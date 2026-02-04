@@ -1,0 +1,65 @@
+<div class="dashboard">
+  <header class="dashboard-header">
+    <div class="title">
+      <h1>Home</h1>
+      <p>Visão geral do seu desempenho</p>
+    </div>
+
+    <div class="dashboard-actions">
+      <app-ciclo-selector
+        [ciclos]="ciclos"
+        [selectedId]="cicloId"
+        (selectedIdChange)="onCicloChange($event)"
+        [loading]="ciclosLoading"
+        [disabled]="ciclosLoading || loading"
+        label="Ciclo">
+      </app-ciclo-selector>
+    </div>
+  </header>
+
+  <section class="dashboard-cards">
+    <app-metric-card
+      type="time"
+      icon="time"
+      title="Estudado na semana"
+      [value]="timeValue"
+      [footerText]="timeFooterText"
+      [footerTone]="timeFooterTone">
+    </app-metric-card>
+
+    <app-metric-card
+      type="streak"
+      icon="calendar"
+      title="Sequência"
+      [value]="streakValue"
+      [footerText]="streakFooterText"
+      footerTone="primary">
+    </app-metric-card>
+
+    <!-- CARD INTELIGENTE -->
+    <app-metric-card
+      type="next"
+      title="Sessão"
+      [value]="actionTitle"
+      [subtitle]="actionSubtitle"
+       actionLabel="Retomar"
+      [footerText]="actionFooterText"
+      [footerTone]="actionFooterTone"
+      [actionText]="actionText"
+      [actionDisabled]="actionDisabled || loading"
+      (action)="onActionClick()">
+    </app-metric-card>
+  </section>
+
+  <section class="dashboard-main">
+    <div class="dashboard-block chart">
+      <app-week-chart [days]="semana"></app-week-chart>
+    </div>
+
+    <article class="block block-progress">
+      <div class="block-body">
+        <app-progress-bar></app-progress-bar>
+      </div>
+    </article>
+  </section>
+</div>

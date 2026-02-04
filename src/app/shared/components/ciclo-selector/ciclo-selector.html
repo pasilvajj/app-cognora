@@ -1,0 +1,19 @@
+<div class="ciclo-select" [class.is-disabled]="disabled || loading">
+  <div class="ciclo-label">{{ label }}</div>
+
+  <select
+    class="ciclo-control"
+    [disabled]="disabled || loading || ciclos.length === 0"
+    [ngModel]="selectedId ?? ''"
+    (ngModelChange)="onChange($event)"
+  >
+    <option value="" disabled>Selecione um ciclo</option>
+
+    <option *ngFor="let c of ciclos" [value]="c.id">
+      {{ c.nome }}
+    </option>
+  </select>
+
+  <div class="ciclo-hint" *ngIf="loading">Carregando ciclos...</div>
+  <div class="ciclo-hint" *ngIf="!loading && ciclos.length === 0">Nenhum ciclo encontrado.</div>
+</div>

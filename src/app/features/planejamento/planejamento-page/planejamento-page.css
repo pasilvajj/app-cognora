@@ -1,0 +1,412 @@
+:host { display: block; }
+
+.planejamento-page {
+  margin: 0 auto;
+  padding: 18px 14px 30px;
+}
+
+/* ===== TOP ===== */
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.top-left h1{
+  margin:0;
+  font-size: 28px;
+  font-weight: 900;
+  color: #0f172a;
+}
+.sub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.top-right{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid #e6edf7;
+  background:#fff;
+  font-weight: 800;
+  font-size: 12px;
+  color:#334155;
+}
+
+.btn.ghost{
+  border: 1px solid #e6edf7;
+  background:#fff;
+  color:#334155;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor:pointer;
+}
+
+/* ====== QUADRO (mais “papel/cartaz”) ====== */
+.board{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(250,250,252,.92));
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 18px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+}
+
+/* Cabeçalho estilo “faixa” */
+.board-header{
+  display:grid;
+  grid-template-columns: 1fr auto 240px; /* sidebar mais estreita */
+  gap: 14px;
+  align-items:center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(15,23,42,.10);
+  background: rgba(15,23,42,.03);
+}
+
+.banner{
+  width: fit-content;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #1f2937;
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: .12em;
+  font-size: 12px;
+  text-transform: uppercase;
+  border: 2px solid rgba(255,255,255,.18);
+}
+
+/* Navegação central */
+.week-nav{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.nav-btn{
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,.12);
+  background:#fff;
+  cursor:pointer;
+  font-weight: 900;
+  color:#334155;
+}
+
+.week-range{
+  font-weight: 900;
+  color:#0f172a;
+  font-size: 16px;
+  letter-spacing: .02em;
+}
+
+.board-right{
+  justify-self: end;
+  text-align: left;
+  padding-left: 12px;
+  border-left: 2px solid rgba(15,23,42,.10);
+}
+.mini-title{
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 12px;
+}
+.mini-value{
+  margin-top: 4px;
+  font-size: 26px;
+  font-weight: 900;
+  color:#0f172a;
+}
+
+/* Corpo: grid + sidebar */
+.board-body{
+  display:grid;
+  grid-template-columns: 1fr 240px; /* sidebar mais estreita */
+  gap: 12px;
+  padding: 12px;
+}
+
+/* ===== GRID PRINCIPAL ===== */
+.grid{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0; /* “tabela” */
+  border: 1px solid rgba(15,23,42,.14);
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,.85);
+}
+
+/* Coluna do dia com separadores verticais fortes */
+.day-col{
+  min-width: 0;
+  border-right: 1px solid rgba(15,23,42,.12);
+  display:flex;
+  flex-direction:column;
+  background: rgba(255,255,255,.7);
+}
+.day-col:last-child{ border-right: none; }
+
+/* Cabeçalho do dia */
+.day-head{
+  padding: 10px 10px 8px;
+  border-bottom: 1px solid rgba(15,23,42,.12);
+  background: rgba(15,23,42,.03);
+}
+.day-name{
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .12em;
+  color:#334155;
+  text-transform: uppercase;
+}
+.day-number{
+  margin-top: 2px;
+  font-size: 22px;
+  font-weight: 900;
+  color:#0f172a;
+}
+
+/* Cards do dia */
+.day-cards{
+  padding: 7px;
+  display:flex;
+  flex-direction:column;
+  gap: 8px; /* menos espaçamento */
+  flex: 1 1 auto;
+}
+
+/* Card mais “flat”, parecido com a 2ª imagem */
+.item-card{
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(15,23,42,.10);
+  border-radius: 10px;
+  padding: 10px 12px; /* ajuste que você queria */
+  box-shadow: none;   /* tira a sombra forte */
+}
+
+.item-card.free{
+  background: rgba(255,247,237,.90);
+  border-color: rgba(251,146,60,.35);
+}
+
+.item-top{
+  display:flex;
+  align-items:flex-start;
+  gap: 8px;
+}
+
+/* Título pode quebrar em 2 linhas (de verdade) */
+.item-title{
+  font-weight: 900;
+  color:#0f172a;
+  font-size: 12.5px;
+  line-height: 1.15;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+}
+
+.item-sub{
+  margin-top: 4px; /* menos espaço */
+  font-size: 11.5px;
+  color:#334155;
+  opacity: .9;
+  line-height: 1.2;
+}
+
+.item-time{
+  margin-top: 6px; /* menos espaço */
+  font-weight: 900;
+  color:#0f172a;
+  font-size: 12px;
+}
+
+.free-note{
+  margin-top: 6px;
+  font-size: 11.5px;
+  color:#7c2d12;
+  font-weight: 800;
+}
+
+/* Rodapé do dia (faixa) */
+.day-footer{
+  border-top: 1px solid rgba(15,23,42,.12);
+  padding: 10px;
+  background: rgba(15,23,42,.03);
+  text-align: left;
+}
+.day-total{
+  font-weight: 900;
+  color:#0f172a;
+  font-size: 13px;
+}
+.day-total-sub{
+  margin-top: 2px;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* ===== SIDEBAR ===== */
+.side{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.side-card{
+  background: rgba(255,255,255,.92);
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 14px;
+  padding: 12px; /* mais compacto */
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.side-title{
+  font-weight: 900;
+  color:#0f172a;
+  margin-bottom: 8px;
+}
+
+.dist-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(15,23,42,.10);
+  gap: 10px;
+}
+.dist-row:last-child{ border-bottom: none; }
+
+.dist-left{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  min-width: 0;
+}
+.dist-name{
+  font-weight: 800;
+  color:#334155;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dist-time{
+  font-weight: 900;
+  color:#0f172a;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.resume-row{
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 7px 0;
+}
+.resume-label{
+  color: var(--muted);
+  font-weight: 800;
+  font-size: 12px;
+}
+.resume-value{
+  color:#0f172a;
+  font-weight: 900;
+  font-size: 12px;
+}
+
+/* ===== DICA ===== */
+.board-tip{
+  display:flex;
+  align-items:flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-top: 1px solid rgba(15,23,42,.10);
+  background: rgba(15,23,42,.03);
+}
+.tip-ico{
+  font-size: 18px;
+  line-height: 1;
+  margin-top: 1px;
+}
+.tip-text{
+  color:#334155;
+  font-weight: 700;
+  font-size: 12.5px;
+}
+.tip-text strong{
+  color:#0f172a;
+  font-weight: 900;
+}
+
+/* ===== DOTS (cores) ===== */
+.dot{
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 3px rgba(15,23,42,0.06);
+}
+.dot.small{
+  width: 9px;
+  height: 9px;
+  box-shadow: 0 0 0 2px rgba(15,23,42,0.06);
+}
+
+.c-amarelo{ background:#fbbf24; }
+.c-laranja{ background:#fb923c; }
+.c-azul{ background:#3b82f6; }
+.c-vermelho{ background:#ef4444; }
+.c-roxo{ background:#8b5cf6; }
+.c-verde{ background:#22c55e; }
+.c-cinza{ background:#94a3b8; }
+
+/* ===== Responsivo ===== */
+@media (max-width: 1180px){
+  .board-header{
+    grid-template-columns: 1fr;
+    row-gap: 10px;
+  }
+  .board-right{
+    justify-self: start;
+    border-left: 0;
+    padding-left: 0;
+  }
+
+  .board-body{
+    grid-template-columns: 1fr;
+  }
+  .side{ order: 2; }
+}
+
+@media (max-width: 980px){
+  .grid{
+    grid-template-columns: 1fr;
+  }
+  .day-col{
+    border-right: none;
+    border-bottom: 1px solid rgba(15,23,42,.12);
+  }
+  .day-col:last-child{ border-bottom: none; }
+}

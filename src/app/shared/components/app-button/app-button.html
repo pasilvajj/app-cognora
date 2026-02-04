@@ -1,0 +1,31 @@
+<!-- COM routerLink -->
+<a
+  *ngIf="routerLink"
+  class="btn"
+  [routerLink]="routerLink"
+  [ngClass]="[
+    'btn-' + variant,
+    'btn-' + size,
+    fullWidth ? 'btn-block' : ''
+  ]"
+>
+  <span *ngIf="!loading">{{ label }}</span>
+  <span *ngIf="loading" class="spinner"></span>
+</a>
+
+<!-- SEM routerLink -->
+<button
+  *ngIf="!routerLink"
+  [type]="type"
+  class="btn"
+  [disabled]="disabled || loading"
+  [ngClass]="[
+    'btn-' + variant,
+    'btn-' + size,
+    fullWidth ? 'btn-block' : ''
+  ]"
+  (click)="onClick()"
+>
+  <span *ngIf="!loading">{{ label }}</span>
+  <span *ngIf="loading" class="spinner"></span>
+</button>

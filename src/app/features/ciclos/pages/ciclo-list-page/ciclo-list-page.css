@@ -1,0 +1,226 @@
+:host {
+  display: block;
+}
+
+.page {
+  width: 100%;
+  padding: 18px 14px 30px;
+}
+
+/* HEADER */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* STATE */
+.state {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 18px;
+  font-weight: 700;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  align-items: st;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px;
+}
+
+.cycle-card {
+  overflow: visible;
+  grid-column: span 6;
+  background: var(--bg-card);
+  border-radius: 14px;
+  /* padding: 16px; */
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  position: relative;
+  padding: 18px 20px;
+}
+
+/* CARD HEADER */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+/* MENU */
+.menu-btn {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.menu-btn:hover {
+  background: #f1f5f9;
+}
+
+/* .menu {
+  position: absolute;
+  top: 42px;
+  right: 12px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+  padding: 6px;
+  animation: dropdown 0.15s ease-out;
+  z-index: 20;
+} */
+
+.menu {
+  position: absolute;
+  top: 42px;
+  right: 8px;
+  min-width: 160px;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.18);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  z-index: 30;
+  animation: dropdown 0.15s ease-out;
+  max-width: calc(100vw - 32px);
+  box-sizing: border-box;
+}
+
+.menu button {
+  width: 100%;
+  border: none;
+  background: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu button:hover {
+  background: #f1f5f9;
+}
+
+.menu .danger {
+  color: #dc2626;
+}
+
+.menu .divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0;
+}
+
+/* META */
+.meta {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  background: #cbd5e1;
+  border-radius: 50%;
+}
+
+/* FOOTER */
+.footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.execute-link {
+  background: none;
+  border: none;
+  color: var(--primary-dark);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 0;
+  opacity: 0.85;
+}
+
+.execute-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+/* ANIMAÇÃO */
+@keyframes dropdown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* RESPONSIVO */
+@media (max-width: 1100px) {
+  .cycle-card {
+    grid-column: span 6;
+  }
+}
+
+@media (max-width: 700px) {
+  .cycle-card {
+    grid-column: span 12;
+  }
+}
+
+.cycle-card.active {
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  border-color: var(--primary);
+  z-index: 15;
+}
+
+.count {
+  margin-left: 6px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+/* Desktop grande */
+@media (min-width: 1200px) {
+  .cycle-card {
+    grid-column: span 6;
+  }
+}
+
+/* Tablet */
+@media (max-width: 1100px) {
+  .cycle-card {
+    grid-column: span 12;
+  }
+}

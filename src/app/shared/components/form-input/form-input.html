@@ -1,0 +1,76 @@
+<div class="form-field">
+  <label *ngIf="label">{{ label }}</label>
+
+  <div class="input-wrapper">
+    <input
+      [type]="type === 'password' && hidePassword ? 'password' : 'text'"
+      [placeholder]="placeholder"
+      [value]="control.value ?? ''"
+      (input)="control.setValue($any($event.target).value)"
+      (blur)="control.markAsTouched()">
+
+    <!-- <input
+      [type]="type === 'password' && hidePassword ? 'password' : 'text'"
+      [placeholder]="placeholder"
+      [formControl]="control"
+    /> -->
+
+    <!-- ÍCONE OLHO -->
+    <button
+      *ngIf="type === 'password'"
+      type="button"
+      class="toggle-password"
+      (click)="togglePassword()"
+    >
+      <svg
+        *ngIf="hidePassword"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M12 5c-7 0-11 7-11 7s4 7 11 7 11-7 11-7-4-7-11-7zm0 11a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"
+        />
+      </svg>
+
+      <svg
+        *ngIf="!hidePassword"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+      >
+        <path
+          d="M3 3l18 18M12 5c-7 0-11 7-11 7a20 20 0 0 0 5.1 5.8M9.9 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9"
+        />
+      </svg>
+    </button>
+  </div>
+
+
+  <ul class="password-checklist" *ngIf="showChecklist">
+    <li [class.ok]="hasMinLength">✔ Mínimo de 8 caracteres</li>
+    <li [class.ok]="hasNumber">✔ Pelo menos 1 número</li>
+    <li [class.ok]="hasUppercase">✔ Letra maiúscula</li>
+    <li [class.ok]="hasSpecialChar">✔ Caractere especial</li>
+  </ul>
+
+  <!-- FORÇA DA SENHA -->
+  <div
+    *ngIf="type === 'password' && control.value"
+    class="password-strength"
+  >
+    <div class="bar">
+      <span
+        class="level"
+        [class.l1]="passwordStrength >= 1"
+        [class.l2]="passwordStrength >= 2"
+        [class.l3]="passwordStrength >= 3"
+        [class.l4]="passwordStrength >= 4"
+        [class.l5]="passwordStrength >= 5"
+      ></span>
+    </div>
+
+    <small class="strength-label">{{ strengthLabel }}</small>
+  </div>
+
+  <!-- ERRO -->
+  <small class="error" *ngIf="showError">Campo inválido</small>
+</div>

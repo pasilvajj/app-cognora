@@ -1,0 +1,81 @@
+<div class="page">
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <h1>Ciclos</h1>
+        <div class="subtitle">
+          Gerencie e acompanhe seus ciclos de estudo
+          <span class="count">({{ ciclos.length }} ciclos)</span>
+        </div>
+
+    </div>
+
+    <app-button
+      label="Novo ciclo"
+      variant="primary"
+      size="sm"
+      [routerLink]="['/ciclos/novo']">
+    </app-button>
+  </div>
+
+  <!-- STATES -->
+  <div class="state" *ngIf="loading">Carregando...</div>
+
+  <div class="state" *ngIf="!loading && ciclos.length === 0">
+    Nenhum ciclo cadastrado ainda.
+  </div>
+
+  <!-- GRID -->
+  <div class="grid" *ngIf="!loading && ciclos.length">
+    <div class="cycle-card" *ngFor="let c of ciclos"  [class.active]="openMenuId === c.id">
+      <!-- HEADER -->
+      <div class="card-header">
+        <div class="title">{{ c.nome }}</div>
+
+        <button
+          class="menu-btn"
+          (click)="toggleMenu(c.id, $event)">
+          ⋮
+        </button>
+
+        <!-- MENU CONTEXTUAL -->
+        <div class="menu" *ngIf="openMenuId === c.id">
+          <button (click)="visualizar(c)">👁 Visualizar</button>
+          <button (click)="editar(c)">✏ Editar</button>
+          <div class="divider"></div>
+          <button class="danger" (click)="excluir(c)">
+            🗑 Excluir
+          </button>
+        </div>
+      </div>
+
+      <!-- META -->
+      <div class="meta">
+        <span>{{ c.cargaHorariaSemanal }}h/sem</span>
+        <span class="dot"></span>
+        <span>{{ c.cargoNome }}</span>
+      </div>
+
+      <!-- FOOTER -->
+      <div class="footer">
+        <button
+          class="execute-link"
+          (click)="abrirCiclo(c.id)">
+          Executar →
+        </button>
+      </div>
+    </div>
+
+  </div>
+  <!-- MODAL -->
+    <app-confirm-dialog
+      *ngIf="cicloParaExcluir"
+      title="Excluir ciclo"
+      message="Tem certeza que deseja excluir este ciclo? Essa ação não poderá ser desfeita."
+      confirmText="Excluir"
+      cancelText="Cancelar"
+      [loading]="excluindo"
+      (confirm)="confirmarExclusao()"
+      (cancel)="cancelarExclusao()">
+    </app-confirm-dialog>
+</div>

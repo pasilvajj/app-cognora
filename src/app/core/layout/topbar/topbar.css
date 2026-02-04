@@ -1,0 +1,113 @@
+:host {
+  display: block;
+  width: 100%;
+  z-index: 5;
+}
+
+/* CONTAINER */
+.topbar {
+  height: 74px;
+  width: 100%;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 24px;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* LADO ESQUERDO */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* BOTÃO MENU (mobile) */
+.menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+
+  width: 40px;
+  height: 40px;
+
+  border: none;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  color: var(--text);
+
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* HOVER DO BOTÃO */
+.menu-btn:hover {
+  background: var(--surface-hover);
+}
+
+/* TÍTULO */
+.topbar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* LADO DIREITO */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ÁREA DO USUÁRIO */
+.user-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* AVATAR */
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-soft));
+  color: #fff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* NOME */
+.username {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+@media (max-width: 768px) {
+  .menu-btn {
+    display: inline-flex;
+  }
+
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .username {
+    display: none; /* economiza espaço */
+  }
+}

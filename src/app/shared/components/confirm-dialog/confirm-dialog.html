@@ -1,0 +1,21 @@
+<div class="overlay" (click)="onCancel()"></div>
+
+<div class="modal">
+  <h2>{{ title }}</h2>
+  <p>{{ message }}</p>
+
+  <div class="actions">
+    <app-button
+      label="Cancelar"
+      variant="ghost"
+      (clicked)="onCancel()">
+    </app-button>
+
+    <app-button
+      label="Excluir"
+      variant="danger"
+      [loading]="loading"
+      (clicked)="onConfirm()">
+    </app-button>
+  </div>
+</div>

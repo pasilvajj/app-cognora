@@ -1,0 +1,83 @@
+<div class="login-container">
+
+  <!-- LADO ESQUERDO -->
+  <section class="login-left">
+    <div class="brand">COGNORA</div>
+
+    <div class="welcome">
+      <p class="small">Bom te ver por aqui.</p>
+      <h1>BEM VINDO</h1>
+      <p class="description">
+        Organize seus estudos, acompanhe seu progresso
+        e alcance seus objetivos com método.
+      </p>
+    </div>
+  </section>
+
+  <!-- LADO DIREITO -->
+  <section class="login-right">
+    <div class="form-box">
+      <h2>Login Account</h2>
+
+      <p class="subtitle">
+        Entre com seus dados para continuar
+      </p>
+
+      <form (ngSubmit)="submit()">
+        <div class="field">
+          <input
+            type="email"
+            placeholder="Email ID"
+            [(ngModel)]="email"
+            name="email"
+            required
+          />
+        </div>
+
+        <div class="field">
+          <input
+            type="password"
+            placeholder="Password"
+            [(ngModel)]="password"
+            name="password"
+            required
+          />
+        </div>
+
+        <div class="options">
+          <label>
+            <input
+              type="checkbox"
+              [(ngModel)]="keepSignedIn"
+              name="keepSignedIn"
+            />
+            Keep me signed in
+          </label>
+
+          <!-- <a href="#">Already a member?</a> -->
+          <a routerLink="/register">Não tem conta? Cadastre-se</a>
+        </div>
+
+        <app-button
+          type="submit"
+          label="ENTRAR"
+          [loading]="loading"
+          [fullWidth]="true">
+        </app-button>
+
+
+        <!-- <button type="submit" [disabled]="loading">
+          {{ loading ? 'ENTRANDO...' : 'SUBSCRIBE' }}
+        </button> -->
+      </form>
+    </div>
+    
+  </section>
+
+</div>
+
+
+
+<footer>
+  <!-- designed by <strong>freepik</strong> -->
+</footer>

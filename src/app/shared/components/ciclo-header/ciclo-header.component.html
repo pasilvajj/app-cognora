@@ -1,0 +1,41 @@
+ 
+ <div class="page-top">
+    <a class="back-link" routerLink="/ciclos">
+      ← <span>Voltar para meus ciclos</span>
+    </a>
+  </div> 
+
+ <div class="ciclo-card">
+    <div class="ciclo-card__icon">
+        <span class="logo-placeholder">▲</span>
+      </div>
+
+      <div class="ciclo-card__content">
+        <!-- 🔹 EDITAR -->
+        <input
+          *ngIf="modo === 'edit'"
+          class="ciclo-nome-input"
+          [(ngModel)]="nome"
+          maxlength="70"
+          placeholder="Nome do ciclo"
+        />
+        <!-- 🔹 VISUALIZAÇÃO -->
+        <div *ngIf="modo === 'view'"
+          class="nomeCiclo"
+          aria-disabled="true">
+          {{ nome }}
+        </div>
+
+       <div class="ciclo-card__meta">
+          <div class="meta-item">
+            <span class="label">Cargo:</span>
+            <span class="value">{{ cargoNome }}</span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">Duração do ciclo</span>
+            <span class="value">{{ cargaHorariaSemanal }}h/sem</span>
+          </div>
+        </div>
+      </div>
+  </div>

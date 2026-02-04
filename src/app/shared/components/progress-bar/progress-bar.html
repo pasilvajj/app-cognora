@@ -1,0 +1,30 @@
+<div class="discipline-card">
+
+  <div class="header">
+    <h3>Progresso por disciplina</h3>
+  </div>
+
+  <div class="discipline-list">
+
+    <div class="discipline-item" *ngFor="let d of disciplines">
+
+      <div class="discipline-info">
+        <span class="name">{{ d.name }}</span>
+        <span class="percent">{{ d.progress }}%</span>
+      </div>
+
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          [class.success]="getColor(d.progress) === 'success'"
+          [class.warning]="getColor(d.progress) === 'warning'"
+          [class.danger]="getColor(d.progress) === 'danger'"
+          [style.width.%]="d.progress">
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>

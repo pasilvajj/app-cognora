@@ -1,0 +1,116 @@
+.pomodoro {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #eef2f7;
+  background: rgba(15, 23, 42, 0.02);
+}
+
+.pomodoro-title {
+  font-weight: 950;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.pomodoro-sub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 950;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(241, 245, 249, 0.9);
+  color: rgba(51, 65, 85, 0.9);
+}
+
+.tag.focus {
+  border-color: rgba(37, 99, 235, 0.25);
+  background: rgba(37, 99, 235, 0.1);
+  color: rgba(29, 78, 216, 1);
+}
+
+.tag.break {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.1);
+  color: rgba(180, 83, 9, 1);
+}
+
+.pomodoro-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pomodoro-time {
+  font-weight: 950;
+  font-size: 16px;
+  color: #0f172a;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  min-width: 94px;
+  text-align: center;
+}
+
+.pomodoro-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-pomodoro {
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 1), rgba(251, 146, 60, 1));
+  cursor: pointer;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 950;
+  box-shadow: 0 10px 22px rgba(245, 158, 11, 0.18);
+}
+
+.btn-pomodoro.ghost {
+  background: #fff;
+  color: #334155;
+  border: 1px solid #e6edf7;
+  box-shadow: none;
+}
+
+.btn-pomodoro:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.dot {
+  color: #cbd5e1;
+}
+
+.muted {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .pomodoro {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pomodoro-right {
+    justify-content: space-between;
+  }
+}

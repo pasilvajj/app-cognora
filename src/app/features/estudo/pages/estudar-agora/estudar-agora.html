@@ -1,0 +1,106 @@
+
+<div class="page">
+
+  <div class="page-header">
+    <h1>Estudar Agora</h1>
+  </div>
+
+  <div class="content">
+
+    <!-- CARD: Próxima Sessão -->
+    <section class="card">
+  <div class="card-header next-header">
+    <h2>Próxima Sessão</h2>
+    <button
+      class="btn-header"
+      type="button"
+      (click)="abrirEscolha()"
+      [disabled]="loading">
+      <span class="icon" aria-hidden="true">≡</span>
+      Escolher outra matéria
+    </button>
+
+  </div>
+
+  <div class="card-body">
+    <div class="next-grid">
+      <div class="next-row">
+        <span class="label">Disciplina:</span>
+        <span class="value">{{ proximaSessaoDto?.disciplinaNome || '-' }}</span>
+      </div>
+
+      <div class="next-row">
+        <span class="label">Ciclo:</span>
+        <span class="value">{{ proximaSessaoDto?.cicloNome || '-' }}</span>
+      </div>
+
+      <div class="next-row">
+        <span class="label">Tempo planejado:</span>
+        <span class="value">{{ tempoPlanejadoLabel }} </span>
+      </div>
+
+      <div class="next-actions">
+        <app-button
+          type="button"
+          label="Iniciar Estudo"
+          variant="primary"
+          [fullWidth]="true"
+          [disabled]="!proximaSessaoDto"
+          (clicked)="iniciarEstudo()">
+        </app-button>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+    <!-- CARD: Progresso do Ciclo -->
+    <section class="card">
+      <div class="card-header">
+        <h2>Progresso do Ciclo</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="progress-list">
+          <div class="progress-row" *ngFor="let p of progress; trackBy: trackByDisciplina">
+            <div class="left">
+              <span class="drag">≡</span>
+              <span class="disc">{{ p.disciplina }}</span>
+            </div>
+
+            <div class="mid">
+              <div class="bar">
+                <div class="fill" [ngClass]="getBarClass(p.percent)" [style.width.%]="p.percent"></div>
+              </div>
+            </div>
+
+            <div class="right">
+              <span class="pct">{{ p.percent }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+ 
+    <!-- CARD: Últimas Sessões -->
+    <app-ultimas-sessoes-card
+      title="Últimas Sessões"
+      [sessions]="recentSessions">
+    </app-ultimas-sessoes-card>
+
+    <app-escolher-materia-modal-circular
+      [open]="modalOpen"
+      [items]="itens"
+      [defaultSelectedItemId]="selecionadoCicloItemId"
+      [recommendedItemId]="proximaSessaoDto?.cicloItemId"
+      (close)="modalOpen = false"
+      (startSession)="onStartSession($event)">
+    </app-escolher-materia-modal-circular>
+  </div>
+</div>
+
+
+
+

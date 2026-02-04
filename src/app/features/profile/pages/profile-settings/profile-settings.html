@@ -1,0 +1,128 @@
+<div class="profile-page">
+
+  <!-- HEADER -->
+  <header class="profile-header">
+    <h1>Configurações do Perfil</h1>
+
+    <nav class="tabs">
+      <button
+        type="button"
+        [class.active]="activeTab === 'profile'"
+        (click)="activeTab = 'profile'">
+        Dados Pessoais
+      </button>
+
+      <button
+        type="button"
+        [class.active]="activeTab === 'security'"
+        (click)="activeTab = 'security'">
+        Segurança
+      </button>
+    </nav>
+  </header>
+
+  <!-- CARD -->
+  <section class="card">
+
+    <form [formGroup]="form" novalidate>
+
+      <div class="content">
+
+        <!-- AVATAR -->
+        <div class="avatar">
+          <img
+            src="do-utilizador.png"
+            alt="Avatar do usuário" />
+
+          <button
+            type="button"
+            class="avatar-btn"
+            aria-label="Alterar avatar">
+            📷
+          </button>
+        </div>
+
+        <!-- FORM -->
+        <div class="fields">
+
+          <!-- =========================
+               DADOS DO PERFIL
+          ========================== -->
+          <ng-container *ngIf="activeTab === 'profile'">
+
+            <app-form-input
+              label="Nome completo"
+              placeholder="Digite seu nome"
+              [control]="form.controls['name']"
+              >
+            </app-form-input>
+
+            <app-form-input
+              label="E-mail"
+              type="email"
+              placeholder="Seu e-mail"
+              [control]="form.controls['email']">
+            </app-form-input>
+          </ng-container>
+
+          <!-- =========================
+               SEGURANÇA
+          ========================== -->
+          <ng-container *ngIf="activeTab === 'security'">
+
+            <div class="password-grid">
+
+              <app-form-input
+                label="Nova senha"
+                type="password"
+                [control]="form.controls['password']">
+              </app-form-input>
+
+              <app-form-input
+                label="Confirmar nova senha"
+                type="password"
+                [control]="form.controls['passwordConfirm']">
+              </app-form-input>
+
+            </div>
+
+          </ng-container>
+
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="actions">
+
+        <!-- Salvar Perfil -->
+        <app-button
+          *ngIf="activeTab === 'profile'"
+          label="Salvar alterações"
+          type="button"
+          [loading]="loading"
+          (clicked)="saveProfile()">
+        </app-button>
+
+        <!-- Salvar Senha -->
+        <app-button
+          *ngIf="activeTab === 'security'"
+          label="Atualizar senha"
+          type="button"
+          [loading]="loading"
+          (clicked)="savePassword()">
+        </app-button>
+
+        <!-- Cancelar -->
+        <app-button
+          label="Cancelar"
+          variant="ghost"
+          type="button"
+          (clicked)="cancel()">
+        </app-button>
+
+      </div>
+
+    </form>
+  </section>
+
+</div>

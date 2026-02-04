@@ -1,0 +1,99 @@
+<div class="page" *ngIf="!loading && sessao; else state">
+  <div class="header">
+    <div>
+      <h1>Sessão de Estudo</h1>
+
+      <div class="sub">
+        <span class="pill">{{ sessao.cicloNome }}</span>
+        <span class="dot">•</span>
+        <span class="muted">{{ sessao.disciplinaNome }}</span>
+        <span class="dot">•</span>
+        <span class="muted">Ordem #{{ sessao.ordem }}</span>
+      </div>
+    </div>
+
+    <button class="btn-back" type="button" (click)="voltar()">
+      Voltar
+    </button>
+  </div>
+
+  <section class="card">
+    <div class="card-header">
+      <div>
+        <h2>{{ sessao.disciplinaNome }}</h2>
+
+        <div class="meta">
+          Planejado: {{ planejadoLabel }}
+        </div>
+      </div>
+
+      <div class="right">
+        <span
+          class="status-pill"
+          [class.is-paused]="pausada"
+          [class.is-ready]="statusLabel === 'Pronta para iniciar'"
+          [class.is-running]="statusLabel === 'Em andamento'"
+          [class.is-done]="statusLabel === 'Concluída'"
+          [class.is-closed]="statusLabel === 'Encerrada'"
+        >
+          {{ statusLabel }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ===== Pomodoro ===== -->
+    <app-pomodoro-timer
+      *ngIf="sessao.pomodoroAtivo"
+      [enabled]="pomodoroEnabled"
+      [config]="pomodoroConfig"
+      [sessaoFinalizada]="!!sessao.fim"
+      [sessaoPausada]="pausada"
+      (toggleEnabled)="onPomodoroToggle($event)"
+      (stageEnded)="onPomodoroStageEnd($event)"
+      (skipStage)="onPomodoroSkipStage()"
+      (modeChanged)="onPomodoroModeChange($event)"
+    ></app-pomodoro-timer>
+    <!-- ===== /Pomodoro ===== -->
+
+    <app-timer-display
+      [tempoExibido]="tempoExibido"
+      [tempoMeta]="tempoMeta"
+      [tempoRestante]="tempoRestante"
+    ></app-timer-display>
+
+    <div class="actions">
+      <button
+        class="btn-main"
+        type="button"
+        (click)="onMainActionClick()"
+        [disabled]="!!sessao.fim || acaoLoading"
+      >
+        {{ statusLabel === 'Pronta para iniciar' ? 'Iniciar' : (pausada ? 'Retomar' : 'Pausar') }}
+      </button>
+    </div>
+
+    <app-observacoes-editor
+      [observacoes]="observacoes"
+      [sessaoFinalizada]="!!sessao.fim"
+      (observacoesChange)="onObservacoesChange($event)"
+      (saveRequest)="onObservacoesSaveRequest($event)"
+    ></app-observacoes-editor>
+  </section>
+
+  <!-- ===== Overlay Pomodoro ===== -->
+  <app-pomodoro-overlay
+    [visible]="pomodoroOverlayVisible"
+    [mode]="pomodoroMode"
+    [texto]="pomodoroOverlayText"
+    [acaoLoading]="acaoLoading"
+    [sessaoFinalizada]="!!sessao.fim"
+    (close)="fecharOverlayPomodoro()"
+    (nextStage)="onPomodoroNextStage()"
+  ></app-pomodoro-overlay>
+</div>
+
+<ng-template #state>
+  <div class="state">
+    {{ loading ? 'Carregando...' : 'Não foi possível carregar a sessão.' }}
+  </div>
+</ng-template>

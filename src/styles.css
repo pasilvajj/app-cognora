@@ -1,1 +1,119 @@
-/* You can add global styles to this file, and also import other style files */
+@import 'ngx-toastr/toastr';
+
+:root {
+  --background: #f5f7fb;
+  --background-soft: #eef2f8;
+
+  --surface: #ffffff;            /* 🔥 cards, topbar, inputs */
+  --surface-hover: #f8fafc;
+
+  --border: #e5ecf6;
+
+  --text: #1e293b;
+  --text-muted: #64748b;
+
+  --primary: #4f8cff;
+  --primary-hover: #3b73f1;
+
+  --danger: #ef4444;
+  --success: #22c55e;
+
+  /* === EFEITOS === */
+  --shadow-sm: 0 2px 6px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+
+  /* === TRANSIÇÕES === */
+  --tran-02: 0.2s ease;
+  --tran-03: 0.3s ease;
+
+  /* 🎨 Cores base */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-soft: rgba(37, 99, 235, 0.15);
+
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+
+  --color-border: #e5e7eb;
+  --color-border-input: #d1d5db;
+  --color-error: #ef4444;
+  --color-success: #22c55e;
+
+  /* 🧱 Backgrounds */
+  --bg-page: #f7f9fc;
+  --bg-card: #ffffff;        /* ← ESSE AQUI */
+  --bg-input: #ffffff;
+  --bg-disabled: #f3f4f6;
+
+  /* ✍️ Tipografia */
+  --font-family-base: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* 📐 Espaçamentos */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+
+  /* 🟦 Bordas */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+
+  /* 🌫️ Sombras */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--background);
+  color: var(--text);
+}
+
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  border: 1px solid #cfe0ff;
+  background: #eff6ff;
+  color: #1d4ed8;
+
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  border-color: #b6d2ff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+}
+
+.btn-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

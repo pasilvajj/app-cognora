@@ -1,0 +1,27 @@
+<div class="backdrop" *ngIf="open" (click)="onBackdrop($event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Escolher matéria</h3>
+      <button class="x" (click)="close.emit()">✕</button>
+    </div>
+
+    <div class="list">
+      <button
+        class="row"
+        *ngFor="let i of itens"
+        (click)="escolher(i)"
+        [class.recommended]="i.cicloItemId === recomendadoId"
+      >
+        <div class="left">
+          <div class="ordem">#{{ i.ordem }}</div>
+          <div class="disc">{{ i.disciplinaNome }}</div>
+        </div>
+        <div class="right">{{ i.tempoMinutos }} min</div>
+      </button>
+    </div>
+
+    <div class="hint" *ngIf="recomendadoId">
+      Itens destacados são o recomendado pela ordem do ciclo.
+    </div>
+  </div>
+</div>

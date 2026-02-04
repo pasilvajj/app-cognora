@@ -1,0 +1,41 @@
+.notes {
+  padding: 0 18px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notes label {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+textarea {
+  width: 100%;
+  min-height: 110px;
+  border-radius: 14px;
+  border: 1px solid #e6edf7;
+  padding: 12px;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+textarea:focus {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notes-status {
+  margin-top: 4px;
+  color: rgba(100, 116, 139, 0.9);
+  font-weight: 800;
+  font-size: 12px;
+}

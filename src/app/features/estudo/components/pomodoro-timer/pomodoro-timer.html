@@ -1,0 +1,44 @@
+<div class="pomodoro">
+  <div class="pomodoro-left">
+    <div class="pomodoro-title">Pomodoro</div>
+    <div class="pomodoro-sub">
+      <span class="tag" [class.focus]="isFocusMode" [class.break]="!isFocusMode">
+        {{ modeLabel }}
+      </span>
+
+      <span class="dot">•</span>
+
+      <span class="muted">
+        Ciclo {{ cycleIndex }} de {{ config.longaACada }}
+      </span>
+    </div>
+  </div>
+
+  <div class="pomodoro-right">
+    <div class="pomodoro-time">
+      {{ timeLabel }}
+    </div>
+
+    <div class="pomodoro-actions">
+      <button
+        class="btn-pomodoro ghost"
+        type="button"
+        (click)="onSkipStage()"
+        [disabled]="sessaoFinalizada"
+        title="Pula para a próxima etapa (Foco/Pausa)"
+      >
+        Pular etapa
+      </button>
+
+      <button
+        class="btn-pomodoro"
+        type="button"
+        (click)="onToggleEnabled()"
+        [disabled]="sessaoFinalizada"
+        title="Ativa/desativa o Pomodoro nesta sessão (não altera o ciclo)"
+      >
+        {{ enabled ? 'Desativar agora' : 'Ativar agora' }}
+      </button>
+    </div>
+  </div>
+</div>

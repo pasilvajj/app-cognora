@@ -1,0 +1,27 @@
+<section class="sessao-estudo">
+  <div class="sessao-wrap">
+    <div class="sessao-conteudo">
+      <span class="label">EM SESSÃO DE ESTUDO</span>
+      <h1 class="timer">{{ tempoFormatado }}</h1>
+      <p class="disciplina">{{ disciplinaAtual }}</p>
+
+      <div class="acoes">
+        <button class="btn btn-primary" *ngIf="rodando; else continuarBtn" (click)="pausar.emit()">
+          ⏸ Pausar
+        </button>
+
+        <ng-template #continuarBtn>
+          <button class="btn btn-primary" (click)="continuar.emit()">▶ Iniciar</button>
+        </ng-template>
+
+        <button class="btn btn-danger" (click)="finalizar.emit()">⏹ Finalizar</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<app-estudo-progresso
+  class="sessao-progresso"
+  *ngIf="ciclo"
+  [ciclo]="ciclo">
+</app-estudo-progresso>

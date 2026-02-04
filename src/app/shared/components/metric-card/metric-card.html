@@ -1,0 +1,64 @@
+<div class="metric-card" [ngClass]="type">
+
+  <!-- ÍCONE -->
+  <div class="metric-icon" [ngClass]="icon" aria-hidden="true">
+    <!-- time -->
+    <svg *ngIf="icon === 'time'" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"></circle>
+      <path d="M12 7v6l4 2"></path>
+    </svg>
+
+    <!-- calendar -->
+    <svg *ngIf="icon === 'calendar'" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="3"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+
+    <!-- book -->
+    <svg *ngIf="icon === 'book'" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+    </svg>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div class="metric-content">
+    <div class="metric-title">{{ title }}</div>
+
+    <div class="metric-value-row">
+      <div class="metric-value">{{ value }}</div>
+
+      <!-- NEXT: botão à direita, ocupando largura total abaixo do conteúdo (como seu layout atual) -->
+    </div>
+
+    <div class="metric-sub" *ngIf="subtitle">{{ subtitle }}</div>
+
+    <!-- Rodapé (delta / recorde / etc) -->
+    <div class="metric-footer" *ngIf="footerText" [ngClass]="footerTone">
+      <span class="footer-dot" *ngIf="type === 'streak'">✓</span>
+      <span class="footer-text">{{ footerText }}</span>
+    </div>
+
+    <!-- Ação (normalmente no next) -->
+
+  <!-- <div class="metric-action" *ngIf="actionLabel"> -->
+
+    <app-button
+        *ngIf="actionLabel"
+        [label]="safeActionLabel"
+        size="sm"
+        variant="primary"
+        [fullWidth]="true"
+        [disabled]="actionDisabled"
+        [loading]="actionLoading"
+        (clicked)="onAction()">
+      </app-button>
+      <!-- </div> -->
+  </div>
+
+</div>

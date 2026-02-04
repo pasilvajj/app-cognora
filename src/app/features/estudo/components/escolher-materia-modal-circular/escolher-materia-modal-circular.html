@@ -1,0 +1,137 @@
+<div class="overlay" *ngIf="open" (click)="onClose()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="header-left">
+        <h2>Escolher matéria</h2>
+        <div class="header-sub">
+          <span><b>{{ vistas }}</b> vistas</span>
+          <span class="dot">•</span>
+          <span><b>{{ restantes }}</b> restantes</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="toggle-btn" type="button" (click)="toggleList()">
+          {{ showList ? 'Ocultar lista' : 'Mostrar lista' }}
+        </button>
+
+        <button class="icon-btn" type="button" (click)="onClose()" aria-label="Fechar">
+          ×
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <!-- STAGE -->
+      <div class="stage">
+        <div class="ring-wrap">
+          <svg class="ring" [attr.viewBox]="'0 0 ' + size + ' ' + size" aria-hidden="true">
+            <ng-container *ngFor="let seg of segments">
+              <path class="seg seg-track" [attr.d]="seg.d"></path>
+            </ng-container>
+
+            <ng-container *ngFor="let seg of segments">
+              <path
+                class="seg seg-fill"
+                [class.is-empty]="!seg.active"
+                [class.is-selected]="seg.selected"
+                [class.is-rec]="seg.recommended"
+                [class.is-seen]="seg.visto"
+                [class.is-running]="seg.emAndamento"
+                [class.is-done]="seg.concluida"
+                [attr.d]="seg.d"
+                (click)="selectBySegment(seg)"
+                (mouseenter)="seg.item ? hover(seg.item) : null"
+                (mouseleave)="hover(null)"
+              ></path>
+            </ng-container>
+          </svg>
+
+          <!-- BADGES ao redor -->
+          <ng-container *ngFor="let seg of segments">
+            <button
+              type="button"
+              class="badge"
+              [class.badge-empty]="!seg.active"
+              [class.badge-selected]="seg.selected"
+              [style.--deg]="seg.midDeg"
+              (click)="selectBySegment(seg)"
+              (mouseenter)="seg.item ? hover(seg.item) : null"
+              (mouseleave)="hover(null)"
+              [disabled]="!seg.active"
+            >
+              <span class="badge-order">{{ seg.ordemLabel }}</span>
+
+              <span class="badge-dot running" *ngIf="seg.emAndamento" aria-hidden="true"></span>
+              <span class="badge-dot done" *ngIf="!seg.emAndamento && seg.concluida" aria-hidden="true"></span>
+              <span class="badge-check" *ngIf="!seg.emAndamento && !seg.concluida && seg.visto" aria-hidden="true">✓</span>
+            </button>
+          </ng-container>
+
+          <!-- CENTRO -->
+          <div class="center">
+            <div class="center-focus" *ngIf="centerFocus; else emptyFocus">
+              {{ centerFocus }}
+            </div>
+
+            <ng-template #emptyFocus>
+              <div class="center-placeholder">
+                Passe o mouse ou selecione um item.
+              </div>
+            </ng-template>
+
+            <!-- <div class="center-actions">
+              <button class="center-btn" type="button" (click)="confirmar()" [disabled]="!selectedItem">
+                Continuar
+              </button>
+            </div> -->
+          </div>
+
+        </div>
+        <div class="legend">
+              <span class="lg">
+                <i class="dot blue"></i> Em andamento
+              </span>
+              <span class="lg">
+                <i class="dot green"></i> Concluída
+              </span>
+              <span class="lg">
+                <i class="dot check">✓</i> Já vista
+              </span>
+            </div>
+      </div>
+
+      <!-- LISTA COMPACTA (SEM PAGINAÇÃO) -->
+      <div class="list" *ngIf="showList">
+        <div
+          class="list-item"
+          *ngFor="let it of items; trackBy: trackById"
+          [class.is-selected]="selectedItem?.cicloItemId === it.cicloItemId"
+          (mouseenter)="hover(it)"
+          (mouseleave)="hover(null)"
+          (click)="select(it)"
+        >
+          <div class="li-left">
+            <span class="pill">#{{ it.ordem }}</span>
+            <div class="li-name" [title]="it.disciplinaNome">{{ it.disciplinaNome }}</div>
+          </div>
+
+          <div class="li-right">
+            <span class="li-time">{{ it.tempoMinutos }} min</span>
+
+            <span class="li-status" [attr.data-status]="statusKey(it)">
+              <span class="li-dot running" *ngIf="it.sessaoAbertaId"></span>
+              <span class="li-dot done" *ngIf="!it.sessaoAbertaId && it.concluida"></span>
+              <span class="li-check" *ngIf="!it.sessaoAbertaId && !it.concluida && it.visto">✓</span>
+              <span class="li-text">{{ statusText(it) }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        Dica: ative “Mostrar lista” para ver os nomes completos. O check indica “já vista” e o ponto azul indica “em andamento”.
+      </div>
+    </div>
+  </div>
+</div>

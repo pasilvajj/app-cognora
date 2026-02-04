@@ -1,0 +1,52 @@
+.timer {
+  padding: 24px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: radial-gradient(circle at 50% 15%, rgba(37, 99, 235, 0.06), rgba(255, 255, 255, 1));
+}
+
+.time {
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #4b73d1;
+}
+
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.chip-meta {
+  background: rgba(37, 99, 235, 0.14);
+  border-color: rgba(37, 99, 235, 0.22);
+  color: rgba(29, 78, 216, 1);
+}
+
+.chip-remaining {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.22);
+  color: rgba(180, 83, 9, 1);
+}
+
+@media (max-width: 720px) {
+  .time {
+    font-size: 46px;
+  }
+}

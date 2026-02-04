@@ -1,0 +1,318 @@
+:host {
+  display: block;
+}
+
+/* Card base */
+.card {
+  background: #ffffff;
+  border: 1px solid #e6edf7;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid #eef2f7;
+  background: #ffffff;
+}
+
+.card-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.card-body {
+  padding: 14px 18px 18px;
+}
+
+/* Lista */
+.sessions {
+  display: flex;
+  flex-direction: column;
+}
+
+.session-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  padding: 18px 6px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.session-row:last-child {
+  border-bottom: none;
+}
+
+.session-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ===== STATUS (círculo + ícone) ===== */
+.status {
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  border: 3px solid #cbd5e1;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.status.done {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.12);
+}
+
+.status.open {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.12);
+}
+
+.status.paused {
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 6px rgba(148, 163, 184, 0.12);
+}
+
+.status.ended {
+  border-color: #cbd5e1;
+  box-shadow: 0 0 0 6px rgba(203, 213, 225, 0.10);
+}
+
+.status-icon {
+  font-weight: 950;
+  line-height: 1;
+  color: #0f172a;
+}
+
+/* check */
+.status-icon.check {
+  font-size: 13px;
+  color: #16a34a;
+}
+
+/* pause (duas barrinhas) */
+.status-icon.pause {
+  width: 10px;
+  height: 10px;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.status-icon.pause i {
+  width: 4px;
+  height: 10px;
+  border-radius: 2px;
+  background: #64748b;
+  display: inline-block;
+}
+
+/* play (triângulo) */
+.status-icon.play {
+  width: 0;
+  height: 0;
+  border-left: 12px solid #2563eb;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  margin-left: 2px;
+}
+
+/* ===== DATA ===== */
+.date-chip {
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 900;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #e0e7ff;
+  flex: 0 0 auto;
+}
+
+.date-chip.is-today {
+  background: #eef2ff;
+  border-color: #dbeafe;
+}
+
+/* mini calendário dd/MM */
+.date-cal {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 18px 1fr;
+  flex: 0 0 auto;
+}
+
+.date-cal-top {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 950;
+  display: grid;
+  place-items: center;
+  letter-spacing: 0.10em;
+}
+
+.date-cal-day {
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+/* fallback */
+.date-text {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 900;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  flex: 0 0 auto;
+}
+
+/* Disciplina */
+.disc {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 520px;
+}
+
+/* Pílula status */
+.pill {
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #334155;
+  flex: 0 0 auto;
+}
+
+.pill.done {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.28);
+  color: #047857;
+}
+
+.pill.paused {
+  background: rgba(148, 163, 184, 0.14);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: #334155;
+}
+
+.pill.open {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.28);
+  color: #1d4ed8;
+}
+
+/* direita */
+.session-right {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 0 0 auto;
+}
+
+.time-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.time {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.time.muted {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f59e0b;
+}
+
+.time.time-done {
+  color: #1d4ed8;
+}
+
+.time.time-open {
+  color: #0f172a;
+}
+
+.time.time-paused {
+  color: #0f172a;
+}
+
+/* CTA */
+.cta {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1d4ed8;
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid rgba(59, 130, 246, 0.30);
+  background: rgba(59, 130, 246, 0.10);
+  white-space: nowrap;
+}
+
+/* Clique */
+.session-row.clickable {
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 16px;
+  margin: 0 -6px;
+  padding-left: 6px;
+  padding-right: 6px;
+  transition: background 140ms ease, transform 140ms ease;
+}
+
+.session-row.clickable:hover {
+  background: rgba(15, 23, 42, 0.02);
+  transform: translateY(-1px);
+}
+
+.session-row.clickable:active {
+  transform: translateY(0);
+}
+
+/* vazio */
+.empty {
+  font-size: 13px;
+  color: #64748b;
+  padding: 10px 0;
+  font-weight: 800;
+}
+
+/* Responsivo */
+@media (max-width: 920px) {
+  .disc { max-width: 320px; font-size: 18px; }
+  .time { font-size: 13px; }
+  .cta { font-size: 13px; padding: 12px 14px; }
+  .status { width: 40px; height: 40px; }
+}

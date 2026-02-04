@@ -1,0 +1,129 @@
+.progresso-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* CARD */
+.progresso-card {
+  width: 100%;
+  max-width: 1100px;
+  background: rgba(247, 249, 252, 0.92);
+  border: 1px solid rgba(220, 228, 242, 0.9);
+  border-radius: 18px;
+  padding: 22px 26px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.10);
+}
+
+/* HEADER (título à esquerda, restante à direita) */
+.progresso-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #6b7a99;
+}
+
+/* BOX “45 MIN RESTANTES” (direita) */
+.tempo-restante-box {
+  background: #eef3fb;
+  color: #6b7a99;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* LISTA */
+.linhas {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.linha {
+  display: grid;
+  grid-template-columns: 260px 1fr 110px;
+  align-items: center;
+  gap: 16px;
+}
+
+.disciplina {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nome {
+  color: #2d3a4a;
+  font-size: 16px;
+}
+
+/* “bolinha” da disciplina */
+.bullet {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  opacity: 0.95;
+}
+
+/* BARRA */
+.barra {
+  height: 10px;
+  background: #e2e6ef;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.preenchimento {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+/* CORES */
+.blue { background: #4c84ff; }
+.green { background: #3db88a; }
+.purple { background: #8a7de8; }
+
+.tempo {
+  text-align: right;
+  font-size: 14px;
+  color: #6b7a99;
+  white-space: nowrap;
+}
+
+/* Rodapé central (opcional) */
+.tempo-restante-footer {
+  margin-top: 14px;
+  font-weight: 700;
+  color: #6b7a99;
+  letter-spacing: 0.3px;
+}
+
+/* Responsivo */
+@media (max-width: 900px) {
+  .linha {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .tempo {
+    text-align: left;
+  }
+
+  .progresso-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

@@ -1,0 +1,149 @@
+.metric-card {
+  position: relative;
+  /* background: #ffffff; */
+  background: var(--bg-card);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.metric-action {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Ícone */
+.metric-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #0f172a;
+}
+
+/* Conteúdo */
+.metric-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.metric-value-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.metric-sub {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: -2px;
+}
+
+/* Footer (delta / recorde / etc) */
+.metric-footer {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.footer-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(37, 99, 235, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.metric-footer.muted { color: var(--muted); }
+.metric-footer.primary { color: var(--primary); }
+.metric-footer.success { color: #16a34a; }
+.metric-footer.warn { color: #f59e0b; }
+
+/* Botão (Next) */
+.study-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.study-btn:hover:enabled {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.35);
+}
+
+.study-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Variações de cor do ícone por type (mantém seu padrão visual) */
+.metric-card.time .metric-icon {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.metric-card.streak .metric-icon {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.metric-card.next .metric-icon {
+  background: rgba(99, 102, 241, 0.15);
+  color: #6366f1;
+}
+
+/* Opcional: tornar o NEXT mais “alto” visualmente */
+.metric-card.next .metric-title {
+  color: var(--primary);
+  font-weight: 800;
+}

@@ -1,0 +1,30 @@
+<aside
+  class="sidebar"
+  [class.closed]="!open">
+
+  <div class="sidebar-header">
+    <img src="assets/logo.svg" class="logo-icon">
+    <span class="logo-text">Cognora</span>
+  </div>
+
+  <nav class="menu">
+    <a routerLink="/dashboard" routerLinkActive="active" >
+      <i class="icon">🏠</i>
+      Home
+    </a>
+
+    <a routerLink="/ciclos" routerLinkActive="active">
+      <i class="icon">📄</i>
+      Meus Ciclos
+    </a>
+      <a routerLink="/planejamento" routerLinkActive="active">
+          <i class="icon">📄</i>
+        Meu planejamento
+      </a>
+    <a routerLink="/configuracoes" routerLinkActive="active" class="bottom">
+      <i class="icon">⚙</i>
+      Configurações
+    </a> 
+  </nav>
+
+</aside>

@@ -1,0 +1,39 @@
+<section class="progresso-wrapper">
+  <div class="progresso-card">
+
+    <div class="progresso-header">
+      <h3 class="titulo">CICLO: {{ ciclo.nome }}</h3>
+
+      <div class="tempo-restante-box">
+        {{ ciclo.tempoRestante }} MIN RESTANTES
+      </div>
+    </div>
+
+    <div class="linhas">
+      <div class="linha" *ngFor="let item of ciclo.itens">
+        <div class="disciplina">
+          <span class="bullet" [ngClass]="item.cor"></span>
+          <span class="nome">{{ item.disciplina }}</span>
+        </div>
+
+        <div class="barra">
+          <div
+            class="preenchimento"
+            [ngClass]="item.cor"
+            [style.width.%]="item.tempoTotal ? (item.tempoAtual / item.tempoTotal) * 100 : 0">
+          </div>
+        </div>
+
+        <div class="tempo">
+          {{ item.tempoAtual }}/{{ item.tempoTotal }} min
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Opcional: igual ao mock tem um texto central embaixo -->
+  <div class="tempo-restante-footer">
+    {{ ciclo.tempoRestante }} MIN RESTANTES
+  </div>
+</section>

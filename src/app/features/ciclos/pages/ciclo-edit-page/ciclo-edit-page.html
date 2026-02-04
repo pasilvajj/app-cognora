@@ -1,0 +1,53 @@
+<div class="page">
+
+  <!-- TOPO -->
+  <div class="page-top">
+    <a class="back-link" routerLink="/ciclos">
+      ← <span>Voltar para meus ciclos</span>
+    </a>
+  </div>
+
+  <!-- CONTEÚDO CENTRAL -->
+  <div class="page-container">
+
+    <!-- CARD DO CICLO -->
+    <div class="ciclo-card">
+      <div class="ciclo-card__icon">
+        <span class="logo-placeholder">▲</span>
+      </div>
+
+      <div class="ciclo-card__content">
+        <input
+          type="text"
+          class="ciclo-nome-input"
+          [(ngModel)]="nomeCiclo"
+          maxlength="70"
+          placeholder="Nome do ciclo"
+        />
+
+        <div class="ciclo-card__meta">
+          <div class="meta-item">
+            <span class="label">Cargo:</span>
+            <span class="value">{{ ciclo?.cargoNome }}</span>
+          </div>
+
+          <div class="meta-item">
+            <span class="label">Duração do ciclo</span>
+            <span class="value">{{ ciclo?.cargaHorariaSemanal }}h/sem</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div class="state" *ngIf="loading">Carregando...</div>
+
+    <section class="card" *ngIf="!loading">
+      <app-materias-ciclo-list
+        [items]="disciplinas"
+        (itemsChange)="disciplinas = $event; aplicarHorasPorMateria();">
+      </app-materias-ciclo-list>
+    </section>
+
+  </div>
+</div>

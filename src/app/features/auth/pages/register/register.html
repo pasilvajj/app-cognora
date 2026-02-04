@@ -1,0 +1,67 @@
+
+<div class="register-container">
+
+   <!-- LADO ESQUERDO -->
+ <section class="register-left">
+  <div class="left-content">
+    <div class="brand">COGNORA</div>
+
+    <div class="welcome">
+      <p class="small">Comece agora</p>
+      <h1>CRIAR CONTA</h1>
+      <p class="description">
+        Crie sua conta e comece a organizar seus estudos de forma inteligente.
+      </p>
+    </div>
+  </div>
+</section>
+
+  <section class="register-right">
+    <form [formGroup]="signupForm" (ngSubmit)="submit()" class="form-box">
+
+      <h2>Criar conta</h2>
+      <p class="subtitle">Preencha seus dados</p>
+
+
+     <app-form-input
+        label="Nome completo"
+        placeholder="Digite seu nome"
+        [control]="signupForm.controls.name">
+     </app-form-input>
+
+      <app-form-input
+        label="Email"
+        type="email"
+        placeholder="Digite seu email"
+        [control]="signupForm.controls.email">
+      </app-form-input>
+
+     <app-form-input
+        label="Senha"
+        type="password"
+        placeholder="Digite sua senha"
+        [control]="signupForm.controls.password">
+      </app-form-input>
+
+     <app-form-input
+        label="Confirmar senha"
+        type="password"
+        placeholder="Confirme sua senha"
+        [control]="signupForm.controls.passwordConfirm">
+      </app-form-input>
+
+       <app-button
+          type="submit"
+          label="CRIAR CONTA"
+          [loading]="loading"
+          [disabled]="signupForm.invalid"
+          [fullWidth]="true">
+        </app-button>
+
+      <div class="footer-link">
+        Já tem conta?
+      </div>
+
+    </form>
+  </section>
+</div>

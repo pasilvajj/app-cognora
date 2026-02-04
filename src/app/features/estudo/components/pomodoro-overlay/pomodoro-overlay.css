@@ -1,0 +1,114 @@
+.pomodoro-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.pomodoro-modal {
+  width: min(520px, 92vw);
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  box-shadow: 0 26px 60px rgba(2, 6, 23, 0.28);
+  padding: 18px;
+  animation: pop 0.18s ease-out;
+}
+
+@keyframes pop {
+  from {
+    transform: translateY(8px) scale(0.98);
+    opacity: 0.85;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(37, 99, 235, 0.12);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.modal-icon::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: radial-gradient(circle at 30% 30%, rgba(37, 99, 235, 0.35), transparent 60%);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.modal-icon.break {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+}
+
+.modal-icon.break::after {
+  background: radial-gradient(circle at 30% 30%, rgba(245, 158, 11, 0.35), transparent 60%);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.9);
+    opacity: 0.7;
+  }
+}
+
+.modal-title {
+  font-weight: 950;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.modal-sub {
+  margin-top: 6px;
+  color: #334155;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.modal-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-secondary {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #ffffff;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.btn-secondary.ghost {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

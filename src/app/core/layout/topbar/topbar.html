@@ -1,0 +1,58 @@
+<header class="topbar">
+
+  <button
+    *ngIf="mobile"
+    class="menu-btn"
+    (click)="onMenuClick()">
+    ☰
+  </button>
+
+  <div class="topbar-left">
+    <span class="app-name">Cognora</span>
+  </div>
+
+
+<div class="topbar-right">
+
+  <div class="right">
+    <div class="user-area" (click)="toggleMenu()">
+      <div class="avatar">
+        {{ initials }}
+      </div>
+
+      <span class="username">
+        {{ user?.name }}
+      </span>
+
+      <span class="chevron" [class.open]="menuOpen">▾</span>
+    </div>
+
+   @if (menuOpen) {
+    <div class="dropdown">
+      <button type="button" (click)="logout()">Sair</button>
+    </div>
+    }
+  </div>
+
+
+    <!-- <div class="select-box">
+      <span>PF 2025 - Agente</span>
+      <i>▾</i>
+    </div>
+
+    <button class="icon-btn">🔔</button>
+
+    <div class="profile">
+      <img src="assets/avatar.png">
+      <span class="user">
+        👤 {{ userName }}
+      </span>
+    </div>
+
+    <button class="logout-btn" (click)="logout()">
+        Sair
+      </button>
+
+  </div> -->
+</div>
+</header>

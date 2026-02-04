@@ -1,0 +1,33 @@
+<div class="page">
+  <div class="page-container">
+
+    <ng-container *ngIf="ciclo as c">
+      <app-ciclo-header
+        [nome]="c.nome"
+        [cargoNome]="c.cargoNome"
+        [cargaHorariaSemanal]="c.cargaHorariaSemanal"
+        [modo]="modo">
+      </app-ciclo-header>
+    </ng-container>
+
+    <!-- Estado -->
+    <div class="state" *ngIf="loading">Carregando...</div>
+
+    <!-- Lista -->
+    <section class="card" *ngIf="!loading">
+      <app-materias-ciclo-list
+        [items]="disciplinas"
+        [readonly]="modo === 'view'"
+        (itemsChange)="modo === 'edit' && onItemsChange($event)">
+      </app-materias-ciclo-list>
+    </section>
+
+    <div class="footer-actions" *ngIf="modo === 'edit'">
+    <button
+      class="action-primary"
+      (click)="salvar()">
+      Salvar alterações
+    </button>
+  </div>
+  </div>
+</div>

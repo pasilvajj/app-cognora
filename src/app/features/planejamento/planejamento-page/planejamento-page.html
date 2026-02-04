@@ -1,0 +1,149 @@
+<div class="planejamento-page">
+  <div class="top">
+    <div class="top-left">
+      <h1>Planejamento</h1>
+      <div class="sub">Roteiro recomendado para a semana (não obrigatório).</div>
+    </div>
+
+    <div class="top-right">
+      <app-ciclo-selector
+        [ciclos]="ciclos"
+        [selectedId]="cicloIdSelecionado"
+        (selectedIdChange)="onCicloChange($event)"
+        [loading]="ciclosLoading"
+        [disabled]="ciclosLoading || carregando || gerando"
+        label="Ciclo"
+      ></app-ciclo-selector>
+
+      <button
+        class="btn ghost"
+        type="button"
+        (click)="carregar()"
+        [disabled]="carregando || gerando || !cicloIdSelecionado"
+      >
+        Atualizar
+      </button>
+
+      <button
+        class="btn ghost"
+        type="button"
+        (click)="gerarPlanejamento()"
+        [disabled]="carregando || gerando || !cicloIdSelecionado"
+      >
+        {{ gerando ? 'Gerando...' : 'Gerar planejamento' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- QUADRO / MOLDURA -->
+  <section class="board">
+    <!-- BANNER -->
+    <div class="board-header">
+      <div class="banner">PLANEJAMENTO SEMANAL</div>
+
+      <div class="week-nav">
+        <button
+          class="nav-btn"
+          type="button"
+          (click)="semanaAnterior()"
+          [disabled]="carregando || gerando || !cicloIdSelecionado"
+        >
+          ‹
+        </button>
+
+        <div class="week-range">{{ intervaloSemanaLabel }}</div>
+
+        <button
+          class="nav-btn"
+          type="button"
+          (click)="proximaSemana()"
+          [disabled]="carregando || gerando || !cicloIdSelecionado"
+        >
+          ›
+        </button>
+      </div>
+
+      <div class="board-right">
+        <div class="mini-title">Total sugerido na semana</div>
+        <div class="mini-value">{{ totalSemanaLabel }}</div>
+      </div>
+    </div>
+
+    <div class="board-body">
+      <!-- GRID PRINCIPAL (7 dias) -->
+      <div class="grid">
+        <div class="day-col" *ngFor="let d of dias; let idx = index">
+          <div class="day-head">
+            <div class="day-name">{{ d.diaSemanaLabel }}</div>
+            <div class="day-number">{{ d.diaMes }}</div>
+          </div>
+
+          <div class="day-cards">
+            <div class="item-card" *ngFor="let it of d.itens" [class.free]="it.duracaoSeg <= 0">
+              <div class="item-top">
+                <span class="dot" [class]="it.corTag || 'c-cinza'"></span>
+                <div class="item-title">{{ it.disciplinaNome }}</div>
+              </div>
+
+              <div class="item-sub" *ngIf="it.topico">{{ it.topico }}</div>
+
+              <div class="item-time" *ngIf="it.duracaoSeg > 0">
+                {{ formatarTempo(it.duracaoSeg) }}
+              </div>
+
+              <div class="free-note" *ngIf="it.duracaoSeg <= 0">
+                {{ it.topico || d.observacao || 'Dia livre' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="day-footer">
+            <div class="day-total">{{ formatarTempo(d.totalDiaSeg) }}</div>
+            <div class="day-total-sub">de estudo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUNA LATERAL -->
+      <aside class="side">
+        <div class="side-card">
+          <div class="side-title">Distribuição por disciplina</div>
+
+          <div class="dist-row" *ngFor="let x of distribuicao">
+            <div class="dist-left">
+              <span class="dot small" [class]="x.corTag || 'c-cinza'"></span>
+              <span class="dist-name">{{ x.disciplinaNome }}</span>
+            </div>
+            <div class="dist-time">{{ formatarTempo(x.totalSeg) }}</div>
+          </div>
+        </div>
+
+        <div class="side-card">
+          <div class="side-title">Resumo</div>
+
+          <div class="resume-row">
+            <span class="resume-label">Dia mais leve:</span>
+            <span class="resume-value">{{ resumoDiaMaisLeve }}</span>
+          </div>
+
+          <div class="resume-row">
+            <span class="resume-label">Dia mais pesado:</span>
+            <span class="resume-value">{{ resumoDiaMaisPesado }}</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- DICA (rodapé do quadro) -->
+    <div class="board-tip">
+      <div class="tip-ico">💡</div>
+      <div class="tip-text">
+        <strong>Dica:</strong> Utilize isso como um roteiro, mas não se preocupe se não conseguir seguir à risca.
+      </div>
+    </div>
+  </section>
+
+  <div class="state" *ngIf="carregando" style="margin-top: 12px; color: var(--muted); font-weight: 700;">
+    Carregando planejamento...
+  </div>
+</div>

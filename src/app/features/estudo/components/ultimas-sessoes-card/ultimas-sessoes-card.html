@@ -1,0 +1,159 @@
+<section class="card">
+  <div class="card-header">
+    <h2>{{ title }}</h2>
+  </div>
+
+  <div class="card-body">
+    <div class="sessions" *ngIf="vm.length > 0; else empty">
+      <ng-container *ngFor="let s of vm; trackBy: trackByKey">
+
+        <!-- Linha clicável APENAS se puder retomar -->
+        <a
+          class="session-row clickable"
+          *ngIf="canResume(s); else rowStatic"
+          [routerLink]="['/estudo/sessao', s.sessaoId]"
+        >
+          <div class="session-left">
+            <!-- STATUS ICON -->
+            <span
+              class="status"
+              [class.done]="s.status === 'CONCLUIDA'"
+              [class.open]="s.status === 'EM_ANDAMENTO'"
+              [class.paused]="s.status === 'PAUSADA'"
+              aria-hidden="true"
+            >
+              <span class="status-icon check" *ngIf="s.status === 'CONCLUIDA'">✓</span>
+
+              <!-- pause icon -->
+              <span class="status-icon pause" *ngIf="s.status === 'PAUSADA'">
+                <i></i><i></i>
+              </span>
+
+              <!-- play icon (opcional) -->
+              <span class="status-icon play" *ngIf="s.status === 'EM_ANDAMENTO'"></span>
+            </span>
+
+            <!-- DATA -->
+            <ng-container [ngSwitch]="s.dateView.kind">
+              <span
+                *ngSwitchCase="'RELATIVE'"
+                class="date-chip"
+                [class.is-today]="s.dateView.text === 'Hoje'"
+              >
+                {{ s.dateView.text }}
+              </span>
+
+              <span *ngSwitchCase="'CALENDAR'" class="date-cal" [attr.aria-label]="s.dateView.raw">
+                <span class="date-cal-top">{{ s.dateView.month }}</span>
+                <span class="date-cal-day">{{ s.dateView.day }}</span>
+              </span>
+
+              <span *ngSwitchDefault class="date-text">{{ s.dateView.text }}</span>
+            </ng-container>
+
+            <span class="disc" [title]="s.disciplina">{{ s.disciplina }}</span>
+
+            <span
+              class="pill"
+              [class.done]="s.status === 'CONCLUIDA'"
+              [class.open]="s.status === 'EM_ANDAMENTO'"
+              [class.paused]="s.status === 'PAUSADA'"
+            >
+              {{ getStatusText(s) }}
+            </span>
+          </div>
+
+          <div class="session-right">
+            <div class="time-col">
+              <span
+                class="time strong"
+                [class.time-done]="s.status === 'CONCLUIDA'"
+                [class.time-open]="s.status === 'EM_ANDAMENTO'"
+                [class.time-paused]="s.status === 'PAUSADA'"
+              >
+                Estudado: {{ s.studiedLabel }}
+              </span>
+
+              <span class="time muted" *ngIf="s.remainingLabel">
+                Restante: {{ s.remainingLabel }}
+              </span>
+            </div>
+
+            <span class="cta">Retomar</span>
+          </div>
+        </a>
+
+        <!-- Linha normal (não clicável) -->
+        <ng-template #rowStatic>
+          <div class="session-row">
+            <div class="session-left">
+              <span
+                class="status"
+                [class.done]="s.status === 'CONCLUIDA'"
+                [class.open]="s.status === 'EM_ANDAMENTO'"
+                [class.paused]="s.status === 'PAUSADA'"
+                aria-hidden="true"
+              >
+                <span class="status-icon check" *ngIf="s.status === 'CONCLUIDA'">✓</span>
+                <span class="status-icon pause" *ngIf="s.status === 'PAUSADA'"><i></i><i></i></span>
+                <span class="status-icon play" *ngIf="s.status === 'EM_ANDAMENTO'"></span>
+              </span>
+
+              <ng-container [ngSwitch]="s.dateView.kind">
+                <span
+                  *ngSwitchCase="'RELATIVE'"
+                  class="date-chip"
+                  [class.is-today]="s.dateView.text === 'Hoje'"
+                >
+                  {{ s.dateView.text }}
+                </span>
+
+                <span *ngSwitchCase="'CALENDAR'" class="date-cal" [attr.aria-label]="s.dateView.raw">
+                  <span class="date-cal-top">{{ s.dateView.month }}</span>
+                  <span class="date-cal-day">{{ s.dateView.day }}</span>
+                </span>
+
+                <span *ngSwitchDefault class="date-text">{{ s.dateView.text }}</span>
+              </ng-container>
+
+              <span class="disc" [title]="s.disciplina">{{ s.disciplina }}</span>
+
+              <span
+                class="pill"
+                [class.done]="s.status === 'CONCLUIDA'"
+                [class.open]="s.status === 'EM_ANDAMENTO'"
+                [class.paused]="s.status === 'PAUSADA'"
+              >
+                {{ getStatusText(s) }}
+              </span>
+            </div>
+
+            <div class="session-right">
+              <div class="time-col">
+                <span
+                  class="time strong"
+                  [class.time-done]="s.status === 'CONCLUIDA'"
+                  [class.time-open]="s.status === 'EM_ANDAMENTO'"
+                  [class.time-paused]="s.status === 'PAUSADA'"
+                >
+                  Estudado: {{ s.studiedLabel }}
+                </span>
+
+                <span class="time muted" *ngIf="s.remainingLabel">
+                  Restante: {{ s.remainingLabel }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </ng-template>
+
+      </ng-container>
+    </div>
+
+    <ng-template #empty>
+      <div class="empty">
+        Nenhuma sessão registrada ainda.
+      </div>
+    </ng-template>
+  </div>
+</section>

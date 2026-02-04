@@ -1,0 +1,125 @@
+:host {
+  display: block;
+  width: 100vw;
+  height: 100vh;
+}
+
+
+/* =========================
+   ÁREA PRINCIPAL
+========================= */
+.layout-main {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column; /* ESSENCIAL */
+  background: var(--background);
+  transition: padding-left 0.3s ease;
+  padding-left: 0;
+  overflow: hidden;
+}
+
+/* Wrapper geral */
+.layout-content {
+  flex: 1; /* 🔥 ocupa só o espaço abaixo do topbar */
+  min-width: 0;          /* 🔥 impede gráfico/card de estourar */
+  max-width: 100%;
+  padding: 28px 32px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    var(--background) 0%,
+    var(--background-soft) 100%
+  );
+}
+
+
+
+/* Desktop com sidebar aberta */
+.layout-main.sidebar-open {
+  padding-left: 250px; /* largura da sidebar */
+}
+
+/* =========================
+   CONTEÚDO DAS PÁGINAS
+========================= */
+.layout-content {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  background: linear-gradient(
+    180deg,
+    var(--background) 0%,
+    var(--background-soft) 100%
+  );
+}
+
+/* Scroll moderno */
+.layout-content::-webkit-scrollbar {
+  width: 10px;
+}
+
+.layout-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.layout-content::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
+
+.layout-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.25);
+}
+
+/* =========================
+   OVERLAY MOBILE
+========================= */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+@media (max-width: 768px) {
+  .layout-main {
+    padding-left: 0 !important;
+  }
+
+  .layout-content {
+    padding: 20px 16px;
+  }
+}
+
+/* =========================
+   ELEMENTOS GLOBAIS
+========================= */
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.card {
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+  border: 1px solid var(--border);
+}

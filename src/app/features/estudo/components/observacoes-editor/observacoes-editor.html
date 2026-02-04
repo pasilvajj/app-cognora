@@ -1,0 +1,14 @@
+<div class="notes">
+  <label>Observações</label>
+
+  <textarea
+    [ngModel]="observacoes"
+    (ngModelChange)="onObservacoesChange($event)"
+    [disabled]="sessaoFinalizada"
+    placeholder="Anote pontos importantes..."
+  ></textarea>
+
+  <div class="notes-status">
+    {{ statusObservacoesLabel }}
+  </div>
+</div>

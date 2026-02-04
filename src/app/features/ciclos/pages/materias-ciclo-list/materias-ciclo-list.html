@@ -1,0 +1,74 @@
+<div class="mat-table" *ngIf="items.length; else empty">
+  <div class="mat-head">
+    <div class="c-check"></div>
+    <div class="c-materia">Matéria</div>
+    <div class="c-edital">Completou edital?</div>
+    <div class="c-peso">Peso</div>
+    <div class="c-nivel">Seu nível</div>
+    <div class="c-horas">Horas p/ matéria</div>
+  </div>
+
+  <div class="mat-row" *ngFor="let it of items; trackBy: trackById"
+    [class.is-checked]="it.checked">
+    <div class="c-check">
+      <input *ngIf="!readonly" type="checkbox" [checked]="it.checked" (change)="onToggleChecked(it)" />
+      <span *ngIf="readonly" class="readonly-check"></span>
+    </div>
+
+    <div class="c-materia">
+      <div class="materia-name">{{ it.nome }}</div>
+      <div class="materia-meta">Tempo padrão: {{ it.tempoMinutos }} min</div>
+    </div>
+
+    <div class="c-edital">
+      <div class="toggle">
+        <span class="toggle-label">Não</span>
+        <label class="switch">
+          <input type="checkbox" 
+            [(ngModel)]="it.completouEdital" 
+            [disabled]="readonly || !it.checked" 
+            (ngModelChange)="itemsChange.emit(items)" />
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Sim</span>
+      </div>
+    </div>
+
+    <div class="c-peso">
+      <input
+        class="peso-input"
+        type="number"
+        min="0"
+        step="1"
+        [(ngModel)]="it.peso"
+        disabled
+        readonly
+        (ngModelChange)="itemsChange.emit(items)"/>
+    </div>
+
+    <div class="c-nivel">
+      <div class="stars" [class.is-disabled]="!it.checked">
+        <button
+          type="button"
+          class="star"
+          *ngFor="let s of stars"
+          [disabled]="readonly || !it.checked"
+          (click)="setNivel(it, s)"
+          [class.on]="it.nivel >= s"
+        >
+          ★
+        </button>
+      </div>
+    </div>
+
+    <div class="c-horas">
+      <span class="horas" [class.is-zero]="it.horasLabel === '0:00h'">{{ it.horasLabel }}</span>
+    </div>
+  </div>
+</div>
+
+<ng-template #empty>
+  <div class="empty">
+    Nenhuma matéria para exibir.
+  </div>
+</ng-template>
