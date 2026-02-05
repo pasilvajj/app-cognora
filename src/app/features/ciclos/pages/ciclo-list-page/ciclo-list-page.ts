@@ -63,6 +63,7 @@ export class CicloListPage implements OnInit {
   excluir(c: CicloDto): void {
   this.openMenuId = null;
   this.cicloParaExcluir = c; // 👈 ISSO DISPARA O MODAL
+
   }
 
   /** 👇 FECHAR MENU AO CLICAR FORA */
@@ -74,11 +75,6 @@ export class CicloListPage implements OnInit {
   cicloParaExcluir: CicloDto | null = null;
   excluindo = false;
 
-  // excluir(c: CicloDto): void {
-  //   this.openMenuId = null;
-  //   this.cicloParaExcluir = c;
-  // }
-
   cancelarExclusao(): void {
     this.cicloParaExcluir = null;
     this.excluindo = false;
@@ -88,18 +84,19 @@ export class CicloListPage implements OnInit {
     if (!this.cicloParaExcluir) return;
 
     this.excluindo = true;
-
-    //   this.api.deleteCiclo(this.cicloParaExcluir.id).subscribe({
-    //     next: () => {
-    //       this.ciclos = this.ciclos.filter(
-    //         c => c.id !== this.cicloParaExcluir!.id
-    //       );
-    //       this.cancelarExclusao();
-    //     },
-    //     error: () => {
-    //       this.excluindo = false;
-    //     }
-    //   });
+      this.api.deletarCiclo(this.cicloParaExcluir.id).subscribe({
+        next: () => {
+          this.ciclos = this.ciclos.filter(
+            c => c.id !== this.cicloParaExcluir!.id
+          );
+           this.excluindo = false;
+          this.cancelarExclusao();
+        },
+        error: () => {
+          this.excluindo = false;
+        }
+      });
+       this.excluindo = false;
     }
 
 }

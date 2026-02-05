@@ -39,7 +39,7 @@ export class CiclosApiService {
   }
 
   saveCiclo(payload: CicloCreateRequest): Observable<CicloDto[]> {
-    return this.http.post<CicloDto[]>(`${this.base}/cicloGerador`, payload );
+    return this.http.post<CicloDto[]>(`${this.base}/ciclo/salvar`, payload );
   }
   listCiclos() {
     return this.http.get<CicloDto[]>(`${this.base}/ciclo`);
@@ -54,5 +54,9 @@ export class CiclosApiService {
       params: { usuarioId },
     });
   }
+
+   deletarCiclo(cicloId: number) {
+    return this.http.delete(`${this.base}/ciclo/delete/${cicloId}`);
+ }
  
 }

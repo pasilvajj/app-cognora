@@ -103,7 +103,7 @@ export class EstudoApiService {
   // =========================
 
   getProximaSessao(cicloId: number): Observable<ProximaSessaoDto> {
-    return this.http.get<ProximaSessaoDto>(`${this.base}/estudo/ciclos/${cicloId}/proxima`);
+    return this.http.get<ProximaSessaoDto>(`${this.base}/estudo/sessoes/ciclos/${cicloId}/proxima`);
   }
 
   iniciarSessao(payload: IniciarSessaoRequest): Observable<SessaoDetalheDto> {

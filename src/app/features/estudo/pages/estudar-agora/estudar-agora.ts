@@ -5,19 +5,16 @@ import { finalize } from 'rxjs/operators';
 import { CicloDto } from '../../../ciclos/data/ciclos.models'; // ajuste para seu tipo real
 import { CiclosApiService,CicloMateriaDto } from '../../../ciclos/data/ciclos-api.service';
 import { UltimasSessoesCard, RecentSession } from '../../components/ultimas-sessoes-card/ultimas-sessoes-card';
-import { EstudoApiService, ProximaSessaoDto,ProgressoDisciplinaDto,
-  SessaoResumoDto, } from '../../data/estudo-api.service';
+import { EstudoApiService, ProximaSessaoDto,ProgressoDisciplinaDto} from '../../data/estudo-api.service';
 import { EscolherMateriaModalCircular, CicloItemView } from '../../components/escolher-materia-modal-circular/escolher-materia-modal-circular';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 
-
 type ProgressItem = {
   disciplina: string;
   percent: number; // 0..100proxima
 };
-
 @Component({
   selector: 'app-estudar-agora',
   imports: [CommonModule, UltimasSessoesCard, EscolherMateriaModalCircular,AppButtonComponent],
@@ -88,15 +85,12 @@ export class EstudarAgora implements OnInit{
 
     this.cicloId = id;
 
-    console.log('Id ciclo:', this.cicloId);
     // 1) recomendado
     this.estudoApi.getProximaSessao(this.cicloId).subscribe({
       next: (r) => {
         this.proximaSessaoDto = r;
         this.selecionadoCicloItemId = r.cicloItemId; // default = recomendado
-
         this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(r.tempoMinutos);
-        console.log('Proxima sessao',this.proximaSessaoDto)
            // força atualização da UI imediatamente
       this.cdr.detectChanges();
       this.carregarMateriasDoCiclo();
@@ -110,17 +104,13 @@ export class EstudarAgora implements OnInit{
       .subscribe({
     next: (c: any) => {
       this.ciclo = c;
-
       const lista = c?.itens ?? c?.items ?? [];
-
       this.itens = lista.map((i: any) => ({
-        cicloItemId: i.id,                 // no seu DTO é "id"
+        cicloItemId: i.id,                 
         ordem: i.ordem,
         disciplinaNome: i.disciplinaNome,
         tempoMinutos: i.tempoMinutos,
       }));
-
-      console.log('items: ',this.itens)
 
       // opcional: se ainda não tem selecionado, mantém o recomendado
       if (!this.selecionado && this.proximaSessaoDto) {
