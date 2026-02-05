@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 
 import { EstudoRoutingModule } from './estudo-routing-module';
 
-import { EstudoPage } from './pages/estudo-page/estudo-page';
 import { EstudoTimer } from './components/estudo-timer/estudo-timer';
 
 
@@ -11,9 +10,7 @@ import { EstudoTimer } from './components/estudo-timer/estudo-timer';
   declarations: [],
   imports: [
     CommonModule,
-    EstudoPage,
     EstudoTimer,
-
     EstudoRoutingModule
   ]
 })
