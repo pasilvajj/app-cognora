@@ -10,6 +10,7 @@ import { PomodoroTimer, PomodoroMode, PomodoroConfig } from '../../components/po
 import { TimerDisplay } from '../../components/timer-display/timer-display';
 import { ObservacoesEditor } from '../../components/observacoes-editor/observacoes-editor';
 import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-sessao-estudo-page',
@@ -69,12 +70,13 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   // =========================
 
   constructor(
-    private route: ActivatedRoute,
-    private router: Router,
-    private api: EstudoApiService,
-    private cdr: ChangeDetectorRef,
-    private zone: NgZone,
-    private pomodoroAlert: PomodoroAlertService
+    private readonly route: ActivatedRoute,
+    private readonly router: Router,
+    private readonly api: EstudoApiService,
+    private readonly cdr: ChangeDetectorRef,
+    private readonly zone: NgZone,
+    private readonly pomodoroAlert: PomodoroAlertService,
+    private readonly toastr: ToastrService
     
   ) {}
 

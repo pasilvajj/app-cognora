@@ -43,9 +43,9 @@ export class Register {
   });
 
   constructor(
-    private router: Router,
-    private authService: AuthService,
-    private toastr: ToastrService
+    private readonly router: Router,
+    private readonly authService: AuthService,
+    private readonly toastr: ToastrService
   ) {}
 
   submit(): void {

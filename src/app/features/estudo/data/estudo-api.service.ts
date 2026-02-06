@@ -1,5 +1,5 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable,inject} from '@angular/core';
+import { HttpClient} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -94,8 +94,10 @@ export interface AtualizarObservacoesRequest {
 export class EstudoApiService {
 
    private readonly base = environment.apiBaseUrl;
+   private readonly http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+
+  constructor() {}
 
   // =========================
   // PRÓXIMA SESSÃO (ciclo)

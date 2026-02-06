@@ -9,7 +9,6 @@ export type CicloMateriaDto = {
   ordem: number;
   disciplinaNome: string;
   tempoMinutos: number;
-
   visto: boolean;
   sessaoAbertaId: number | null;
   concluida: boolean;
