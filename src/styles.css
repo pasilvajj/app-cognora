@@ -66,6 +66,15 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
+/* Isso faz com que o número '1' ocupe o mesmo espaço que o '8' */
+.time-display, .chip {
+  font-variant-numeric: tabular-nums;
+  -moz-font-feature-settings: "tnum";
+  -webkit-font-feature-settings: "tnum";
+  font-feature-settings: "tnum";
+}
+
+
 html, body {
   height: 100%;
   margin: 0;

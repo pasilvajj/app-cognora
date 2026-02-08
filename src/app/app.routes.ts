@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { MainLayout } from './core/layout/main-layout/main-layout';
-import { PauseSessionGuard } from './core/guards/pause-session.guard';
 import { AuthGuard } from './core/auth/auth.guard';
+import { pauseSessionGuard } from './core/guards/pause-session.guard';
+import { MainLayout } from './core/layout/main-layout/main-layout';
 
 export const routes: Routes = [
 
@@ -44,7 +44,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/estudo/pages/sessao-estudo-page/sessao-estudo-page')
             .then(m => m.SessaoEstudoPage),
-        canDeactivate: [PauseSessionGuard],
+        canDeactivate: [pauseSessionGuard],
       },
 
       {

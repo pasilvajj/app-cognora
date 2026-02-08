@@ -1,4 +1,6 @@
-<div class="page" *ngIf="!loading && sessao; else state">
+<div class="page" *ngIf="!loading() && sessao; else state">
+
+  <!-- ================= HEADER ================= -->
   <div class="header">
     <div>
       <h1>Sessão de Estudo</h1>
@@ -17,83 +19,61 @@
     </button>
   </div>
 
+  <!-- ================= CARD ================= -->
   <section class="card">
+
+    <!-- HEADER DO CARD -->
     <div class="card-header">
       <div>
         <h2>{{ sessao.disciplinaNome }}</h2>
-
-        <div class="meta">
-          Planejado: {{ planejadoLabel }}
-        </div>
+        <div class="meta">Planejado: {{ tempoPlanejado }}</div>
       </div>
 
-      <div class="right">
-        <span
-          class="status-pill"
-          [class.is-paused]="pausada"
-          [class.is-ready]="statusLabel === 'Pronta para iniciar'"
-          [class.is-running]="statusLabel === 'Em andamento'"
-          [class.is-done]="statusLabel === 'Concluída'"
-          [class.is-closed]="statusLabel === 'Encerrada'"
-        >
-          {{ statusLabel }}
-        </span>
-      </div>
+      <span class="status-pill" [class.is-pausada]="timer.pausada()"
+        [class.is-ready]="statusLabel() === 'Pronta para iniciar'" [class.is-running]="statusLabel() === 'Em andamento'"
+        [class.is-done]="statusLabel() === 'Concluída'" [class.is-closed]="statusLabel() === 'Encerrada'">
+        {{ statusLabel() }}
+      </span>
     </div>
 
-    <!-- ===== Pomodoro ===== -->
-    <app-pomodoro-timer
-      *ngIf="sessao.pomodoroAtivo"
-      [enabled]="pomodoroEnabled"
-      [config]="pomodoroConfig"
-      [sessaoFinalizada]="!!sessao.fim"
-      [sessaoPausada]="pausada"
-      (toggleEnabled)="onPomodoroToggle($event)"
-      (stageEnded)="onPomodoroStageEnd($event)"
-      (skipStage)="onPomodoroSkipStage()"
-      (modeChanged)="onPomodoroModeChange($event)"
-    ></app-pomodoro-timer>
-    <!-- ===== /Pomodoro ===== -->
+    <!-- ================= POMODORO ================= -->
+    <app-pomodoro-timer *ngIf="pomodoroEnabled()" [sessaoFinalizada]="timer.finalizada()"
+      (skipStage)="onPomodoroSkipStage()">
+    </app-pomodoro-timer>
 
-    <app-timer-display
-      [tempoExibido]="tempoExibido"
-      [tempoMeta]="tempoMeta"
-      [tempoRestante]="tempoRestante"
-    ></app-timer-display>
+    <!-- ================= TIMER PRINCIPAL ================= -->
+    <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()">
+    </app-timer-display>
 
+    <!-- ================= AÇÃO PRINCIPAL ================= -->
     <div class="actions">
-      <button
-        class="btn-main"
-        type="button"
-        (click)="onMainActionClick()"
-        [disabled]="!!sessao.fim || acaoLoading"
-      >
-        {{ statusLabel === 'Pronta para iniciar' ? 'Iniciar' : (pausada ? 'Retomar' : 'Pausar') }}
+      <button class="btn-main" type="button" (click)="onMainActionClick()"
+        [disabled]="timer.finalizada() || acaoLoading()">
+        {{
+        statusLabel() === 'Pronta para iniciar'
+        ? 'Iniciar'
+        : timer.pausada()
+        ? 'Retomar'
+        : 'Pausar'
+        }}
       </button>
     </div>
 
-    <app-observacoes-editor
-      [observacoes]="observacoes"
-      [sessaoFinalizada]="!!sessao.fim"
-      (observacoesChange)="onObservacoesChange($event)"
-      (saveRequest)="onObservacoesSaveRequest($event)"
-    ></app-observacoes-editor>
-  </section>
+    <!-- ================= OBSERVAÇÕES ================= -->
+    <app-observacoes-editor [observacoes]="observacoes" [sessaoFinalizada]="timer.finalizada()"
+      (observacoesChange)="onObservacoesChange($event)" (saveRequest)="onObservacoesSaveRequest($event)">
+    </app-observacoes-editor>
 
-  <!-- ===== Overlay Pomodoro ===== -->
-  <app-pomodoro-overlay
-    [visible]="pomodoroOverlayVisible"
-    [mode]="pomodoroMode"
-    [texto]="pomodoroOverlayText"
-    [acaoLoading]="acaoLoading"
-    [sessaoFinalizada]="!!sessao.fim"
-    (close)="fecharOverlayPomodoro()"
-    (nextStage)="onPomodoroNextStage()"
-  ></app-pomodoro-overlay>
+  </section>
 </div>
 
+<app-pomodoro-overlay [visible]="pomodoroVisible()" [mode]="pomodoroMode()" [texto]="pomodoroTexto()"
+  (closeOverlay)="onPomodoroCloseOverlay()" (nextStage)="onPomodoroNextStage()">
+</app-pomodoro-overlay>
+
+<!-- ================= STATE ================= -->
 <ng-template #state>
   <div class="state">
-    {{ loading ? 'Carregando...' : 'Não foi possível carregar a sessão.' }}
+    {{ loading() ? 'Carregando sessão...' : 'Não foi possível carregar a sessão.' }}
   </div>
 </ng-template>

@@ -1,6 +1,6 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PomodoroMode } from '../pomodoro-timer/pomodoro-timer';
+import { Component, input, output } from '@angular/core';
+import { PomodoroMode } from '../../data/pomodoro.types';
 
 @Component({
   selector: 'app-pomodoro-overlay',
@@ -10,25 +10,33 @@ import { PomodoroMode } from '../pomodoro-timer/pomodoro-timer';
   styleUrl: './pomodoro-overlay.css',
 })
 export class PomodoroOverlay {
-  @Input() visible = false;
-  @Input() mode: PomodoroMode = 'FOCO';
-  @Input() texto = '';
-  @Input() acaoLoading = false;
-  @Input() sessaoFinalizada = false;
-  
-  @Output() close = new EventEmitter<void>();
-  @Output() nextStage = new EventEmitter<void>();
+  // ================= INPUTS =================
+
+  visible = input(false);
+  mode = input<PomodoroMode>('FOCO');
+  texto = input('');
+  acaoLoading = input(false);
+  sessaoFinalizada = input(false);
+
+  // ================= OUTPUTS =================
+
+  closeOverlay = output<void>();
+  nextStage = output<void>();
+
+  // ================= ACTIONS =================
 
   onClose(): void {
-    this.close.emit();
+    this.closeOverlay.emit();
   }
 
   onNextStage(): void {
     this.nextStage.emit();
   }
 
+  // ================= HELPERS =================
+
   get isFocusMode(): boolean {
-    return this.mode === 'FOCO';
+    return this.mode() === 'FOCO';
   }
 
   get title(): string {

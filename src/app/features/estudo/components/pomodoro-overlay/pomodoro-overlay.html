@@ -1,4 +1,4 @@
-<div class="pomodoro-overlay" *ngIf="visible" (click)="onClose()">
+<div class="pomodoro-overlay" *ngIf="visible()" (click)="onClose()">
   <div class="pomodoro-modal" (click)="$event.stopPropagation()">
     <div class="modal-icon" [class.break]="!isFocusMode"></div>
 
@@ -7,7 +7,7 @@
     </div>
 
     <div class="modal-sub">
-      {{ texto }}
+      {{ texto() }}
     </div>
 
     <div class="modal-actions">
@@ -15,12 +15,7 @@
         Ok
       </button>
 
-      <button
-        class="btn-secondary"
-        type="button"
-        (click)="onNextStage()"
-        [disabled]="acaoLoading || sessaoFinalizada"
-      >
+      <button class="btn-secondary" type="button" (click)="onNextStage()" [disabled]="acaoLoading || sessaoFinalizada">
         Próxima etapa
       </button>
     </div>

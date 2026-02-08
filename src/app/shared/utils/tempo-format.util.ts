@@ -1,5 +1,5 @@
 export class TempoFormatUtil {
-  private constructor() {}
+  private constructor() { }
 
   static minutosParaMs(min?: number | null): number {
     return Math.max(0, Number(min ?? 0)) * 60_000;

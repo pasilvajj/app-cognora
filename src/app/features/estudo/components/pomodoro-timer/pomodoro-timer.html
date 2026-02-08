@@ -1,44 +1,27 @@
 <div class="pomodoro">
+  <!-- esquerda -->
   <div class="pomodoro-left">
-    <div class="pomodoro-title">Pomodoro</div>
-    <div class="pomodoro-sub">
-      <span class="tag" [class.focus]="isFocusMode" [class.break]="!isFocusMode">
-        {{ modeLabel }}
-      </span>
+    <span class="mode-badge" [class.focus]="engine.isFocusMode()" [class.break]="!engine.isFocusMode()">
+      {{ engine.modeLabel() }}
+    </span>
 
-      <span class="dot">•</span>
-
-      <span class="muted">
-        Ciclo {{ cycleIndex }} de {{ config.longaACada }}
-      </span>
-    </div>
+    <span class="cycle-text">
+      Ciclo {{ engine.cicloAtual() }} de {{ engine.totalCiclos() }}
+    </span>
   </div>
 
+  <!-- direita -->
   <div class="pomodoro-right">
-    <div class="pomodoro-time">
-      {{ timeLabel }}
+    <div class="time-pill">
+      {{ engine.timeLabel() }}
     </div>
 
-    <div class="pomodoro-actions">
-      <button
-        class="btn-pomodoro ghost"
-        type="button"
-        (click)="onSkipStage()"
-        [disabled]="sessaoFinalizada"
-        title="Pula para a próxima etapa (Foco/Pausa)"
-      >
-        Pular etapa
-      </button>
+    <button class="btn-ghost" type="button" (click)="onSkipStage()" [disabled]="sessaoFinalizada()">
+      Pular etapa
+    </button>
 
-      <button
-        class="btn-pomodoro"
-        type="button"
-        (click)="onToggleEnabled()"
-        [disabled]="sessaoFinalizada"
-        title="Ativa/desativa o Pomodoro nesta sessão (não altera o ciclo)"
-      >
-        {{ enabled ? 'Desativar agora' : 'Ativar agora' }}
-      </button>
-    </div>
+    <button class="btn-warning" type="button" (click)="onToggleEnabled()" [disabled]="sessaoFinalizada()">
+      Desativar agora
+    </button>
   </div>
 </div>
