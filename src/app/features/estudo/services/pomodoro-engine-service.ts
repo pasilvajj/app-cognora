@@ -48,6 +48,8 @@ export class PomodoroEngineService {
   readonly totalCiclos = computed(() => this._totalCiclos());
   readonly focusFinished = this._focusFinished.asReadonly();
 
+
+
   /** ⬅️ ESTE ERA O QUE FALTAVA */
   readonly modeLabel = computed(() => {
     const mode = this._mode();
@@ -86,6 +88,16 @@ export class PomodoroEngineService {
 
   closeOverlay(): void {
     this._overlayVisible.set(false);
+
+    // se acabou foco → iniciar pausa
+    if (!this._running() && this._mode() !== 'FOCO' && !this._finished()) {
+      this._remainingMs.set(this.getStageDuration(this._mode()));
+      this._running.set(true);
+      this.endTime = Date.now() + this._remainingMs();
+      this.startTicker();
+    }
+
+    this._focusFinished.set(false);
   }
 
 

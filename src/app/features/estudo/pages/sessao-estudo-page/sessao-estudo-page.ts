@@ -58,6 +58,27 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   readonly pomodoroTexto = computed(() => this.pomodoro.overlayText());
   readonly pomodoroVisible = computed(() => this.pomodoro.overlayVisible());
 
+  constructor() {
+    effect(() => {
+      // foco acabou de terminar
+      if (this.pomodoro.focusFinished()) {
+
+        // pausa apenas o timer da sessão
+        if (!this.timer.pausada() && !this.timer.finalizada()) {
+          this.timer.pause();
+
+          // chama backend SEM reinicializar pomodoro
+          if (this.sessao) {
+            const estudadoSeg = Math.floor(this.timer.decorridoMs() / 1000);
+
+            this.api.pausarSessao(this.sessao.id, estudadoSeg)
+              .subscribe();
+          }
+        }
+      }
+    });
+  }
+
   // ================= INIT =================
 
   ngOnInit(): void {
@@ -75,16 +96,6 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
     this.api.getSessao(sessaoId).subscribe({
       next: (s) => this.initSessao(s),
       error: () => this.loading.set(false),
-    });
-
-    // 🔥 pausa automática quando FOCO termina
-    effect(() => {
-      if (!this.pomodoro.focusFinished()) return;
-
-      // pausa cronômetro principal
-      if (!this.timer.pausada() && !this.timer.finalizada()) {
-        this.pausarSessao();
-      }
     });
   }
 
@@ -112,7 +123,7 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
     else if (!s.inicio) this.statusLabel.set('Pronta para iniciar');
     else this.statusLabel.set('Em andamento');
 
-    if (s.pomodoroAtivo) {
+    if (s.pomodoroAtivo && !this.pomodoroEnabled()) {
       this.pomodoroEnabled.set(true);
 
       this.pomodoro.init({
@@ -160,11 +171,9 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   private pausarSessao(): void {
     if (!this.sessao) return;
 
-    this.acaoLoading.set(true);
-
-    const estudadoSeg = this.timer.pause();
     this.pomodoro.pause();
-
+    this.acaoLoading.set(true);
+    const estudadoSeg = this.timer.pause();
     this.api.pausarSessao(this.sessao.id, estudadoSeg).subscribe({
       next: (s) => {
         this.initSessao(s);
@@ -206,15 +215,22 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   // ================= POMODORO EVENTS =================
 
   onPomodoroSkipStage(): void {
+    console.log('Skip');
     this.pomodoro.skip();
   }
 
   onPomodoroCloseOverlay(): void {
+    console.log('é qui de verdade');
+    if (!this.timer.pausada()) {
+      this.pausarSessao();
+    }
     this.pomodoro.closeOverlay();
   }
 
   onPomodoroNextStage(): void {
-    this.pomodoro.skip();
+    console.log('Começo a contar: ');
+    this.pomodoro.closeOverlay();
+    // this.pomodoro.start();
   }
 
   // ================= GUARD =================
