@@ -1,4 +1,3 @@
-
 <div class="page">
 
   <div class="page-header">
@@ -9,50 +8,41 @@
 
     <!-- CARD: Próxima Sessão -->
     <section class="card">
-  <div class="card-header next-header">
-    <h2>Próxima Sessão</h2>
-    <button
-      class="btn-header"
-      type="button"
-      (click)="abrirEscolha()"
-      [disabled]="loading">
-      <span class="icon" aria-hidden="true">≡</span>
-      Escolher outra matéria
-    </button>
-
-  </div>
-
-  <div class="card-body">
-    <div class="next-grid">
-      <div class="next-row">
-        <span class="label">Disciplina:</span>
-        <span class="value">{{ proximaSessaoDto?.disciplinaNome || '-' }}</span>
-      </div>
-
-      <div class="next-row">
-        <span class="label">Ciclo:</span>
-        <span class="value">{{ proximaSessaoDto?.cicloNome || '-' }}</span>
-      </div>
-
-      <div class="next-row">
-        <span class="label">Tempo planejado:</span>
-        <span class="value">{{ tempoPlanejadoLabel }} </span>
-      </div>
-
-      <div class="next-actions">
-        <app-button
-          type="button"
-          label="Iniciar Estudo"
-          variant="primary"
-          [fullWidth]="true"
-          [disabled]="!proximaSessaoDto"
-          (clicked)="iniciarEstudo()">
-        </app-button>
+      <div class="card-header next-header">
+        <h2>Próxima Sessão</h2>
+        <button class="btn-header" type="button" (click)="abrirEscolha()" [disabled]="loading()">
+          <span class="icon" aria-hidden="true">≡</span>
+          Escolher outra matéria
+        </button>
 
       </div>
-    </div>
-  </div>
-</section>
+
+      <div class="card-body">
+        <div class="next-grid">
+          <div class="next-row">
+            <span class="label">Disciplina:</span>
+            <span class="value">{{ proximaSessaoDto?.disciplinaNome || '-' }}</span>
+          </div>
+
+          <div class="next-row">
+            <span class="label">Ciclo:</span>
+            <span class="value">{{ proximaSessaoDto?.cicloNome || '-' }}</span>
+          </div>
+
+          <div class="next-row">
+            <span class="label">Tempo planejado:</span>
+            <span class="value">{{ tempoPlanejadoLabel }} </span>
+          </div>
+
+          <div class="next-actions">
+            <app-button type="button" label="Iniciar Estudo" variant="primary" [fullWidth]="true"
+              [disabled]="!proximaSessaoDto" (clicked)="iniciarEstudo()">
+            </app-button>
+
+          </div>
+        </div>
+      </div>
+    </section>
 
 
 
@@ -83,24 +73,14 @@
         </div>
       </div>
     </section>
- 
+
     <!-- CARD: Últimas Sessões -->
-    <app-ultimas-sessoes-card
-      title="Últimas Sessões"
-      [sessions]="recentSessions">
+    <app-ultimas-sessoes-card title="Últimas Sessões" [sessions]="recentSessions">
     </app-ultimas-sessoes-card>
 
-    <app-escolher-materia-modal-circular
-      [open]="modalOpen"
-      [items]="itens"
-      [defaultSelectedItemId]="selecionadoCicloItemId"
-      [recommendedItemId]="proximaSessaoDto?.cicloItemId"
-      (close)="modalOpen = false"
-      (startSession)="onStartSession($event)">
+    <app-escolher-materia-modal-circular [open]="modalOpen" [items]="itens"
+      [defaultSelectedItemId]="selecionadoCicloItemId" [recommendedItemId]="proximaSessaoDto?.cicloItemId"
+      (close)="modalOpen = false" (startSession)="onStartSession($event)">
     </app-escolher-materia-modal-circular>
   </div>
 </div>
-
-
-
-

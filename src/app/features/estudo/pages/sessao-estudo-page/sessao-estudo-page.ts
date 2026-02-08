@@ -1,15 +1,5 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  HostListener,
-  inject,
-  OnDestroy,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, OnDestroy, OnInit, signal, } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { map, Observable, of } from 'rxjs';
 
@@ -220,7 +210,6 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   }
 
   onPomodoroCloseOverlay(): void {
-    console.log('é qui de verdade');
     if (!this.timer.pausada()) {
       this.pausarSessao();
     }

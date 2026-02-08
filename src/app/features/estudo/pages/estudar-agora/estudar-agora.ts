@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { finalize, map } from 'rxjs/operators';
+import { delay, finalize, map } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
@@ -28,7 +28,8 @@ export class EstudarAgora implements OnInit {
 
   cicloId = 1;
   private usuarioId!: number;
-  loading = true;
+  loading = signal(true);
+  isProcessando = signal(false);
   // recomendado pelo backend (ordem do ciclo)
   proximaSessaoDto?: ProximaSessaoDto;
   tempoPlanejadoLabel = '';
@@ -44,8 +45,6 @@ export class EstudarAgora implements OnInit {
   progress: ProgressItem[] = [];
   recentSessions: RecentSession[] = [];
 
-  isProcessando = false;
-
   constructor(
     private readonly ciclosApi: CiclosApiService,
     private readonly estudoApi: EstudoApiService,
@@ -57,7 +56,8 @@ export class EstudarAgora implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loading = true;
+
+    this.loading.set(true);
 
     const user = this.auth.getUser()!;
     this.usuarioId = user.id;
@@ -73,7 +73,9 @@ export class EstudarAgora implements OnInit {
   }
 
   getProximaSessao(): void {
-    this.estudoApi.getProximaSessao(this.cicloId).subscribe({
+    this.estudoApi.getProximaSessao(this.cicloId).pipe(
+      delay(0)
+    ).subscribe({
       next: (r) => {
         this.proximaSessaoDto = r;
         this.selecionadoCicloItemId = r.cicloItemId; // default = recomendado
@@ -138,7 +140,7 @@ export class EstudarAgora implements OnInit {
 
   private carregarMateriasDoCiclo(): void {
     this.ciclosApi.getMateriasCiclo(this.cicloId, this.usuarioId).
-      pipe(finalize(() => (this.loading = false))).subscribe({
+      pipe(finalize(() => (this.loading.set(false)))).subscribe({
         next: (list: CicloMateriaDto[]) => {
           this.itens = list.map((m) => ({
             cicloItemId: m.cicloItemId,
@@ -166,14 +168,14 @@ export class EstudarAgora implements OnInit {
   }
 
   private executarInicioDeSessao(cicloItemId: number): void {
-    if (this.isProcessando) return;
+    if (this.isProcessando()) return;
 
     this.estudoApi.iniciarSessao({
       usuarioId: this.usuarioId,
       cicloId: this.cicloId,
       cicloItemId
     }).pipe(
-      finalize(() => this.isProcessando = false)
+      finalize(() => this.isProcessando.set(false))
     ).subscribe({
       next: (s) => {
         if (s?.id) {
