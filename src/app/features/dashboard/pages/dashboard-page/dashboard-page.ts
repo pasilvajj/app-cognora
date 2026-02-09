@@ -1,15 +1,20 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
-import { WeekChart } from '../../../../shared/components/week-chart/week-chart';
-import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
-import { DashboardApiService, DashboardResumoDto, ProgressoDisciplinaDto, WeekDayDto,  SessaoCardDto,
-} from '../../data/dashboard-api.service';
-import { CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
-import { CicloSelector, CicloOption,} from '../../../../shared/components/ciclo-selector/ciclo-selector';
-import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
+import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
+import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
+import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
+import { WeekChart } from '../../../../shared/components/week-chart/week-chart';
+import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
+import { CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
+
+import {
+  DashboardApiService, DashboardResumoDto, ProgressoDisciplinaDto,
+  SessaoCardDto,
+  WeekDayDto,
+} from '../../data/dashboard-api.service';
 
 type FooterTone = 'success' | 'warn' | 'muted' | 'primary';
 
@@ -24,9 +29,11 @@ export class DashboardPage implements OnInit {
 
   private usuarioId!: number;
 
+  toast = inject(ToastrService);
+
   ciclos: CicloOption[] = [];
   cicloId: number | null = null;
-  ciclosLoading = false;
+  ciclosLoading = signal(false);
 
   loading = true;
   resumo?: DashboardResumoDto;
@@ -46,22 +53,22 @@ export class DashboardPage implements OnInit {
   actionFooterText = '';
   actionFooterTone: FooterTone = 'muted';
   actionText = '';
-  actionDisabled = true;
+  actionDisabled = signal(true);
   private actionSessaoId: number | null = null;
-  private actionIsRetomar = false;
+  private actionIsRetomar = signal(false);
 
   semana: WeekDayDto[] = [];
   progresso: ProgressoDisciplinaDto[] = [];
 
   private readonly LS_KEY = 'cognora:lastCicloId';
 
-  constructor(
-    private dashboardApi: DashboardApiService,
-    private ciclosApi: CiclosApiService,
-    private router: Router,
-    private cdr: ChangeDetectorRef,
-    private auth: AuthService,
-  ) {}
+  dashboardApi = inject(DashboardApiService);
+  ciclosApi = inject(CiclosApiService);
+  router = inject(Router);
+  cdr = inject(ChangeDetectorRef);
+  auth = inject(AuthService);
+
+  constructor() { }
 
   ngOnInit(): void {
     const user = this.auth.getUser();
@@ -81,32 +88,38 @@ export class DashboardPage implements OnInit {
     this.carregarResumo();
   }
 
-  private carregarCiclos(): void {
-    this.ciclosLoading = true;
+  private async carregarCiclos(): Promise<void> {
+    this.ciclosLoading.set(true);
 
-    this.ciclosApi.listCiclos().subscribe({
-      next: (list) => {
-        this.ciclos = (list ?? []).map((c: any) => ({
-          id: Number(c.id),
-          nome: String(c.nome ?? `Ciclo ${c.id}`),
-        }));
+    try {
+      // Aguarda a resposta da API de forma linear
+      const list = await this.ciclosApi.listCiclos();
 
-        const preferido = this.lerCicloPreferido();
-        this.cicloId = resolverCicloPadrao(this.ciclos, preferido);
+      this.ciclos = (list ?? []).map((c: any) => ({
+        id: Number(c.id),
+        nome: String(c.nome ?? `Ciclo ${c.id}`),
+      }));
 
-        if (this.cicloId) this.salvarCicloPreferido(this.cicloId);
+      const preferido = this.lerCicloPreferido();
+      this.cicloId = resolverCicloPadrao(this.ciclos, preferido);
 
-        this.ciclosLoading = false;
-        this.cdr.detectChanges();
+      if (this.cicloId) {
+        this.salvarCicloPreferido(this.cicloId);
+      }
 
-        this.carregarResumo();
-      },
-      error: () => {
-        this.ciclosLoading = false;
-        this.cdr.detectChanges();
-      },
-    });
+      // Como é uma sequência lógica, o resumo só carrega após o sucesso dos ciclos
+      await this.carregarResumo();
+
+    } catch (error) {
+      console.error('Erro ao carregar ciclos:', error);
+      this.toast.error('Não foi possível carregar os ciclos.');
+    } finally {
+      // Executa sempre (sucesso ou erro), garantindo que o loading pare
+      this.ciclosLoading.set(false);
+      this.cdr.detectChanges();
+    }
   }
+
 
   private carregarResumo(): void {
     if (!this.cicloId) return;
@@ -116,7 +129,6 @@ export class DashboardPage implements OnInit {
     this.dashboardApi.getResumo(this.usuarioId, this.cicloId).subscribe({
       next: (r) => {
         this.resumo = r;
-
         // ===== TIME =====
         this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
         this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
@@ -150,7 +162,7 @@ export class DashboardPage implements OnInit {
     const podeRetomar = status === 'PAUSADA' || status === 'EM_ANDAMENTO';
 
     if (ultima && podeRetomar) {
-      this.actionIsRetomar = true;
+      this.actionIsRetomar.set(true);
       this.actionSessaoId = Number(ultima.id);
 
       this.actionTitle = ultima.disciplinaNome ?? 'Sessão em andamento';
@@ -161,13 +173,13 @@ export class DashboardPage implements OnInit {
       this.actionFooterText = this.mapStatus(status);
       this.actionFooterTone = status === 'PAUSADA' ? 'warn' : 'primary';
       this.actionText = 'Retomar';
-      this.actionDisabled = false;
+      this.actionDisabled.set(false);
       return;
     }
 
     // PRÓXIMA SESSÃO
     if (proxima) {
-      this.actionIsRetomar = false;
+      this.actionIsRetomar.set(false);
       this.actionSessaoId = null;
 
       this.actionTitle = proxima.disciplinaNome ?? 'Próxima sessão';
@@ -175,7 +187,7 @@ export class DashboardPage implements OnInit {
       this.actionFooterText = 'Próxima sessão recomendada';
       this.actionFooterTone = 'success';
       this.actionText = 'Iniciar';
-      this.actionDisabled = false;
+      this.actionDisabled.set(false);
       return;
     }
 
@@ -185,11 +197,11 @@ export class DashboardPage implements OnInit {
     this.actionFooterText = '';
     this.actionFooterTone = 'muted';
     this.actionText = '';
-    this.actionDisabled = true;
+    this.actionDisabled.set(true);
   }
 
   onActionClick(): void {
-    if (this.actionIsRetomar && this.actionSessaoId) {
+    if (this.actionIsRetomar() && this.actionSessaoId) {
       this.router.navigate(['/estudo/sessao', this.actionSessaoId]);
       return;
     }

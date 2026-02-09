@@ -1,10 +1,10 @@
-import { Component, OnInit, ChangeDetectorRef, HostListener,} from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
-import { CiclosApiService } from '../../data/ciclos-api.service';
-import { CicloDto } from '../../data/ciclos.models';
+import { ChangeDetectorRef, Component, HostListener, inject, resource, signal } from '@angular/core';
+import { Router, RouterModule } from '@angular/router';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/confirm-dialog';
+import { CiclosApiService } from '../../data/ciclos-api.service';
+import { CicloDto } from '../../data/ciclos.models';
 
 @Component({
   selector: 'app-ciclo-list-page',
@@ -13,90 +13,86 @@ import { ConfirmDialog } from '../../../../shared/components/confirm-dialog/conf
   templateUrl: './ciclo-list-page.html',
   styleUrl: './ciclo-list-page.css',
 })
-export class CicloListPage implements OnInit {
-  ciclos: CicloDto[] = [];
-  loading = true;
+export class CicloListPage {
+  loading = signal(true);
 
-  openMenuId: number | null = null;
+  api = inject(CiclosApiService);
+  cdr = inject(ChangeDetectorRef);
+  router = inject(Router);
 
-  constructor(
-    private api: CiclosApiService,
-    private cdr: ChangeDetectorRef,
-    private router: Router
-  ) {}
+  openMenuId = signal<number | null>(null);
+  cicloParaExcluir = signal<CicloDto | null>(null);
+  excluindo = signal(false);
 
-  ngOnInit(): void {
-    this.carregarCiclos();
+  ciclosResource = resource({
+    loader: () => this.api.listCiclos()
+  });
+
+  toggleMenu(id: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openMenuId.update(prev => prev === id ? null : id);
   }
 
-  carregarCiclos(): void {
-    this.loading = true;
-    this.api.listCiclos().subscribe({
-      next: (data) => (this.ciclos = data ?? []),
-      error: (err) => console.error('Erro ao listar ciclos', err),
-      complete: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-    });
-  }
+  ciclos = resource({
+    loader: () => this.api.listCiclos()
+  })
+
+  constructor() { }
 
   abrirCiclo(id: number): void {
     this.router.navigate(['/estudaAgora', id]);
   }
 
-  toggleMenu(id: number, event: MouseEvent): void {
-    event.stopPropagation();
-    this.openMenuId = this.openMenuId === id ? null : id;
-  }
+  // toggleMenu(id: number, event: MouseEvent): void {
+  //   event.stopPropagation();
+  //   this.openMenuId = this.openMenuId === id ? null : id;
+  // }
 
   visualizar(c: CicloDto): void {
-    this.openMenuId = null;
+    this.openMenuId.set(null);
     this.router.navigate(['/ciclos/visualizar', c.id]);
   }
 
   editar(c: CicloDto): void {
-    this.openMenuId = null;
+    this.openMenuId.set(null);
     this.router.navigate(['/ciclos/editar', c.id]);
   }
 
   excluir(c: CicloDto): void {
-  this.openMenuId = null;
-  this.cicloParaExcluir = c; // 👈 ISSO DISPARA O MODAL
+    this.openMenuId.set(null);
+    this.cicloParaExcluir.set(c);
 
   }
 
   /** 👇 FECHAR MENU AO CLICAR FORA */
   @HostListener('document:click')
   closeMenuOnOutsideClick(): void {
-    this.openMenuId = null;
+    this.openMenuId.set(null);
   }
 
-  cicloParaExcluir: CicloDto | null = null;
-  excluindo = false;
+  // cicloParaExcluir: CicloDto | null = null;
+  // excluindo = false;
 
   cancelarExclusao(): void {
-    this.cicloParaExcluir = null;
-    this.excluindo = false;
+    this.cicloParaExcluir.set(null);
+    this.excluindo.set(false);
   }
 
   confirmarExclusao(): void {
-    if (!this.cicloParaExcluir) return;
+    const ciclo = this.cicloParaExcluir();
+    if (!ciclo) return;
 
-    this.excluindo = true;
-      this.api.deletarCiclo(this.cicloParaExcluir.id).subscribe({
-        next: () => {
-          this.ciclos = this.ciclos.filter(
-            c => c.id !== this.cicloParaExcluir!.id
-          );
-           this.excluindo = false;
-          this.cancelarExclusao();
-        },
-        error: () => {
-          this.excluindo = false;
-        }
-      });
-       this.excluindo = false;
-    }
+    this.excluindo.set(true);
+    this.api.deletarCiclo(ciclo.id).subscribe({
+      next: () => {
+        // Atualiza a lista local do resource sem precisar de um novo GET
+        this.ciclosResource.value.update(list => list?.filter(c => c.id !== ciclo.id));
+        this.cancelarExclusao();
+      },
+      error: () => this.excluindo.set(false),
+      complete: () => this.excluindo.set(false)
+    });
+  }
+
 
 }

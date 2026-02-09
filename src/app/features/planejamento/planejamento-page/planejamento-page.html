@@ -6,30 +6,17 @@
     </div>
 
     <div class="top-right">
-      <app-ciclo-selector
-        [ciclos]="ciclos"
-        [selectedId]="cicloIdSelecionado"
-        (selectedIdChange)="onCicloChange($event)"
-        [loading]="ciclosLoading"
-        [disabled]="ciclosLoading || carregando || gerando"
-        label="Ciclo"
-      ></app-ciclo-selector>
+      <app-ciclo-selector [ciclos]="ciclos" [selectedId]="cicloIdSelecionado" (selectedIdChange)="onCicloChange($event)"
+        [loading]="ciclosLoading()" [disabled]="ciclosLoading() || carregando || gerando"
+        label="Ciclo"></app-ciclo-selector>
 
-      <button
-        class="btn ghost"
-        type="button"
-        (click)="carregar()"
-        [disabled]="carregando || gerando || !cicloIdSelecionado"
-      >
+      <button class="btn ghost" type="button" (click)="carregar()"
+        [disabled]="carregando || gerando || !cicloIdSelecionado">
         Atualizar
       </button>
 
-      <button
-        class="btn ghost"
-        type="button"
-        (click)="gerarPlanejamento()"
-        [disabled]="carregando || gerando || !cicloIdSelecionado"
-      >
+      <button class="btn ghost" type="button" (click)="gerarPlanejamento()"
+        [disabled]="carregando || gerando || !cicloIdSelecionado">
         {{ gerando ? 'Gerando...' : 'Gerar planejamento' }}
       </button>
     </div>
@@ -42,23 +29,15 @@
       <div class="banner">PLANEJAMENTO SEMANAL</div>
 
       <div class="week-nav">
-        <button
-          class="nav-btn"
-          type="button"
-          (click)="semanaAnterior()"
-          [disabled]="carregando || gerando || !cicloIdSelecionado"
-        >
+        <button class="nav-btn" type="button" (click)="semanaAnterior()"
+          [disabled]="carregando || gerando || !cicloIdSelecionado">
           ‹
         </button>
 
         <div class="week-range">{{ intervaloSemanaLabel }}</div>
 
-        <button
-          class="nav-btn"
-          type="button"
-          (click)="proximaSemana()"
-          [disabled]="carregando || gerando || !cicloIdSelecionado"
-        >
+        <button class="nav-btn" type="button" (click)="proximaSemana()"
+          [disabled]="carregando || gerando || !cicloIdSelecionado">
           ›
         </button>
       </div>

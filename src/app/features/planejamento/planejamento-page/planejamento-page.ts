@@ -1,12 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
-import { Router} from '@angular/router';
+import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
+import { AuthService } from '../../../core/auth/auth.service';
+import { CicloOption, CicloSelector, } from '../../../shared/components/ciclo-selector/ciclo-selector';
+import { CiclosApiService } from '../../ciclos/data/ciclos-api.service';
 import { PlanejamentoApiService } from '../data/planejamento-api.service';
 import { PlanejamentoSemanalDto } from '../data/planejamento.models';
-
-import { CiclosApiService } from '../../ciclos/data/ciclos-api.service';
-import { CicloSelector, CicloOption,} from '../../../shared/components/ciclo-selector/ciclo-selector';
-import { AuthService } from '../../../core/auth/auth.service';
 
 type DiaView = {
   diaSemanaLabel: string; // "Seg"
@@ -34,10 +34,13 @@ export class PlanejamentoPage implements OnInit {
 
   private usuarioId!: number;
 
+  toast = inject(ToastrService);
+
   // ciclo selector
   ciclos: CicloOption[] = [];
   cicloIdSelecionado: number | null = null;
-  ciclosLoading = false;
+
+  ciclosLoading = signal(false);
 
   planejamento?: PlanejamentoSemanalDto;
 
@@ -62,9 +65,9 @@ export class PlanejamentoPage implements OnInit {
     private api: PlanejamentoApiService,
     private ciclosApi: CiclosApiService,
     private cdr: ChangeDetectorRef,
-     private router: Router,
+    private router: Router,
     private auth: AuthService
-  ) {}
+  ) { }
 
   ngOnInit(): void {
 
@@ -107,34 +110,42 @@ export class PlanejamentoPage implements OnInit {
 
   // ===== Ciclos =====
 
-  private carregarCiclos(): void {
-    this.ciclosLoading = true;
+  // No seu componente, certifique-se de usar Signals para estados de UI
 
-    this.ciclosApi.listCiclos().subscribe({
-      next: (list) => {
-        this.ciclos = (list ?? []).map((c: any) => ({
-          id: Number(c.id),
-          nome: String(c.nome ?? `Ciclo ${c.id}`),
-        }));
 
-        this.ciclosLoading = false;
+  private async carregarCiclos(): Promise<void> {
+    this.ciclosLoading.set(true);
 
-        // define ciclo padrão (primeiro da lista) e carrega planejamento
-        if (this.cicloIdSelecionado == null && this.ciclos.length) {
-          this.cicloIdSelecionado = this.ciclos[0].id;
-          if (!this.weekStartIso) this.weekStartIso = this.getMondayIso(new Date());
-          this.carregarPlanejamento(false);
+    try {
+      // 1. Uso de Promise para fluxo linear
+      const list = await this.ciclosApi.listCiclos();
+
+      this.ciclos = (list ?? []).map(c => ({
+        id: Number(c.id),
+        nome: String(c.nome ?? `Ciclo ${c.id}`),
+      }));
+
+      // 2. Lógica de inicialização de estado
+      if (!this.cicloIdSelecionado && this.ciclos.length > 0) {
+        this.cicloIdSelecionado = this.ciclos[0].id;
+
+        if (!this.weekStartIso) {
+          this.weekStartIso = this.getMondayIso(new Date());
         }
+        // 3. Carregamento encadeado (aguarda o planejamento se necessário)
+        await this.carregarPlanejamento(false);
+      }
 
-        this.cdr.detectChanges();
-      },
-      error: (e) => {
-        console.error('Erro ao carregar ciclos', e);
-        this.ciclosLoading = false;
-        this.cdr.detectChanges();
-      },
-    });
+    } catch (err) {
+      console.error('Erro ao carregar ciclos:', err);
+      this.toast.error('Falha ao obter lista de ciclos.');
+    } finally {
+      // 4. Garantia de fechamento de loading e detecção de mudanças
+      this.ciclosLoading.set(false);
+      this.cdr.detectChanges();
+    }
   }
+
 
   // ===== Ações do template (semana) =====
 
@@ -173,15 +184,15 @@ export class PlanejamentoPage implements OnInit {
 
     const req$ = forcarGeracao
       ? this.api.gerarPlanejamentoSemanal(
-          this.usuarioId,
-          this.cicloIdSelecionado,
-          this.weekStartIso
-        )
+        this.usuarioId,
+        this.cicloIdSelecionado,
+        this.weekStartIso
+      )
       : this.api.getPlanejamentoSemanal(
-          this.usuarioId,
-          this.cicloIdSelecionado,
-          this.weekStartIso
-        );
+        this.usuarioId,
+        this.cicloIdSelecionado,
+        this.weekStartIso
+      );
 
     req$.subscribe({
       next: (dto) => {

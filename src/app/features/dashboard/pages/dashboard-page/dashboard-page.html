@@ -6,48 +6,25 @@
     </div>
 
     <div class="dashboard-actions">
-      <app-ciclo-selector
-        [ciclos]="ciclos"
-        [selectedId]="cicloId"
-        (selectedIdChange)="onCicloChange($event)"
-        [loading]="ciclosLoading"
-        [disabled]="ciclosLoading || loading"
-        label="Ciclo">
+      <app-ciclo-selector [ciclos]="ciclos" [selectedId]="cicloId" (selectedIdChange)="onCicloChange($event)"
+        [loading]="ciclosLoading()" [disabled]="ciclosLoading() || loading" label="Ciclo">
       </app-ciclo-selector>
     </div>
   </header>
 
   <section class="dashboard-cards">
-    <app-metric-card
-      type="time"
-      icon="time"
-      title="Estudado na semana"
-      [value]="timeValue"
-      [footerText]="timeFooterText"
-      [footerTone]="timeFooterTone">
+    <app-metric-card type="time" icon="time" title="Estudado na semana" [value]="timeValue"
+      [footerText]="timeFooterText" [footerTone]="timeFooterTone">
     </app-metric-card>
 
-    <app-metric-card
-      type="streak"
-      icon="calendar"
-      title="Sequência"
-      [value]="streakValue"
-      [footerText]="streakFooterText"
-      footerTone="primary">
+    <app-metric-card type="streak" icon="calendar" title="Sequência" [value]="streakValue"
+      [footerText]="streakFooterText" footerTone="primary">
     </app-metric-card>
 
     <!-- CARD INTELIGENTE -->
-    <app-metric-card
-      type="next"
-      title="Sessão"
-      [value]="actionTitle"
-      [subtitle]="actionSubtitle"
-       actionLabel="Retomar"
-      [footerText]="actionFooterText"
-      [footerTone]="actionFooterTone"
-      [actionText]="actionText"
-      [actionDisabled]="actionDisabled || loading"
-      (action)="onActionClick()">
+    <app-metric-card type="next" title="Sessão" [value]="actionTitle" [subtitle]="actionSubtitle" actionLabel="Retomar"
+      [footerText]="actionFooterText" [footerTone]="actionFooterTone" [actionText]="actionText"
+      [actionDisabled]="actionDisabled() || loading" (action)="onActionClick()">
     </app-metric-card>
   </section>
 

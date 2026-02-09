@@ -28,8 +28,6 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   private readonly api = inject(EstudoApiService);
   private readonly pomodoro = inject(PomodoroEngineService);
   readonly timer = inject(SessionTimerService);
-
-
   // ================= STATE =================
 
   loading = signal(true);
@@ -41,7 +39,6 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
   statusLabel = signal('Carregando...');
   acaoLoading = signal(false);
   pomodoroEnabled = signal(false);
-
   // ================= POMODORO VIEW MODEL =================
 
   readonly pomodoroMode = computed(() => this.pomodoro.mode());
