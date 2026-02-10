@@ -1,5 +1,4 @@
-import { Injectable, NgZone, computed, signal } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { computed, Injectable, signal } from '@angular/core';
 
 export type PomodoroMode = 'FOCO' | 'PAUSA_CURTA' | 'PAUSA_LONGA';
 
@@ -10,19 +9,34 @@ export interface PomodoroConfig {
   longaACada: number;
 }
 
+interface PomodoroState {
+  mode: PomodoroMode;
+  remainingMs: number;
+  running: boolean;
+  finished: boolean;
+  cicloAtual: number;
+  totalCiclos: number;
+  focusFinished: boolean;
+  overlayVisible: boolean;
+  overlayText: string;
+  endTime: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PomodoroEngineService {
-
-  // ================================
-  // STATE PRIVADO
-  // ================================
-
-  private readonly _mode = signal<PomodoroMode>('FOCO');
-  private readonly _remainingMs = signal(0);
-  private readonly _running = signal(false);
-  private readonly _finished = signal(false);
-  private readonly _cicloAtual = signal(1);
-  private readonly _totalCiclos = signal(4);
+  // 1. Estado Único e Privado
+  private readonly state = signal<PomodoroState>({
+    mode: 'FOCO',
+    remainingMs: 0,
+    running: false,
+    finished: false,
+    cicloAtual: 1,
+    totalCiclos: 4,
+    focusFinished: false,
+    overlayVisible: false,
+    overlayText: '',
+    endTime: 0
+  });
 
   private config: PomodoroConfig = {
     focoMin: 25,
@@ -31,214 +45,218 @@ export class PomodoroEngineService {
     longaACada: 4,
   };
 
-  private tickerSub?: Subscription;
-  private endTime = 0;
-  private readonly _focusFinished = signal(false);
-  constructor(private readonly zone: NgZone) { }
+  private tickerId?: any;
 
-  // ================================
-  // SIGNALS PÚBLICOS
-  // ================================
+  // 2. Selectors Públicos (Derivados do estado)
+  readonly mode = computed(() => this.state().mode);
+  readonly remainingMs = computed(() => this.state().remainingMs);
+  readonly running = computed(() => this.state().running);
+  readonly finished = computed(() => this.state().finished);
+  readonly cicloAtual = computed(() => this.state().cicloAtual);
+  readonly totalCiclos = computed(() => this.state().totalCiclos);
+  readonly focusFinished = computed(() => this.state().focusFinished);
+  readonly overlayVisible = computed(() => this.state().overlayVisible);
+  readonly overlayText = computed(() => this.state().overlayText);
 
-  readonly mode = computed(() => this._mode());
-  readonly remainingMs = computed(() => this._remainingMs());
-  readonly running = computed(() => this._running());
-  readonly finished = computed(() => this._finished());
-  readonly cicloAtual = computed(() => this._cicloAtual());
-  readonly totalCiclos = computed(() => this._totalCiclos());
-  readonly focusFinished = this._focusFinished.asReadonly();
-
-
-
-  /** ⬅️ ESTE ERA O QUE FALTAVA */
   readonly modeLabel = computed(() => {
-    const mode = this._mode();
-    if (mode === 'FOCO') return 'FOCO';
-    if (mode === 'PAUSA_CURTA') return 'PAUSA CURTA';
-    return 'PAUSA LONGA';
+    const m = this.state().mode;
+    return m === 'FOCO' ? 'FOCO' : m.replace('_', ' ');
   });
 
-  readonly isFocusMode = computed(() => this._mode() === 'FOCO');
+  readonly isFocusMode = computed(() => this.state().mode === 'FOCO');
 
   readonly timeLabel = computed(() => {
-    const totalSec = Math.floor(this._remainingMs() / 1000);
+    const totalSec = Math.floor(this.state().remainingMs / 1000);
     const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
     const s = (totalSec % 60).toString().padStart(2, '0');
     return `${m}:${s}`;
   });
 
-  // =============================
-  // OVERLAY STATE
-  // =============================
+  // 3. Métodos de Controle
+  init(config: PomodoroConfig): void {
+    this.stopTicker();
+    this.config = config;
 
-  private readonly _overlayVisible = signal(false);
-  private readonly _overlayText = signal('');
-
-  readonly overlayVisible = computed(() => this._overlayVisible());
-  readonly overlayText = computed(() => this._overlayText());
-
-  // =============================
-  // OVERLAY CONTROLES
-  // =============================
-
-  showOverlay(text: string): void {
-    this._overlayText.set(text);
-    this._overlayVisible.set(true);
+    this.state.set({
+      mode: 'FOCO',
+      remainingMs: config.focoMin * 60_000,
+      running: false,
+      finished: false,
+      cicloAtual: 1,
+      totalCiclos: config.longaACada,
+      focusFinished: false,
+      overlayVisible: false,
+      overlayText: '',
+      endTime: 0
+    });
   }
 
-  closeOverlay(): void {
-    this._overlayVisible.set(false);
+  restore(snapshot: {
+    modo?: PomodoroMode | null;
+    cicloIndex?: number | null;
+    restanteSeg?: number | null;
+    rodando?: boolean;
+  }): void {
+    const s = this.state();
 
-    // se acabou foco → iniciar pausa
-    if (!this._running() && this._mode() !== 'FOCO' && !this._finished()) {
-      this._remainingMs.set(this.getStageDuration(this._mode()));
-      this._running.set(true);
-      this.endTime = Date.now() + this._remainingMs();
-      this.startTicker();
+    let remainingMs = s.remainingMs;
+
+    if (snapshot.restanteSeg != null) {
+      remainingMs = snapshot.restanteSeg * 1000;
     }
 
-    this._focusFinished.set(false);
+    const running = !!snapshot.rodando;
+    const endTime = running ? Date.now() + remainingMs : 0;
+
+    this.state.update(curr => ({
+      ...curr,
+      mode: snapshot.modo ?? curr.mode,
+      cicloAtual: snapshot.cicloIndex ?? curr.cicloAtual,
+      remainingMs,
+      running,
+      endTime
+    }));
+
+    if (running) this.startTicker();
   }
 
-
-  // ================================
-  // INIT
-  // ================================
-
-  init(config: PomodoroConfig): void {
-    this.stop();
-
-    this.config = config;
-    this._totalCiclos.set(config.longaACada);
-    this._cicloAtual.set(1);
-    this._mode.set('FOCO');
-    this._finished.set(false);
-
-    this._remainingMs.set(this.getStageDuration('FOCO'));
-  }
-
-  // ================================
-  // CONTROLES
-  // ================================
-
-  toggle(): void {
-    if (this._finished()) return;
-
-    if (this._running()) this.pause();
-    else this.start();
-  }
 
   start(): void {
-    if (this._finished()) return;
-    this._focusFinished.set(false);
-    this._running.set(true);
-    this.endTime = Date.now() + this._remainingMs();
+    const s = this.state();
+    if (s.finished) return;
+
+    this.state.update(curr => ({
+      ...curr,
+      running: true,
+      focusFinished: false,
+      endTime: Date.now() + curr.remainingMs,
+    }));
+
     this.startTicker();
   }
 
-  pause(): void {
-    this._remainingMs.set(Math.max(0, this.endTime - Date.now()));
-    this._running.set(false);
+  pause(): number {
     this.stopTicker();
+    const decorrido = this.calculateNow();
+
+    this.state.update(s => ({
+      ...s,
+      running: false,
+      remainingMs: Math.max(0, s.endTime - Date.now())
+    }));
+    return Math.floor(decorrido / 1000);
+  }
+
+  toggle(): void {
+    this.state().running ? this.pause() : this.start();
   }
 
   stop(): void {
     this.stopTicker();
-    this._running.set(false);
+    this.state.update(s => ({ ...s, running: false }));
   }
 
   skip(): void {
     this.advanceStage();
   }
 
-  // ================================
-  // TICKER SEM DRIFT
-  // ================================
+  closeOverlay(): void {
+    const s = this.state();
+    const isNextStagePause = s.mode !== 'FOCO' && !s.finished;
 
+    this.state.update(curr => ({
+      ...curr,
+      overlayVisible: false,
+      focusFinished: false,
+      // Se for transição para pausa, já prepara o tempo e flag de rodando
+      ...(isNextStagePause && {
+        remainingMs: this.getStageDuration(curr.mode),
+        running: true,
+        endTime: Date.now() + this.getStageDuration(curr.mode)
+      })
+    }));
+
+    if (isNextStagePause) this.startTicker();
+  }
+
+  // 4. Lógica Interna Otimizada
+  // Dentro do ticker do Pomodoro
   private startTicker(): void {
     this.stopTicker();
+    this.tickerId = setInterval(() => {
+      const s = this.state();
+      // Use Math.floor para segundos para que a interface não "trema"
+      const restante = Math.max(0, s.endTime - Date.now());
 
-    this.tickerSub = timer(0, 250).subscribe(() => {
-      this.zone.run(() => {
-        if (!this._running() || this._finished()) {
-          this.stopTicker();
-          return;
-        }
-
-        const restante = Math.max(0, this.endTime - Date.now());
-        this._remainingMs.set(restante);
-
-        if (restante <= 0) {
-          this.advanceStage();
-        }
-      });
-    });
+      if (restante <= 0) {
+        this.advanceStage();
+      } else {
+        this.state.update(curr => ({ ...curr, remainingMs: restante }));
+      }
+    }, 500); // 500ms é o equilíbrio perfeito para não atrasar a UI
   }
+
 
   private stopTicker(): void {
-    this.tickerSub?.unsubscribe();
-    this.tickerSub = undefined;
+    if (this.tickerId) clearInterval(this.tickerId);
   }
-
-  // ================================
-  // FLUXO DE ETAPAS
-  // ================================
 
   private advanceStage(): void {
     this.stopTicker();
+    const s = this.state();
 
-    const current = this._mode();
-    // =========================
-    // FOCO → MOSTRA OVERLAY E PARA
-    // =========================
-    if (current === 'FOCO') {
-      const isLong = this._cicloAtual() % this.config.longaACada === 0;
+    if (s.mode === 'FOCO') {
+      const isLong = s.cicloAtual % this.config.longaACada === 0;
+      const nextMode = isLong ? 'PAUSA_LONGA' : 'PAUSA_CURTA';
 
-      // muda apenas o modo (ainda NÃO inicia pausa)
-      this._mode.set(isLong ? 'PAUSA_LONGA' : 'PAUSA_CURTA');
-      this._remainingMs.set(this.getStageDuration(this._mode()));
-
-      // 🔥 MOSTRA OVERLAY
-      this._overlayText.set('Tempo de foco encerrado. Faça uma pausa.');
-      this._overlayVisible.set(true);
-
-      // 🔥 PARA execução (espera usuário)
-      this._running.set(false);
-      this._focusFinished.set(true);
-
+      this.state.update(curr => ({
+        ...curr,
+        mode: nextMode,
+        remainingMs: this.getStageDuration(nextMode),
+        running: false,
+        focusFinished: true,
+        overlayVisible: true,
+        overlayText: 'Tempo de foco encerrado. Faça uma pausa.'
+      }));
       return;
     }
 
-    // =========================
-    // PAUSA → PRÓXIMO CICLO OU FIM
-    // =========================
-    if (this._cicloAtual() >= this.config.longaACada) {
-      this._finished.set(true);
-      this._running.set(false);
-      this._remainingMs.set(0);
+    if (s.cicloAtual >= this.config.longaACada) {
+      this.state.update(curr => ({ ...curr, finished: true, running: false, remainingMs: 0 }));
       return;
     }
 
-    // avança ciclo
-    this._cicloAtual.update(v => v + 1);
-    this._mode.set('FOCO');
-    this._remainingMs.set(this.getStageDuration('FOCO'));
-
-    // 🔥 MOSTRA OVERLAY ANTES DO FOCO
-    this._overlayText.set('Pausa encerrada. Pronto para voltar ao foco?');
-    this._overlayVisible.set(true);
-
-    // 🔥 NÃO inicia automático
-    this._running.set(false);
+    // Transição de Pausa -> Novo Foco
+    this.state.update(curr => ({
+      ...curr,
+      cicloAtual: curr.cicloAtual + 1,
+      mode: 'FOCO',
+      remainingMs: this.getStageDuration('FOCO'),
+      running: false,
+      overlayVisible: true,
+      overlayText: 'Pausa encerrada. Pronto para voltar ao foco?'
+    }));
   }
-
-  // ================================
-  // HELPERS
-  // ================================
 
   private getStageDuration(mode: PomodoroMode): number {
-    if (mode === 'FOCO') return this.config.focoMin * 60_000;
-    if (mode === 'PAUSA_LONGA') return this.config.pausaLongaMin * 60_000;
-    return this.config.pausaCurtaMin * 60_000;
+    const durations = {
+      'FOCO': this.config.focoMin,
+      'PAUSA_CURTA': this.config.pausaCurtaMin,
+      'PAUSA_LONGA': this.config.pausaLongaMin
+    };
+    return durations[mode] * 60_000;
   }
+
+  private calculateNow(): number {
+    const s = this.state();
+
+    // se nunca iniciou
+    if (!s.endTime) return 0;
+
+    const restante = Math.max(0, s.endTime - Date.now());
+    const duracaoTotal = this.getStageDuration(s.mode);
+
+    return Math.max(0, duracaoTotal - restante);
+  }
+
 }

@@ -1,16 +1,16 @@
-<div class="page" *ngIf="!loading() && sessao; else state">
+@if (!loading() && sessao(); as s) {
+<div class="page">
 
   <!-- ================= HEADER ================= -->
   <div class="header">
     <div>
       <h1>Sessão de Estudo</h1>
-
       <div class="sub">
-        <span class="pill">{{ sessao.cicloNome }}</span>
+        <span class="pill">{{ s.cicloNome }}</span>
         <span class="dot">•</span>
-        <span class="muted">{{ sessao.disciplinaNome }}</span>
+        <span class="muted">{{ s.disciplinaNome }}</span>
         <span class="dot">•</span>
-        <span class="muted">Ordem #{{ sessao.ordem }}</span>
+        <span class="muted">Ordem #{{ s.ordem }}</span>
       </div>
     </div>
 
@@ -21,12 +21,11 @@
 
   <!-- ================= CARD ================= -->
   <section class="card">
-
-    <!-- HEADER DO CARD -->
     <div class="card-header">
       <div>
-        <h2>{{ sessao.disciplinaNome }}</h2>
-        <div class="meta">Planejado: {{ tempoPlanejado }}</div>
+        <h2>{{ s.disciplinaNome }}</h2>
+        <!-- Tempo planejado agora é um signal -->
+        <div class="meta">Planejado: {{ tempoPlanejado() }}</div>
       </div>
 
       <span class="status-pill" [class.is-pausada]="timer.pausada()"
@@ -37,9 +36,10 @@
     </div>
 
     <!-- ================= POMODORO ================= -->
-    <app-pomodoro-timer *ngIf="pomodoroEnabled()" [sessaoFinalizada]="timer.finalizada()"
-      (skipStage)="onPomodoroSkipStage()">
+    @if (pomodoroEnabled()) {
+    <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()" (skipStage)="onPomodoroSkipStage()">
     </app-pomodoro-timer>
+    }
 
     <!-- ================= TIMER PRINCIPAL ================= -->
     <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()">
@@ -60,20 +60,20 @@
     </div>
 
     <!-- ================= OBSERVAÇÕES ================= -->
-    <app-observacoes-editor [observacoes]="observacoes" [sessaoFinalizada]="timer.finalizada()"
+    <app-observacoes-editor [observacoes]="observacoes()" [sessaoFinalizada]="timer.finalizada()"
       (observacoesChange)="onObservacoesChange($event)" (saveRequest)="onObservacoesSaveRequest($event)">
     </app-observacoes-editor>
 
   </section>
 </div>
+} @else {
+<!-- ================= STATE (Substitui o ng-template) ================= -->
+<div class="state">
+  {{ loading() ? 'Carregando sessão...' : 'Não foi possível carregar a sessão.' }}
+</div>
+}
 
+<!-- Overlay fica fora do fluxo principal para evitar problemas de Z-Index -->
 <app-pomodoro-overlay [visible]="pomodoroVisible()" [mode]="pomodoroMode()" [texto]="pomodoroTexto()"
   (closeOverlay)="onPomodoroCloseOverlay()" (nextStage)="onPomodoroNextStage()">
 </app-pomodoro-overlay>
-
-<!-- ================= STATE ================= -->
-<ng-template #state>
-  <div class="state">
-    {{ loading() ? 'Carregando sessão...' : 'Não foi possível carregar a sessão.' }}
-  </div>
-</ng-template>

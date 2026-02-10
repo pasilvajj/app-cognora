@@ -1,16 +1,16 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, OnDestroy, OnInit, signal, } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, OnDestroy, resource, signal, untracked } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { map, Observable, of } from 'rxjs';
+import { firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { ObservacoesEditor } from '../../components/observacoes-editor/observacoes-editor';
+import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
 import { PomodoroTimer } from '../../components/pomodoro-timer/pomodoro-timer';
 import { TimerDisplay } from '../../components/timer-display/timer-display';
 import { EstudoApiService } from '../../data/estudo-api.service';
 import { SessaoDetalheDto } from '../../data/estudo.models';
-
-import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
 import { SessionTimerService } from '../../services/session-timer-service';
 
@@ -22,187 +22,213 @@ import { SessionTimerService } from '../../services/session-timer-service';
   templateUrl: './sessao-estudo-page.html',
   styleUrl: './sessao-estudo-page.css',
 })
-export class SessaoEstudoPage implements OnInit, OnDestroy {
+export class SessaoEstudoPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly api = inject(EstudoApiService);
-  private readonly pomodoro = inject(PomodoroEngineService);
+
+  readonly pomodoro = inject(PomodoroEngineService);
   readonly timer = inject(SessionTimerService);
+
   // ================= STATE =================
-
-  loading = signal(true);
-  sessao?: SessaoDetalheDto;
-
-  observacoes = '';
-  tempoPlanejado = '';
-
-  statusLabel = signal('Carregando...');
+  observacoes = signal('');
+  tempoPlanejado = signal('');
   acaoLoading = signal(false);
   pomodoroEnabled = signal(false);
-  // ================= POMODORO VIEW MODEL =================
 
+  private readonly params = toSignal(this.route.paramMap);
+
+  private readonly sessaoId = computed(() => {
+    const id = this.params()?.get('id') ?? this.route.parent?.snapshot.paramMap.get('id');
+    return Number(id);
+  });
+
+  // ================= RESOURCE =================
+  readonly sessaoResource = resource({
+    params: () => this.sessaoId(),
+    loader: async ({ params: id }) => {
+      if (!id || isNaN(id) || id <= 0) return null;
+      const dados = await this.api.getSessao1(id);
+      untracked(() => this.initSessao(dados));
+      return dados;
+    },
+  });
+
+  readonly sessao = computed(() => this.sessaoResource.value());
+  readonly loading = computed(() => this.sessaoResource.isLoading());
+
+  // ================= POMODORO VIEW MODEL =================
   readonly pomodoroMode = computed(() => this.pomodoro.mode());
   readonly pomodoroTexto = computed(() => this.pomodoro.overlayText());
   readonly pomodoroVisible = computed(() => this.pomodoro.overlayVisible());
 
   constructor() {
+    // 🔒 Garante que fim de foco pausa sessão real
     effect(() => {
-      // foco acabou de terminar
       if (this.pomodoro.focusFinished()) {
-
-        // pausa apenas o timer da sessão
-        if (!this.timer.pausada() && !this.timer.finalizada()) {
-          this.timer.pause();
-
-          // chama backend SEM reinicializar pomodoro
-          if (this.sessao) {
-            const estudadoSeg = Math.floor(this.timer.decorridoMs() / 1000);
-
-            this.api.pausarSessao(this.sessao.id, estudadoSeg)
-              .subscribe();
+        untracked(() => {
+          if (!this.timer.pausada() && !this.timer.finalizada()) {
+            this.pausarSessao();
           }
-        }
+        });
       }
     });
   }
 
-  // ================= INIT =================
+  // ================= STATUS =================
+  readonly statusLabel = computed(() => {
+    const s = this.sessao();
+    if (!s) return 'Carregando...';
 
-  ngOnInit(): void {
-    const idRaw =
-      this.route.snapshot.paramMap.get('id') ??
-      this.route.parent?.snapshot.paramMap.get('id');
+    if (s.fim || this.timer.finalizada()) return s.concluido ? 'Concluída' : 'Encerrada';
 
-    const sessaoId = Number(idRaw);
+    if (this.timer.pausada()) return s.inicio ? 'Pausada' : 'Pronta para iniciar';
 
-    if (!idRaw || Number.isNaN(sessaoId) || sessaoId <= 0) {
-      this.router.navigate(['/estudaAgora']);
-      return;
-    }
-
-    this.api.getSessao(sessaoId).subscribe({
-      next: (s) => this.initSessao(s),
-      error: () => this.loading.set(false),
-    });
-  }
+    return 'Em andamento';
+  });
 
   ngOnDestroy(): void {
-    if (this.sessao && !this.sessao.fim) {
-      this.api.atualizarObservacoes(this.sessao.id, this.observacoes).subscribe();
+    const s = this.sessao();
+
+    if (s && !s.fim) {
+      this.api.atualizarObservacoes(s.id, this.observacoes()).subscribe();
     }
+
+    this.timer.stop();
+    this.pomodoro.stop();
   }
 
-  // ================= INIT HELPER =================
+  // ================= INIT =================
 
   private initSessao(s: SessaoDetalheDto): void {
-    this.sessao = s;
+    if (!s) return;
 
     const metaMs = TempoFormatUtil.minutosParaMs(s.tempoMinutos);
-    const baseMs = this.getBaseMsFromSessao(s);
+    const baseMs = (Number(s.estudadoTotalSeg ?? 0)) * 1000;
 
-    this.tempoPlanejado = TempoFormatUtil.minutosParaHorasMin(s.tempoMinutos);
-    this.observacoes = s.observacoes ?? '';
+    this.tempoPlanejado.set(TempoFormatUtil.minutosParaHorasMin(s.tempoMinutos));
+    this.observacoes.set(s.observacoes ?? '');
 
-    this.timer.init(metaMs, baseMs, !!s.pausadoEm || !s.inicio, !!s.fim);
+    const pausada = !!s.pausadoEm || !s.inicio;
+    const finalizada = !!s.fim;
 
-    if (s.fim) this.statusLabel.set(s.concluido ? 'Concluída' : 'Encerrada');
-    else if (s.pausadoEm) this.statusLabel.set('Pausada');
-    else if (!s.inicio) this.statusLabel.set('Pronta para iniciar');
-    else this.statusLabel.set('Em andamento');
+    this.timer.init(metaMs, baseMs, pausada, finalizada);
+
+    // 🔒 Nunca deixa iniciar sozinho
+    if (pausada || finalizada) {
+      this.timer.stop();
+    }
+
+    // ================= POMODORO =================
 
     if (s.pomodoroAtivo && !this.pomodoroEnabled()) {
       this.pomodoroEnabled.set(true);
 
       this.pomodoro.init({
-        focoMin: Number(s.pomodoroFocoMin ?? 25),
-        pausaCurtaMin: Number(s.pomodoroPausaCurtaMin ?? 5),
-        pausaLongaMin: Number(s.pomodoroPausaLongaMin ?? 15),
-        longaACada: Number(s.pomodoroLongaACada ?? 4),
+        focoMin: s.pomodoroFocoMin ?? 25,
+        pausaCurtaMin: s.pomodoroPausaCurtaMin ?? 5,
+        pausaLongaMin: s.pomodoroPausaLongaMin ?? 15,
+        longaACada: s.pomodoroLongaACada ?? 4,
       });
+
+      const primeiraVez = s.pomodoroCicloIndex == null;
+
+      if (!primeiraVez) {
+        this.pomodoro.restore({
+          modo: s.pomodoroModo as any,
+          cicloIndex: s.pomodoroCicloIndex,
+          restanteSeg: s.pomodoroRestanteSeg,
+          rodando: !s.pausadoEm && !!s.inicio && !s.fim
+        });
+      }
+
+      // 🔒 Se veio restante > 0, força estado pausado
+      // if (s.pausadoEm) {
+      //   this.pomodoro.pause();
+      // }
     }
-
-    this.loading.set(false);
   }
 
-  private getBaseMsFromSessao(s: SessaoDetalheDto): number {
-    return Math.max(0, Math.floor(Number((s as any).estudadoTotalSeg ?? 0))) * 1000;
+  // ================= MAIN ACTION =================
+
+  async onMainActionClick() {
+    const s = this.sessao();
+
+    if (!s || this.timer.finalizada() || this.acaoLoading()) return;
+
+    if (this.statusLabel() === 'Pronta para iniciar') await this.comecar();
+    else if (this.timer.pausada()) await this.retomar();
+    else await this.pausarSessao();
   }
 
-  // ================= BOTÃO PRINCIPAL =================
+  private async comecar() {
+    const sessao = this.sessao()!;
 
-  onMainActionClick(): void {
-    if (!this.sessao || this.timer.finalizada() || this.acaoLoading()) return;
+    this.executarAcao(async () => {
+      const s = await firstValueFrom(this.api.comecarSessao(sessao.id, sessao.pomodoroAtivo));
 
-    if (this.statusLabel() === 'Pronta para iniciar') return this.comecar();
-    if (this.timer.pausada()) return this.retomar();
+      this.initSessao(s);
 
-    this.pausarSessao();
-  }
+      this.timer.start();
 
-  private comecar(): void {
-    this.acaoLoading.set(true);
-
-    this.api.comecarSessao(this.sessao!.id).subscribe({
-      next: (s) => {
-        this.initSessao(s);
-        this.timer.start();
+      if (this.pomodoroEnabled()) {
         this.pomodoro.start();
         this.pomodoro.closeOverlay();
-        this.statusLabel.set('Em andamento');
-        this.acaoLoading.set(false);
-      },
-      error: () => this.acaoLoading.set(false),
+      }
     });
   }
 
-  private pausarSessao(): void {
-    if (!this.sessao) return;
+  private async pausarSessao(): Promise<void> {
+    this.executarAcao(async () => {
+      const estudadoSeg = this.timer.pause();
+      this.pomodoro.pause();
 
-    this.pomodoro.pause();
-    this.acaoLoading.set(true);
-    const estudadoSeg = this.timer.pause();
-    this.api.pausarSessao(this.sessao.id, estudadoSeg).subscribe({
-      next: (s) => {
-        this.initSessao(s);
-        this.statusLabel.set('Pausada');
-        this.acaoLoading.set(false);
-      },
-      error: () => this.acaoLoading.set(false),
+      await firstValueFrom(this.api.pausarSessao(this.sessao()!.id, estudadoSeg));
     });
   }
 
-  private retomar(): void {
-    this.acaoLoading.set(true);
+  private async retomar(): Promise<void> {
+    this.executarAcao(async () => {
+      const s = await firstValueFrom(this.api.retomarSessao(this.sessao()!.id));
 
-    this.api.retomarSessao(this.sessao!.id).subscribe({
-      next: (s) => {
-        this.initSessao(s);
-        this.timer.start();
+      this.initSessao(s);
+
+      this.timer.start();
+
+      if (this.pomodoroEnabled() && this.pomodoro.isFocusMode()) {
         this.pomodoro.start();
-        this.pomodoro.closeOverlay();
-        this.statusLabel.set('Em andamento');
-        this.acaoLoading.set(false);
-      },
-      error: () => this.acaoLoading.set(false),
+      }
+
+      this.pomodoro.closeOverlay();
     });
+  }
+
+  private async executarAcao(fn: () => Promise<void>) {
+    this.acaoLoading.set(true);
+
+    try {
+      await fn();
+    } finally {
+      this.acaoLoading.set(false);
+    }
   }
 
   finalizar(concluido: boolean): void {
-    if (!this.sessao) return;
+    const s = this.sessao();
+    if (!s) return;
 
     this.timer.finish();
 
     this.api.finalizarSessao({
-      id: this.sessao.id,
+      id: s.id,
       concluido,
-      observacoes: this.observacoes,
-    }).subscribe((s) => this.initSessao(s));
+      observacoes: this.observacoes(),
+    }).subscribe((novo) => this.initSessao(novo));
   }
 
   // ================= POMODORO EVENTS =================
 
   onPomodoroSkipStage(): void {
-    console.log('Skip');
     this.pomodoro.skip();
   }
 
@@ -210,57 +236,60 @@ export class SessaoEstudoPage implements OnInit, OnDestroy {
     if (!this.timer.pausada()) {
       this.pausarSessao();
     }
+
     this.pomodoro.closeOverlay();
   }
 
   onPomodoroNextStage(): void {
-    console.log('Começo a contar: ');
     this.pomodoro.closeOverlay();
-    // this.pomodoro.start();
   }
 
   // ================= GUARD =================
 
   devePausarAntesDeSair(): boolean {
-    return !!this.sessao && !this.timer.finalizada() && !this.timer.pausada();
+    return !!this.sessao() && !this.timer.finalizada() && !this.timer.pausada();
   }
 
   pausarAntesDeSair(): Observable<boolean> {
-    if (!this.sessao || this.timer.finalizada()) return of(true);
+    const s = this.sessao();
+
+    if (!s || this.timer.finalizada()) return of(true);
 
     const estudadoSeg = this.timer.pause();
     this.pomodoro.pause();
 
-    return this.api.pausarSessao(this.sessao.id, estudadoSeg).pipe(map(() => true));
+    return this.api.pausarSessao(s.id, estudadoSeg).pipe(map(() => true));
   }
 
   // ================= OBSERVAÇÕES =================
 
   onObservacoesChange(value: string): void {
-    this.observacoes = value;
+    this.observacoes.set(value);
   }
 
   onObservacoesSaveRequest(text: string): void {
-    if (!this.sessao || this.sessao.fim) return;
+    const s = this.sessao();
+    if (!s || s.fim) return;
 
-    this.api.atualizarObservacoes(this.sessao.id, text ?? '').subscribe((s) => {
-      this.sessao = s;
-      this.observacoes = s.observacoes ?? '';
+    this.api.atualizarObservacoes(s.id, text ?? '').subscribe((novo) => {
+      this.observacoes.set(novo.observacoes ?? '');
     });
   }
 
-  // ================= VOLTAR =================
-
   voltar(): void {
-    this.router.navigate(['/estudaAgora', (this.sessao as any)?.cicloId]);
+    const s = this.sessao();
+    this.router.navigate(['/estudaAgora', (s as any)?.cicloId]);
   }
 
   @HostListener('window:beforeunload')
   beforeUnload(): void {
-    if (!this.sessao || this.timer.finalizada() || this.timer.pausada()) return;
+    const s = this.sessao();
+
+    if (!s || this.timer.finalizada() || this.timer.pausada()) return;
 
     const estudadoSeg = this.timer.pause();
     this.pomodoro.pause();
-    this.api.pausarSessao(this.sessao.id, estudadoSeg).subscribe();
+
+    this.api.pausarSessao(s.id, estudadoSeg).subscribe();
   }
 }

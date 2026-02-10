@@ -66,6 +66,11 @@ export interface SessaoDetalheDto {
   pomodoroPausaCurtaMin: number;
   pomodoroPausaLongaMin: number;
   pomodoroLongaACada: number;
+
+  pomodoroModo: 'FOCO' | 'PAUSA_CURTA' | 'PAUSA_LONGA';
+  pomodoroCicloIndex: number;
+  pomodoroEtapaInicio: string | null;
+  pomodoroRestanteSeg: number;
 }
 
 export interface SessaoCardDto {

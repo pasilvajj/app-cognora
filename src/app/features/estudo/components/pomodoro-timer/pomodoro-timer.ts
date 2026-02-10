@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
 
 @Component({
@@ -8,26 +8,35 @@ import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
   imports: [CommonModule],
   templateUrl: './pomodoro-timer.html',
   styleUrl: './pomodoro-timer.css',
-  changeDetection: ChangeDetectionStrategy.OnPush,
+  changeDetection: ChangeDetectionStrategy.OnPush, // Crítico para performance
 })
 export class PomodoroTimer {
-  // ===== engine central =====
+  // 1. Injeção da Engine Central (Estado Atômico)
   readonly engine = inject(PomodoroEngineService);
 
-  // ===== inputs =====
+  // 2. Signal Inputs (Modern Angular)
   sessaoFinalizada = input(false);
 
-  // ===== outputs =====
+  // 3. Signal Outputs
   skipStage = output<void>();
   toggleEnabled = output<void>();
+
+  // 4. Computed local para UI (Otimiza re-render do HTML)
+  // Exemplo: se precisar de uma lógica específica apenas para o botão de pular
+  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished());
 
   // ===============================
   // AÇÕES DO TEMPLATE
   // ===============================
 
+  onToggle(): void {
+    if (this.sessaoFinalizada()) return;
+    this.engine.toggle();
+  }
+
   onSkipStage(): void {
     this.engine.skip();
-    this.skipStage.emit();
+    this.skipStage.emit(); // Notifica o pai se necessário (ex: para logs)
   }
 
   onToggleEnabled(): void {

@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { inject, Injectable } from '@angular/core';
+import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
   AtualizarObservacoesRequest,
@@ -28,12 +28,16 @@ export class EstudoApiService {
     return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/iniciar`, payload);
   }
 
-  comecarSessao(id: number): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/comecar`, {});
+  comecarSessao(id: number, pomodoroAtivo: boolean): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/${pomodoroAtivo}/comecar`, {});
   }
 
   getSessao(id: number): Observable<SessaoDetalheDto> {
     return this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`);
+  }
+
+  getSessao1(id: number): Promise<SessaoDetalheDto> {
+    return firstValueFrom(this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`));
   }
 
   pausarSessao(id: number, decorridoMs: number): Observable<SessaoDetalheDto> {

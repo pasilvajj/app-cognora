@@ -1,64 +1,57 @@
 import { computed, Injectable, NgZone, signal } from '@angular/core';
-import { Subscription, timer } from 'rxjs';
+import { Subscription } from 'rxjs';
+
+interface TimerState {
+  metaMs: number;
+  decorridoMs: number;
+  pausada: boolean;
+  finalizada: boolean;
+  baseDecorridoMs: number;
+  baseAgoraMs: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SessionTimerService {
-  // =============================
-  // STATE PRIVADO
-  // =============================
 
-  private readonly _decorridoMs = signal(0);
-  private readonly _metaMs = signal(0);
-  private readonly _paused = signal(true);
-  private readonly _finished = signal(false);
 
-  private baseDecorridoMs = 0;
-  private baseAgoraMs = 0;
+  private readonly state = signal<TimerState>({
+    metaMs: 0,
+    decorridoMs: 0,
+    pausada: true,
+    finalizada: false,
+    baseDecorridoMs: 0,
+    baseAgoraMs: 0
+  });
+
+  readonly decorridoMs = computed(() => this.state().decorridoMs);
+  readonly metaMs = computed(() => this.state().metaMs);
+  readonly pausada = computed(() => this.state().pausada);
+  readonly finalizada = computed(() => this.state().finalizada);
+  readonly restanteMs = computed(() => Math.max(0, this.state().metaMs - this.state().decorridoMs));
+
+  private tickerId?: any;
 
   private tickerSub?: Subscription;
 
   constructor(private readonly zone: NgZone) { }
 
   // =============================
-  // SIGNALS PÚBLICOS (USADOS NO HTML)
-  // =============================
-
-  /** ⬅️ ESTE ERA O QUE FALTAVA */
-  readonly decorridoMs = computed(() => this._decorridoMs());
-
-  readonly metaMs = computed(() => this._metaMs());
-  readonly pausada = computed(() => this._paused());
-  readonly finalizada = computed(() => this._finished());
-
-  readonly restanteMs = computed(() => {
-    const restante = this._metaMs() - this._decorridoMs();
-    return Math.max(0, restante);
-  });
-
-  // =============================
   // INIT DA SESSÃO
   // =============================
 
-  init(
-    metaMs: number,
-    baseDecorridoMs: number,
-    pausada: boolean,
-    finalizada: boolean
-  ): void {
+  init(metaMs: number, baseDecorridoMs: number, pausada: boolean, finalizada: boolean): void {
     this.stopTicker();
 
-    this._metaMs.set(metaMs);
-    this._paused.set(pausada);
-    this._finished.set(finalizada);
+    this.state.set({
+      metaMs,
+      decorridoMs: baseDecorridoMs,
+      pausada,
+      finalizada,
+      baseDecorridoMs,
+      baseAgoraMs: Date.now()
+    });
 
-    this.baseDecorridoMs = baseDecorridoMs;
-    this.baseAgoraMs = Date.now();
-
-    this._decorridoMs.set(baseDecorridoMs);
-
-    if (!pausada && !finalizada) {
-      this.startTicker();
-    }
+    if (!pausada && !finalizada) this.startTicker();
   }
 
   // =============================
@@ -66,96 +59,87 @@ export class SessionTimerService {
   // =============================
 
   start(): void {
-    if (this._finished()) return;
+    if (this.state().finalizada) return;
 
-    this._paused.set(false);
-
-    this.baseDecorridoMs = this._decorridoMs();
-    this.baseAgoraMs = Date.now();
+    this.state.update(s => ({
+      ...s,
+      pausada: false,
+      baseDecorridoMs: s.decorridoMs,
+      baseAgoraMs: Date.now()
+    }));
 
     this.startTicker();
   }
-
   pause(): number {
     this.stopTicker();
-
     const decorrido = this.calculateNow();
-    this._decorridoMs.set(decorrido);
-    this._paused.set(true);
 
-    /** retorna segundos para enviar ao backend */
+    this.state.update(s => ({
+      ...s,
+      decorridoMs: decorrido,
+      pausada: true
+    }));
+
     return Math.floor(decorrido / 1000);
   }
 
   finish(): void {
     this.stopTicker();
-
-    this._decorridoMs.set(this._metaMs());
-    this._finished.set(true);
-    this._paused.set(true);
+    this.state.update(s => ({
+      ...s,
+      decorridoMs: s.metaMs,
+      finalizada: true,
+      pausada: true
+    }));
   }
 
   stop(): void {
     this.stopTicker();
   }
 
+  reset(): void {
+    this.stopTicker();
+    this.state.set({
+      metaMs: 0,
+      decorridoMs: 0,
+      pausada: true,
+      finalizada: false,
+      baseDecorridoMs: 0,
+      baseAgoraMs: 0
+    });
+  }
   // =============================
   // TICKER SEM DRIFT
   // =============================
 
   private startTicker(): void {
     this.stopTicker();
+    // Uso de setInterval nativo: mais leve e amigável para Angular Zoneless
+    this.tickerId = setInterval(() => {
+      const now = this.calculateNow();
+      const meta = this.state().metaMs;
 
-    this.tickerSub = timer(0, 1000).subscribe(() => {
-      this.zone.run(() => {
-        if (this._paused() || this._finished()) {
-          this.stopTicker();
-          return;
-        }
-
-        const now = this.calculateNow();
-        this._decorridoMs.set(now);
-
-        if (this._metaMs() > 0 && now >= this._metaMs()) {
-          this.finish();
-        }
-      });
-    });
+      if (meta > 0 && now >= meta) {
+        this.finish();
+      } else {
+        this.state.update(s => ({ ...s, decorridoMs: now }));
+      }
+    }, 1000);
   }
 
   private stopTicker(): void {
-    this.tickerSub?.unsubscribe();
-    this.tickerSub = undefined;
+    if (this.tickerId) {
+      clearInterval(this.tickerId);
+      this.tickerId = undefined;
+    }
   }
-
-  // =============================
-  // CÁLCULO ABSOLUTO
-  // =============================
 
   private calculateNow(): number {
-    const delta = Date.now() - this.baseAgoraMs;
-    const total = this.baseDecorridoMs + delta;
+    const s = this.state();
+    const delta = Date.now() - s.baseAgoraMs;
+    const total = s.baseDecorridoMs + delta;
 
-    if (this._metaMs() > 0) {
-      return Math.min(total, this._metaMs());
-    }
-
-    return Math.max(0, total);
+    return s.metaMs > 0 ? Math.min(total, s.metaMs) : Math.max(0, total);
   }
 
-  // =============================
-  // RESET (AO SAIR DA TELA)
-  // =============================
-
-  reset(): void {
-    this.stopTicker();
-
-    this._decorridoMs.set(0);
-    this._metaMs.set(0);
-    this._paused.set(true);
-    this._finished.set(false);
-
-    this.baseDecorridoMs = 0;
-    this.baseAgoraMs = 0;
-  }
 }

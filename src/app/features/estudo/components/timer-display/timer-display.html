@@ -1,15 +1,17 @@
 <div class="timer">
   <!-- 'floor' para o tempo que já passou -->
-  <div class="time">{{ decorridoMs | tempoRelogio:'floor' }}</div>
+  <span class="time">{{ decorridoFormatado() }}</span>
 
   <div class="chips">
     <span class="chip chip-meta">
-      Meta {{ metaMs | tempoRelogio }}
+      Meta {{ metaFormatado() }}
     </span>
 
     <span class="chip chip-remaining">
       <!-- Calculamos o restante e usamos 'ceil' para arredondar para cima -->
-      Restante {{ (metaMs - decorridoMs) | tempoRelogio:'ceil' }}
+      <!-- @if (metaMs() > 0) { -->
+      <div class="restante">Restam: {{ restanteFormatado() }}</div>
+      <!-- } -->
     </span>
   </div>
 </div>
