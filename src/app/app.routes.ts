@@ -23,6 +23,7 @@ export const routes: Routes = [
     path: '',
     component: MainLayout,
     canActivate: [AuthGuard], // 🔐 BLOQUEIA TUDO SEM LOGIN
+    canActivateChild: [AuthGuard],
     children: [
 
       {

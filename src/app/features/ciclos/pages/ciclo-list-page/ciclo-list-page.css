@@ -22,7 +22,7 @@
 
 .subtitle {
   font-size: 13px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -70,9 +70,11 @@
   border: none;
   background: transparent;
   font-size: 18px;
+  color: var(--text);
   cursor: pointer;
   padding: 6px;
   border-radius: 8px;
+  line-height: 1;
 }
 
 .menu-btn:hover {
@@ -102,7 +104,7 @@
   padding: 6px;
   display: flex;
   flex-direction: column;
-  z-index: 30;
+  z-index: 60;
   animation: dropdown 0.15s ease-out;
   max-width: calc(100vw - 32px);
   box-sizing: border-box;
@@ -115,6 +117,7 @@
   padding: 8px 12px;
   font-size: 13px;
   font-weight: 700;
+  color: #0f172a;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
@@ -207,8 +210,34 @@
 
 .count {
   margin-left: 6px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 700;
+}
+
+:host-context([data-theme='dark']) .menu-btn {
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .menu-btn:hover {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+:host-context([data-theme='dark']) .menu {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 16px 32px rgba(2, 6, 23, 0.45);
+}
+
+:host-context([data-theme='dark']) .menu button {
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .menu button:hover {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+}
+
+:host-context([data-theme='dark']) .menu .divider {
+  background: var(--border);
 }
 
 /* Desktop grande */

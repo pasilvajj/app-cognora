@@ -200,3 +200,34 @@
     grid-column: 2 / -1;
   }
 }
+
+:host-context([data-theme='dark']) .mat-table{
+  background: var(--surface);
+  border-color: rgba(148,163,184,.34);
+}
+:host-context([data-theme='dark']) .mat-head{
+  color: color-mix(in srgb,var(--text-muted) 85%,#ffffff);
+  border-bottom-color: rgba(148,163,184,.22);
+}
+:host-context([data-theme='dark']) .mat-row{
+  background: color-mix(in srgb,var(--surface) 92%,#0b1220);
+  border-bottom-color: rgba(148,163,184,.18);
+}
+:host-context([data-theme='dark']) .materia-name{color:var(--text);}
+:host-context([data-theme='dark']) .materia-meta,
+:host-context([data-theme='dark']) .toggle{color:var(--text-muted);}
+:host-context([data-theme='dark']) .toggle-label{color:var(--text);}
+:host-context([data-theme='dark']) .peso-input{
+  background: var(--bg-input);
+  border-color: var(--border);
+  color: var(--text);
+}
+:host-context([data-theme='dark']) .star{color:color-mix(in srgb,var(--text) 24%,transparent);}
+:host-context([data-theme='dark']) .star.on{color:var(--text);}
+:host-context([data-theme='dark']) .horas{color:#22c55e;}
+:host-context([data-theme='dark']) .horas.is-zero{color:var(--text-muted);}
+:host-context([data-theme='dark']) .empty{
+  border-color: var(--border);
+  background: color-mix(in srgb,var(--surface) 90%,#0b1220);
+  color: var(--text-muted);
+}

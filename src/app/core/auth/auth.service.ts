@@ -58,19 +58,56 @@ export class AuthService {
   }
  
   logout(): void {
-    sessionStorage.clear(); // 🔥 limpa tudo de uma vez
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.USER_KEY);
   }
 
   isAuthenticated(): boolean {
-    return !!this.getToken();
+    return !!this.getToken() && !!this.getUser();
   }
 
   getToken(): string | null {
-    return sessionStorage.getItem(this.TOKEN_KEY);
+    const token = sessionStorage.getItem(this.TOKEN_KEY);
+    if (!token) return null;
+
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return null;
+    }
+
+    return token;
   }
 
   getUser(): { id: number; name: string } | null {
     const raw = sessionStorage.getItem(this.USER_KEY);
     return raw ? JSON.parse(raw) : null;
+  }
+
+  private isTokenExpired(token: string): boolean {
+    try {
+      const payload = this.decodeTokenPayload(token);
+      const exp = Number(payload?.['exp']);
+      if (!Number.isFinite(exp) || exp <= 0) return false;
+
+      const nowInSec = Math.floor(Date.now() / 1000);
+      return exp <= nowInSec;
+    } catch {
+      // Token inválido/ilegível: considera sessão inválida.
+      return true;
+    }
+  }
+
+  private decodeTokenPayload(token: string): Record<string, unknown> | null {
+    const parts = token.split('.');
+    if (parts.length < 2) return null;
+
+    const payloadBase64Url = parts[1];
+    const payloadBase64 = payloadBase64Url
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(payloadBase64Url.length / 4) * 4, '=');
+
+    const json = atob(payloadBase64);
+    return JSON.parse(json) as Record<string, unknown>;
   }
 }

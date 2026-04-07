@@ -31,8 +31,10 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('weekCanvas') canvasRef?: ElementRef<HTMLCanvasElement>;
 
   private chart?: Chart;
+  private themeObserver?: MutationObserver;
 
   ngAfterViewInit(): void {
+    this.observeTheme();
     this.render();
   }
 
@@ -45,6 +47,7 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyChart();
+    this.themeObserver?.disconnect();
   }
 
   private render(): void {
@@ -67,11 +70,18 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
           {
             label: 'Horas estudadas',
             data,
+            borderColor: this.isDarkTheme() ? '#38bdf8' : '#2ea7f0',
+            backgroundColor: this.isDarkTheme()
+              ? 'rgba(56, 189, 248, 0.28)'
+              : 'rgba(46, 167, 240, 0.26)',
             tension: 0.38,
             fill: true,
             borderWidth: 2,
             pointRadius: 4,
             pointHoverRadius: 5,
+            pointBorderColor: this.isDarkTheme() ? '#38bdf8' : '#2ea7f0',
+            pointBackgroundColor: this.isDarkTheme() ? '#0b1220' : '#ffffff',
+            pointBorderWidth: 2,
           },
         ],
       },
@@ -91,14 +101,22 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
         },
         scales: {
           x: {
-            grid: { display: false },
+            grid: {
+              display: false,
+              color: this.isDarkTheme() ? 'rgba(148,163,184,.14)' : 'rgba(15,23,42,.08)',
+            },
             ticks: {
+              color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
               font: { size: 12, weight: 600 },
             },
           },
           y: {
             beginAtZero: true,
+            grid: {
+              color: this.isDarkTheme() ? 'rgba(148,163,184,.14)' : 'rgba(15,23,42,.08)',
+            },
             ticks: {
+              color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
               callback: (value) => `${value}h`,
               font: { size: 12, weight: 600 },
             },
@@ -140,5 +158,20 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
     const s = Math.max(0, Number(sec || 0));
     // 1 casa decimal para ficar bonito no gráfico e no tooltip
     return Math.round((s / 3600) * 10) / 10;
+  }
+
+  private isDarkTheme(): boolean {
+    return typeof document !== 'undefined'
+      && document.documentElement.getAttribute('data-theme') === 'dark';
+  }
+
+  private observeTheme(): void {
+    if (typeof document === 'undefined') return;
+    this.themeObserver?.disconnect();
+    this.themeObserver = new MutationObserver((changes) => {
+      const changedTheme = changes.some((m) => m.type === 'attributes' && m.attributeName === 'data-theme');
+      if (changedTheme) this.render();
+    });
+    this.themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   }
 }

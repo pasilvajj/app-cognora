@@ -20,14 +20,14 @@
   margin: 0;
   font-size: 16px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .chart-subtitle {
   margin-top: 6px;
   font-size: 13px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 /* Área do gráfico */
@@ -41,4 +41,8 @@
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+:host-context([data-theme='dark']) .chart-header{
+  border-bottom-color: color-mix(in srgb,var(--text) 12%,transparent);
 }

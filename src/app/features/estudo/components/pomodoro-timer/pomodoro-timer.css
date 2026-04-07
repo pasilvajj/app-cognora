@@ -36,8 +36,8 @@
 
 /* pausa */
 .mode-badge.break {
-  background: #fff3d6;
-  color: #c88400;
+  background: rgba(245, 158, 11, 0.18);
+  color: #d97706;
 }
 
 /* texto do ciclo */
@@ -83,6 +83,36 @@ button {
 
 .btn-ghost:hover:not(:disabled) {
   background: #f9fafb;
+}
+
+:host-context([data-theme='dark']) .pomodoro {
+  border-bottom-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 82%, #0b1220);
+}
+
+:host-context([data-theme='dark']) .mode-badge.focus {
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+
+:host-context([data-theme='dark']) .cycle-text {
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .time-pill {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+:host-context([data-theme='dark']) .btn-ghost {
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .btn-ghost:hover:not(:disabled) {
+  background: var(--surface-hover);
 }
 
 /* botão warning (laranja) */

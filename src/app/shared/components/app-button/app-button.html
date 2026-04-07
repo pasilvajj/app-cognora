@@ -6,7 +6,8 @@
   [ngClass]="[
     'btn-' + variant,
     'btn-' + size,
-    fullWidth ? 'btn-block' : ''
+    fullWidth ? 'btn-block' : '',
+    extraClass
   ]"
 >
   <span *ngIf="!loading">{{ label }}</span>
@@ -22,7 +23,8 @@
   [ngClass]="[
     'btn-' + variant,
     'btn-' + size,
-    fullWidth ? 'btn-block' : ''
+    fullWidth ? 'btn-block' : '',
+    extraClass
   ]"
   (click)="onClick()"
 >

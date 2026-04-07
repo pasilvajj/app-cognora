@@ -366,3 +366,18 @@ input:focus, select:focus {
 .back-link span {
   line-height: 1;
 }
+
+:host-context([data-theme='dark']) .ciclo-card{
+  background: color-mix(in srgb,var(--surface) 92%,#0b1220);
+  border-color: color-mix(in srgb,var(--text) 14%,transparent);
+  box-shadow: 0 10px 30px rgba(2,6,23,.32);
+}
+:host-context([data-theme='dark']) .ciclo-nome-input{
+  color:var(--text);
+  background: color-mix(in srgb,var(--surface) 88%,#0b1220);
+  border-bottom-color: color-mix(in srgb,var(--text) 16%,transparent);
+}
+:host-context([data-theme='dark']) .meta-item .label,
+:host-context([data-theme='dark']) .ciclo-card__content .nomeCiclo{color:var(--text-muted);}
+:host-context([data-theme='dark']) .meta-item .value{color:var(--text);}
+:host-context([data-theme='dark']) .back-link{color:var(--text-muted);}

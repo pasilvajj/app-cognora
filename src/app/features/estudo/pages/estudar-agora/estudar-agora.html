@@ -2,6 +2,9 @@
 
   <div class="page-header">
     <h1>Estudar Agora</h1>
+    <button class="btn-back-ciclos" type="button" (click)="voltarParaMeusCiclos()">
+      Voltar para meus ciclos
+    </button>
   </div>
 
   <div class="content">
@@ -67,7 +70,7 @@
             </div>
 
             <div class="right">
-              <span class="pct">{{ p.percent }}%</span>
+              <span class="pct">{{ formatPercent(p.percent) }}</span>
             </div>
           </div>
         </div>

@@ -28,12 +28,16 @@ export class TimerDisplay {
     this.pipe.transform(this.metaMs())
   );
 
-  // 3. A PROPRIEDADE QUE FALTAVA: Formata quanto tempo falta
+  /**
+   * Restante em segundos inteiros coerente com o decorrido exibido:
+   * floor(meta/1s) − floor(decorrido/1s). Evita ficar 1s à frente de
+   * floor((meta − decorrido) / 1s).
+   */
   readonly restanteFormatado = computed(() => {
-    const restante = Math.max(0, this.metaMs() - this.decorridoMs());
-    // Força o arredondamento para cima antes de formatar
-    const segundosAjustados = Math.ceil(restante / 1000) * 1000;
-    return this.pipe.transform(segundosAjustados);
+    const metaSeg = Math.floor(this.metaMs() / 1000);
+    const decorridoSeg = Math.floor(this.decorridoMs() / 1000);
+    const restanteSeg = Math.max(0, metaSeg - decorridoSeg);
+    return this.pipe.transform(restanteSeg * 1000, 'floor');
   });
 
 }

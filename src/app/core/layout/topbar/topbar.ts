@@ -1,7 +1,8 @@
-import { Component, OnInit,Input, Output, EventEmitter} from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, ElementRef, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../auth/auth.service';
+import { ThemeService } from '../../theme/theme.service';
 
 @Component({
   selector: 'app-topbar',
@@ -19,7 +20,9 @@ export class Topbar implements OnInit {
 
   constructor(
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private readonly elementRef: ElementRef<HTMLElement>,
+    private readonly themeService: ThemeService
   ) {}
 
   ngOnInit(): void {
@@ -45,14 +48,31 @@ export class Topbar implements OnInit {
     this.menuOpen = !this.menuOpen;
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.menuOpen) return;
+    const target = event.target as Node | null;
+    if (!target) return;
+    if (!this.elementRef.nativeElement.contains(target)) {
+      this.menuOpen = false;
+    }
+  }
+
   onMenuClick(): void {
     this.menuClick.emit();
   }
 
-  logout(): void {
-    this.auth.logout();
-    this.router.navigate(['/login']);{
+  isDarkTheme(): boolean {
+    return this.themeService.isDark();
+  }
 
-}
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  logout(): void {
+    this.menuOpen = false;
+    this.auth.logout();
+    this.router.navigate(['/login']);
   }
 }

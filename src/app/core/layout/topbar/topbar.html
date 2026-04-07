@@ -13,6 +13,14 @@
 
 
 <div class="topbar-right">
+  <button
+    class="theme-toggle"
+    type="button"
+    (click)="toggleTheme()"
+    [attr.aria-label]="isDarkTheme() ? 'Tema atual: Black. Clique para mudar para Claro' : 'Tema atual: Claro. Clique para mudar para Black'"
+    [title]="isDarkTheme() ? 'Tema atual: Black • trocar para Claro' : 'Tema atual: Claro • trocar para Black'">
+    {{ isDarkTheme() ? 'Black' : 'Claro' }}
+  </button>
 
   <div class="right">
     <div class="user-area" (click)="toggleMenu()">
@@ -28,8 +36,11 @@
     </div>
 
    @if (menuOpen) {
-    <div class="dropdown">
-      <button type="button" (click)="logout()">Sair</button>
+    <div class="dropdown menu-dropdown" role="menu" aria-label="Menu da conta">
+      <button class="menu-item menu-item-danger" type="button" role="menuitem" (click)="logout()">
+        <span class="menu-item-icon" aria-hidden="true">></span>
+        <span class="menu-item-label">Sair</span>
+      </button>
     </div>
     }
   </div>

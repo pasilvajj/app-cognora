@@ -281,3 +281,36 @@ input:focus {
   opacity: 1;
   transform: translateX(0);
 }
+
+/* ===== Normalização por tema ===== */
+.form-field label,
+label {
+  color: var(--text-muted);
+}
+
+.form-field input,
+input {
+  background: var(--bg-input);
+  color: var(--text);
+  border-color: var(--color-border-input, var(--border));
+}
+
+.form-field input::placeholder,
+input::placeholder {
+  color: color-mix(in srgb, var(--text-muted) 78%, #ffffff);
+}
+
+.toggle-password svg {
+  stroke: var(--text-muted);
+}
+
+.strength-label,
+.password-strength .label {
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .form-field input,
+:host-context([data-theme='dark']) input {
+  border-color: color-mix(in srgb, var(--text) 14%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, #0b1220);
+}

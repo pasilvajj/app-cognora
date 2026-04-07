@@ -48,7 +48,8 @@
     <!-- ================= AÇÃO PRINCIPAL ================= -->
     <div class="actions">
       <button class="btn-main" type="button" (click)="onMainActionClick()"
-        [disabled]="timer.finalizada() || acaoLoading()">
+        [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
+        [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">
         {{
         statusLabel() === 'Pronta para iniciar'
         ? 'Iniciar'

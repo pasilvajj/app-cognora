@@ -1,18 +1,18 @@
 /* OVERLAY */
 .overlay {
   position: fixed;
-  inset: 0;
+  inset:0;
   background: rgba(18, 24, 38, 0.42);
   backdrop-filter: blur(6px);
   display: grid;
   place-items: center;
-  z-index: 999;
+  z-index: 1040;
 }
 
 /* MODAL */
 .modal {
-  width: min(980px, 94vw);
-  max-height: min(92vh, 980px);
+  width: min(940px, 93vw);
+  max-height: min(88vh, 820px);
   background: rgba(255, 255, 255, 0.98);
   border-radius: 18px;
   overflow: hidden;
@@ -100,7 +100,14 @@
 
 /* BODY */
 .modal-body {
-  padding: 16px 16px 14px;
+  padding: 14px 14px 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  overflow: auto;
+}
+
+.modal-body.with-list {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 38%);
 }
 
 /* STAGE */
@@ -113,19 +120,20 @@
   padding: 14px;
 }
 
-/* wrapper do anel */
 .ring-wrap {
+  --ring-size:clamp(280px,36vw,430px);
+  --badge-radius:calc(var(--ring-size)*.48);
   position: relative;
   width: 100%;
-  height: 440px;
+  height:clamp(320px,calc(var(--ring-size) + 68px),520px);
   display: grid;
   place-items: center;
 }
 
 .ring {
   position: absolute;
-  width: 440px;
-  height: 440px;
+  width: var(--ring-size);
+  height: var(--ring-size);
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -179,15 +187,15 @@
   opacity: 0.95;
 }
 
-/* BADGES */
 .badge {
   position: absolute;
-  /* left: 50%; */
-  /* top: 50%; */
+  left: 50%;
+  top: 50%;
   transform:
-    rotate(calc(var(--deg) * 1deg))
-    translateY(-218px)
-    rotate(calc(var(--deg) * -1deg));
+    translate(-50%,-50%)
+    rotate(calc(var(--deg)*1deg))
+    translateY(calc(-1*var(--badge-radius)))
+    rotate(calc(var(--deg)*-1deg));
   transform-origin: center;
 
   display: inline-flex;
@@ -227,7 +235,6 @@
   font-weight: 950;
   color: rgba(15, 23, 42, 0.82);
   font-size: 13px;
-  letter-spacing: -0.01em;
 }
 
 .badge-check {
@@ -248,7 +255,6 @@
   height: 10px;
   border-radius: 999px;
   display: inline-block;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
 }
 
 .badge-dot.running {
@@ -263,15 +269,8 @@
 .center {
   position: absolute;
   inset: 0;
-  display: grid;
-  place-items: center;
-  text-align: center;
+  display: block;
   pointer-events: none;
-  padding: 22px;
-}
-
-.center > * {
-  pointer-events: auto;
 }
 
 .center-placeholder {
@@ -284,18 +283,21 @@
 }
 
 .center-focus {
-  padding: 10px 12px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 8px 10px;
   border-radius: 14px;
   border: 1px solid rgba(15, 23, 42, 0.10);
   background: rgba(255, 255, 255, 0.88);
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.08);
 
-  font-weight: 950;
+  font-weight: 820;
   color: #0f172a;
+  font-size:clamp(12px,1.05vw,16px);
 
-  width: min(25%);
-  max-width: 520px;
-
+  width:min(300px,calc(var(--ring-size)*.58));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -376,12 +378,12 @@
 
 /* LISTA COMPACTA */
 .list {
-  margin-top: 12px;
+  margin-top: 0;
   border: 1px solid rgba(15, 23, 42, 0.10);
   background: rgba(255, 255, 255, 0.86);
   border-radius: 16px;
   padding: 10px;
-  max-height: 280px;
+  max-height: clamp(280px, 70vh, 640px);
   overflow: auto;
 }
 
@@ -424,14 +426,14 @@
   border-radius: 999px;
   background: rgba(15, 23, 42, 0.06);
   color: rgba(15, 23, 42, 0.80);
-  font-weight: 950;
-  font-size: 12px;
+  font-weight:700;
+  font-size:10px;
 }
 
 .li-name {
-  font-weight: 950;
+  font-weight:700;
+  font-size:13px;
   color: #0f172a;
-  max-width: 520px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -445,7 +447,8 @@
 }
 
 .li-time {
-  font-weight: 900;
+  font-weight:650;
+  font-size:12px;
   color: rgba(15, 23, 42, 0.70);
 }
 
@@ -458,8 +461,8 @@
   border: 1px solid rgba(15, 23, 42, 0.10);
   background: rgba(255, 255, 255, 0.85);
   color: rgba(15, 23, 42, 0.72);
-  font-weight: 900;
-  font-size: 12px;
+  font-weight:650;
+  font-size:10px;
 }
 
 .li-dot {
@@ -501,27 +504,77 @@
 }
 
 /* RESPONSIVO */
-@media (max-width: 820px) {
-  .ring-wrap {
-    height: 380px;
+@media (max-width: 1080px) {
+  .modal {
+    width: min(900px, 93vw);
   }
 
-  .ring {
-    width: 380px;
-    height: 380px;
+  .modal-body.with-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .list {
+    margin-top: 12px;
+    max-height: min(42vh, 420px);
+  }
+}
+
+@media (max-width: 820px) {
+  .modal-header {
+    flex-wrap: wrap;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .ring-wrap {
+    --ring-size:clamp(300px,78vw,380px);
+    --badge-radius:calc(var(--ring-size)*.485);
+    height:clamp(340px,calc(var(--ring-size) + 72px),450px);
   }
 
   .badge {
-    transform:
-      rotate(calc(var(--deg) * 1deg))
-      translateY(-188px)
-      rotate(calc(var(--deg) * -1deg));
     height: 32px;
     padding: 0 10px;
   }
 
-  .center-focus {
-    width: min(420px, 78%);
-    max-width: 420px;
+}
+
+@media (max-width: 560px) {
+  .overlay {
+    padding: 8px;
   }
+
+  .modal {
+    width: 100%;
+    max-height: 96vh;
+    border-radius: 14px;
+  }
+
+  .modal-header {
+    padding: 12px;
+  }
+
+  .modal-body {
+    padding: 12px;
+  }
+
+  .stage {
+    padding: 10px;
+  }
+
+  .ring-wrap {
+    --ring-size:clamp(260px,86vw,300px);
+    --badge-radius:calc(var(--ring-size)*.485);
+    height:clamp(300px,calc(var(--ring-size) + 62px),380px);
+  }
+
+  .badge {
+    height: 30px;
+    min-width: 42px;
+    gap: 6px;
+  }
+
 }

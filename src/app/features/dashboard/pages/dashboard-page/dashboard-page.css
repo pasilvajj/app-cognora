@@ -13,7 +13,7 @@
 
 .dashboard-header span {
   font-size: 14px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* MÉTRICAS */
@@ -35,6 +35,7 @@
 /* BLOCOS */
 .dashboard-block {
   background: var(--bg-card);
+  border: 1px solid transparent;
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.05);
@@ -47,7 +48,7 @@
 .dashboard-block.placeholder {
   justify-content: center;
   text-align: center;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .dashboard-block.placeholder h3 {
@@ -152,4 +153,9 @@ button {
   border-radius: 10px;
   font-weight: 600;
   cursor: pointer;
+}
+
+:host-context([data-theme='dark']) .dashboard-block{
+  border-color: color-mix(in srgb,var(--text) 12%,transparent);
+  box-shadow: 0 12px 30px rgba(2,6,23,.34);
 }

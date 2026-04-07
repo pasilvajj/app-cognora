@@ -5,6 +5,7 @@
   --background-soft: #eef2f8;
 
   --surface: #ffffff;            /* 🔥 cards, topbar, inputs */
+  --surface-soft: #f3f6fb;
   --surface-hover: #f8fafc;
 
   --border: #e5ecf6;
@@ -39,6 +40,12 @@
   --color-border-input: #d1d5db;
   --color-error: #ef4444;
   --color-success: #22c55e;
+  --sidebar-bg-start: #0b1c33;
+  --sidebar-bg-end: #0f2b55;
+  --sidebar-text: #e5edff;
+  --sidebar-hover: rgba(255, 255, 255, 0.08);
+  --sidebar-active-start: #2f80ed;
+  --sidebar-active-end: #56ccf2;
 
   /* 🧱 Backgrounds */
   --bg-page: #f7f9fc;
@@ -66,6 +73,34 @@
   --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.04);
 }
 
+:root[data-theme='dark'] {
+  --background: #07090f;
+  --background-soft: #0c1220;
+  --surface: #101724;
+  --surface-soft: #161f31;
+  --surface-hover: #1d2a40;
+  --border: #27354c;
+  --text: #e6edf7;
+  --text-muted: #9fb0c5;
+  --primary: #60a5fa;
+  --primary-hover: #3b82f6;
+  --bg-page: #07090f;
+  --bg-card: #101724;
+  --bg-input: #161f31;
+  --bg-disabled: #1e2a3f;
+  --color-text-primary: #e5edf8;
+  --color-text-secondary: #b3c2d3;
+  --color-text-muted: #8da0b6;
+  --color-border: #27354c;
+  --color-border-input: #334867;
+  --sidebar-bg-start: #0a1322;
+  --sidebar-bg-end: #0f1c31;
+  --sidebar-text: #d7e4f8;
+  --sidebar-hover: rgba(96, 165, 250, 0.12);
+  --sidebar-active-start: #2e6ccf;
+  --sidebar-active-end: #4a88e6;
+}
+
 /* Isso faz com que o número '1' ocupe o mesmo espaço que o '8' */
 .time-display, .chip {
   font-variant-numeric: tabular-nums;
@@ -85,6 +120,14 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   background: var(--background);
   color: var(--text);
+  transition: background-color .2s ease, color .2s ease;
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(1200px 420px at 10% -10%, rgba(59, 130, 246, 0.10), transparent 60%),
+    radial-gradient(900px 360px at 100% 0%, rgba(30, 64, 175, 0.10), transparent 60%),
+    var(--background);
 }
 
 

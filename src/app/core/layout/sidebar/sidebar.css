@@ -14,8 +14,8 @@
   min-width: 260px;
   height: 100vh;
   
-  background: linear-gradient(180deg, #0b1c33, #0f2b55);
-  color: #e5edff;
+  background: linear-gradient(180deg, var(--sidebar-bg-start), var(--sidebar-bg-end));
+  color: var(--sidebar-text);
 
   display: flex;
   flex-direction: column;
@@ -84,7 +84,7 @@
   padding: 12px 14px;
   border-radius: 10px;
 
-  color: #dbe7ff;
+  color: var(--sidebar-text);
   text-decoration: none;
   font-weight: 500;
   font-size: 15px;
@@ -96,7 +96,7 @@
    HOVER
 ========================= */
 .menu a:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--sidebar-hover);
   transform: translateX(4px);
 }
 
@@ -104,8 +104,8 @@
    ATIVO
 ========================= */
 .menu a.active {
-  background: linear-gradient(135deg, #2f80ed, #56ccf2);
-  box-shadow: 0 6px 18px rgba(47, 128, 237, 0.45);
+  background: linear-gradient(135deg, var(--sidebar-active-start), var(--sidebar-active-end));
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--sidebar-active-start) 45%, transparent);
   color: #ffffff;
 }
 

@@ -71,6 +71,10 @@ export class CicloCreatePage implements OnInit {
     this.aplicarHorasPorMateria();
   }
 
+  voltarParaMeusCiclos(): void {
+    this.router.navigate(['/ciclos']);
+  }
+
   onDisciplinaChange(): void {
     if (this.cargoId == null) {
       this.disciplinas = [];

@@ -18,11 +18,11 @@
   margin:0;
   font-size: 28px;
   font-weight: 900;
-  color: #0f172a;
+  color: var(--text);
 }
 .sub{
   margin-top: 4px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 600;
   font-size: 13px;
 }
@@ -58,10 +58,10 @@
 /* ====== QUADRO (mais “papel/cartaz”) ====== */
 .board{
   background:
-    linear-gradient(180deg, rgba(255,255,255,.92), rgba(250,250,252,.92));
-  border: 1px solid rgba(15,23,42,.12);
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,252,.98));
+  border: 1px solid rgba(15,23,42,.14);
   border-radius: 18px;
-  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.07);
   overflow: hidden;
 }
 
@@ -73,7 +73,7 @@
   align-items:center;
   padding: 14px 16px;
   border-bottom: 1px solid rgba(15,23,42,.10);
-  background: rgba(15,23,42,.03);
+  background: #f8fafc;
 }
 
 .banner{
@@ -109,7 +109,7 @@
 
 .week-range{
   font-weight: 900;
-  color:#0f172a;
+  color:#111827;
   font-size: 16px;
   letter-spacing: .02em;
 }
@@ -121,7 +121,7 @@
   border-left: 2px solid rgba(15,23,42,.10);
 }
 .mini-title{
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 800;
   font-size: 12px;
 }
@@ -148,7 +148,7 @@
   border: 1px solid rgba(15,23,42,.14);
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(255,255,255,.85);
+  background: rgba(255,255,255,.96);
 }
 
 /* Coluna do dia com separadores verticais fortes */
@@ -157,7 +157,7 @@
   border-right: 1px solid rgba(15,23,42,.12);
   display:flex;
   flex-direction:column;
-  background: rgba(255,255,255,.7);
+  background: rgba(255,255,255,.95);
 }
 .day-col:last-child{ border-right: none; }
 
@@ -165,7 +165,7 @@
 .day-head{
   padding: 10px 10px 8px;
   border-bottom: 1px solid rgba(15,23,42,.12);
-  background: rgba(15,23,42,.03);
+  background: #f8fafc;
 }
 .day-name{
   font-size: 12px;
@@ -192,8 +192,8 @@
 
 /* Card mais “flat”, parecido com a 2ª imagem */
 .item-card{
-  background: rgba(255,255,255,.86);
-  border: 1px solid rgba(15,23,42,.10);
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(15,23,42,.12);
   border-radius: 10px;
   padding: 10px 12px; /* ajuste que você queria */
   box-shadow: none;   /* tira a sombra forte */
@@ -252,7 +252,7 @@
 .day-footer{
   border-top: 1px solid rgba(15,23,42,.12);
   padding: 10px;
-  background: rgba(15,23,42,.03);
+  background: #f8fafc;
   text-align: left;
 }
 .day-total{
@@ -262,7 +262,7 @@
 }
 .day-total-sub{
   margin-top: 2px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 700;
   font-size: 11px;
 }
@@ -275,11 +275,11 @@
 }
 
 .side-card{
-  background: rgba(255,255,255,.92);
-  border: 1px solid rgba(15,23,42,.12);
+  background: rgba(255,255,255,.98);
+  border: 1px solid rgba(15,23,42,.14);
   border-radius: 14px;
   padding: 12px; /* mais compacto */
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
 }
 
 .side-title{
@@ -326,7 +326,7 @@
   padding: 7px 0;
 }
 .resume-label{
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 800;
   font-size: 12px;
 }
@@ -343,7 +343,7 @@
   gap: 10px;
   padding: 12px 14px;
   border-top: 1px solid rgba(15,23,42,.10);
-  background: rgba(15,23,42,.03);
+  background: #f8fafc;
 }
 .tip-ico{
   font-size: 18px;
@@ -409,4 +409,107 @@
     border-bottom: 1px solid rgba(15,23,42,.12);
   }
   .day-col:last-child{ border-bottom: none; }
+}
+
+/* ===== MODO BLACK ===== */
+:host-context([data-theme='dark']) .board{
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 90%, #0b1220), color-mix(in srgb, var(--surface) 96%, #000));
+  border-color: var(--border);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.32);
+}
+
+:host-context([data-theme='dark']) .board-header{
+  border-bottom-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 82%, #0b1220);
+}
+
+:host-context([data-theme='dark']) .banner{
+  background: color-mix(in srgb, var(--primary) 22%, #0b1220);
+  border-color: color-mix(in srgb, var(--primary) 36%, var(--border));
+}
+
+:host-context([data-theme='dark']) .nav-btn{
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .week-range,
+:host-context([data-theme='dark']) .mini-value,
+:host-context([data-theme='dark']) .day-number,
+:host-context([data-theme='dark']) .day-total,
+:host-context([data-theme='dark']) .side-title,
+:host-context([data-theme='dark']) .dist-time,
+:host-context([data-theme='dark']) .resume-value{
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .board-right{
+  border-left-color: var(--border);
+}
+
+:host-context([data-theme='dark']) .grid{
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 86%, #0a1220);
+}
+
+:host-context([data-theme='dark']) .day-col{
+  border-right-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, #0a1220);
+}
+
+:host-context([data-theme='dark']) .day-head{
+  border-bottom-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 78%, #0b1220);
+}
+
+:host-context([data-theme='dark']) .day-name{
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .item-card{
+  background: color-mix(in srgb, var(--surface) 90%, #0b1220);
+  border-color: var(--border);
+}
+
+:host-context([data-theme='dark']) .item-title,
+:host-context([data-theme='dark']) .item-time{
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .item-sub,
+:host-context([data-theme='dark']) .dist-name,
+:host-context([data-theme='dark']) .tip-text{
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .day-footer{
+  border-top-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 78%, #0b1220);
+}
+
+:host-context([data-theme='dark']) .side-card{
+  background: color-mix(in srgb, var(--surface) 92%, #0b1220);
+  border-color: var(--border);
+  box-shadow: 0 10px 22px rgba(2, 6, 23, 0.26);
+}
+
+:host-context([data-theme='dark']) .dist-row{
+  border-bottom-color: var(--border);
+}
+
+:host-context([data-theme='dark']) .board-tip{
+  border-top-color: var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, #0b1220);
+}
+
+:host-context([data-theme='dark']) .tip-text strong{
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .btn.ghost,
+:host-context([data-theme='dark']) .pill{
+  border-color: var(--border);
+  background: var(--surface);
+  color: var(--text);
 }

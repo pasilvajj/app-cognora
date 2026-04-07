@@ -44,6 +44,7 @@ export class EstudarAgora implements OnInit {
   modalOpen = false;
   progress: ProgressItem[] = [];
   recentSessions: RecentSession[] = [];
+  private progressoBruto: ProgressoDisciplinaDto[] = [];
 
   constructor(
     private readonly ciclosApi: CiclosApiService,
@@ -52,7 +53,7 @@ export class EstudarAgora implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly auth: AuthService,
-    private readonly toastr: ToastrService
+    private readonly toastr: ToastrService,
   ) { }
 
   ngOnInit(): void {
@@ -70,6 +71,10 @@ export class EstudarAgora implements OnInit {
     this.getProgressoCiclo();
     this.getSessoesRecentes();
 
+  }
+
+  voltarParaMeusCiclos(): void {
+    this.router.navigate(['/ciclos']);
   }
 
   getProximaSessao(): void {
@@ -105,6 +110,7 @@ export class EstudarAgora implements OnInit {
     const estudadoSeg = Number(s.estudadoTotalSeg ?? s.segundosEstudados ?? 0);
     const restanteSeg = Math.max(0, Number(s.segundosRestantes ?? 0));
     const baseDate = s.fim ?? s.inicio;
+    const statusNormalizado = this.normalizarStatusSessao(s.status, estudadoSeg, restanteSeg);
 
     return {
       sessaoId: s.id,
@@ -112,22 +118,117 @@ export class EstudarAgora implements OnInit {
       disciplina: s.disciplinaNome,
       studiedLabel: this.formatSeconds(estudadoSeg),
       remainingLabel: s.fim ? undefined : this.formatSeconds(restanteSeg),
-      status: s.status,
+      status: statusNormalizado,
       estudadoTotalSeg: s.estudadoTotalSeg,
     };
+  }
+
+  private normalizarStatusSessao(
+    status: SessaoCardDto['status'],
+    estudadoSeg: number,
+    restanteSeg: number,
+  ): SessaoCardDto['status'] {
+    // Sessão sem progresso real não pode aparecer como concluída
+    // quando ainda existe tempo restante.
+    if (estudadoSeg <= 0 && restanteSeg > 0) {
+      return 'PAUSADA';
+    }
+    return status;
   }
 
   getProgressoCiclo(): void {
     this.estudoApi.getProgressoCiclo(this.cicloId, this.usuarioId).subscribe({
       next: (list: ProgressoDisciplinaDto[]) => {
-        this.progress = list.map((p) => ({
-          disciplina: p.disciplinaNome,
-          percent: p.percentual ?? 0,
-        }));
-        this.cdr.detectChanges();
+        this.progressoBruto = list ?? [];
+        this.recalcularProgresso();
       },
       error: (e) => console.error('Erro progresso ciclo', e),
     });
+  }
+
+  private recalcularProgresso(): void {
+    this.progress = this.progressoBruto.map((p) => ({
+      disciplina: p.disciplinaNome,
+      percent: this.normalizarPercentualProgresso(p),
+    }));
+    this.cdr.detectChanges();
+  }
+
+  private normalizarPercentualProgresso(p: ProgressoDisciplinaDto): number {
+    const obj = p as unknown as Record<string, unknown>;
+    const feitos =
+      this.lerNumeroFlexivel(obj['minutosFeitos']) ??
+      this.lerNumeroFlexivel(obj['minutosEstudados']) ??
+      this.lerNumeroFlexivel(obj['minFeitos']) ??
+      this.lerNumeroFlexivel(obj['feitoMin']) ??
+      0;
+    const metaDto =
+      this.lerNumeroFlexivel(obj['minutosMeta']) ??
+      this.lerNumeroFlexivel(obj['metaMinutos']) ??
+      this.lerNumeroFlexivel(obj['minMeta']) ??
+      this.lerNumeroFlexivel(obj['metaMin']) ??
+      0;
+    const meta = metaDto > 0 ? metaDto : this.obterMetaDaDisciplina(p.disciplinaNome);
+    const percentualRaw =
+      this.lerNumeroFlexivel(obj['percentual']) ??
+      this.lerNumeroFlexivel(obj['percent']) ??
+      this.lerNumeroFlexivel(obj['porcentagem']) ??
+      this.lerNumeroFlexivel(obj['percentualConcluido']) ??
+      this.lerNumeroFlexivel(obj['progressoPercentual']) ??
+      0;
+
+    const percentualCalculado = meta > 0 ? (Math.max(0, feitos) / Math.max(0, meta)) * 100 : 0;
+    let percentual = percentualCalculado;
+
+    // Fallback: se não conseguir calcular por feitos/meta, tenta valor percentual bruto.
+    if ((!Number.isFinite(percentual) || percentual <= 0) && Number.isFinite(percentualRaw) && percentualRaw > 0) {
+      percentual = percentualRaw > 0 && percentualRaw <= 1 ? percentualRaw * 100 : percentualRaw;
+    }
+
+    const clamped = Math.max(0, Math.min(100, percentual));
+    return clamped < 10 ? Math.round(clamped * 10) / 10 : Math.round(clamped);
+  }
+
+  private obterMetaDaDisciplina(disciplinaNome: string): number {
+    const key = this.normalizarNome(disciplinaNome);
+    if (!key) return 0;
+    const item = this.itens.find((i) => this.normalizarNome(i.disciplinaNome) === key);
+    const meta = Number(item?.tempoMinutos ?? 0);
+    return Number.isFinite(meta) && meta > 0 ? meta : 0;
+  }
+
+  private normalizarNome(nome: string): string {
+    return String(nome ?? '').trim().toLowerCase();
+  }
+
+  formatPercent(value: number): string {
+    if (!Number.isFinite(value)) return '0%';
+    return value < 10 && value > 0 ? `${value.toFixed(1)}%` : `${Math.round(value)}%`;
+  }
+
+  private lerNumeroFlexivel(value: unknown): number | null {
+    if (value == null) return null;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value !== 'string') return null;
+
+    const raw = value.trim();
+    if (!raw) return null;
+
+    // Formato tempo HH:MM[:SS] -> converte para minutos decimais.
+    if (/^\d{1,2}:\d{1,2}(:\d{1,2})?$/.test(raw)) {
+      const parts = raw.split(':').map(Number);
+      if (parts.length === 2) {
+        const [h, m] = parts;
+        return h * 60 + m;
+      }
+      const [h, m, s] = parts;
+      return h * 60 + m + (s / 60);
+    }
+
+    // Suporta "12,5", "12.5", "12%", etc.
+    const normalized = raw.replace('%', '').replace(',', '.');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 
 
@@ -156,6 +257,7 @@ export class EstudarAgora implements OnInit {
             const found = this.itens.find(i => i.cicloItemId === this.proximaSessaoDto!.cicloItemId);
             if (found) this.selecionado = found;
           }
+          this.recalcularProgresso();
           this.cdr.detectChanges();
         },
         error: (e) => console.error('Erro ao carregar matérias do ciclo', e),
