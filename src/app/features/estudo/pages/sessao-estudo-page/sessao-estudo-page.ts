@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, OnDestroy, resource, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { catchError, firstValueFrom, map, Observable, of } from 'rxjs';
+import { catchError, finalize, firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { ObservacoesEditor } from '../../components/observacoes-editor/observacoes-editor';
@@ -13,6 +13,7 @@ import { EstudoApiService } from '../../data/estudo-api.service';
 import { SessaoDetalheDto } from '../../data/estudo.models';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
 import { SessionTimerService } from '../../services/session-timer-service';
+import { StudyAlertSoundService } from '../../services/study-alert-sound.service';
 import { StudySessionClockCoordinatorService } from '../../services/study-session-clock-coordinator.service';
 import { StudySessionPomodoroSnapshotService } from '../../services/study-session-pomodoro-snapshot.service';
 
@@ -31,6 +32,7 @@ export class SessaoEstudoPage implements OnDestroy {
 
   readonly pomodoro = inject(PomodoroEngineService);
   readonly timer = inject(SessionTimerService);
+  private readonly sounds = inject(StudyAlertSoundService);
   private readonly coordenador = inject(StudySessionClockCoordinatorService);
   private readonly pomodoroSnapshot = inject(StudySessionPomodoroSnapshotService);
 
@@ -39,6 +41,7 @@ export class SessaoEstudoPage implements OnDestroy {
   tempoPlanejado = signal('');
   acaoLoading = signal(false);
   pomodoroEnabled = signal(false);
+  private readonly finalizandoSessao = signal(false);
 
   /**
    * Cópia local do último DTO recebido da API (via initSessao).
@@ -87,6 +90,17 @@ export class SessaoEstudoPage implements OnDestroy {
         });
       }
     });
+
+    // ✅ Ao atingir a meta do cronômetro principal, conclui/finaliza automaticamente
+    // a sessão, mesmo que o Pomodoro ainda esteja correndo.
+    effect(() => {
+      const s = this.sessao();
+      if (!s || !s.inicio || !!s.fim) return;
+      if (!this.timer.finalizada()) return;
+      if (this.finalizandoSessao()) return;
+
+      untracked(() => this.finalizar(true));
+    });
   }
 
   // ================= STATUS =================
@@ -128,8 +142,9 @@ export class SessaoEstudoPage implements OnDestroy {
     // Mantém o sinal local sempre atualizado com o último DTO da API.
     this._sessao.set(s);
 
-    const metaMs  = TempoFormatUtil.minutosParaMs(s.tempoMinutos);
-    const baseMs  = Number(s.estudadoTotalSeg ?? 0) * 1000;
+    const metaMs = TempoFormatUtil.minutosParaMs(s.tempoMinutos);
+    const baseMsRaw = Number(s.estudadoTotalSeg ?? 0) * 1000;
+    const baseMs = metaMs > 0 ? Math.min(baseMsRaw, metaMs) : Math.max(0, baseMsRaw);
     const pausada = !!s.pausadoEm || !s.inicio;
     const finalizada = !!s.fim;
 
@@ -385,17 +400,30 @@ export class SessaoEstudoPage implements OnDestroy {
 
   finalizar(concluido: boolean): void {
     const s = this.sessao();
-    if (!s) return;
+    if (!s || this.finalizandoSessao() || !!s.fim) return;
 
+    this.finalizandoSessao.set(true);
+    this.acaoLoading.set(true);
     this.timer.finish();
+    this.pomodoro.stop();
 
     this.api.finalizarSessao({
       id: s.id,
       concluido,
       observacoes: this.observacoes(),
-    }).subscribe((novo) => {
-      this.pomodoroSnapshot.clear(s.id);
-      this.initSessao(novo);
+    }).pipe(
+      finalize(() => {
+        this.finalizandoSessao.set(false);
+        this.acaoLoading.set(false);
+      }),
+    ).subscribe({
+      next: (novo) => {
+        if (concluido) {
+          this.sounds.playSessionFinished();
+        }
+        this.pomodoroSnapshot.clear(s.id);
+        this.initSessao(novo);
+      },
     });
   }
 

@@ -59,6 +59,24 @@ export class StudyAlertSoundService {
     ]);
   }
 
+  playSessionFinished(): void {
+    if (this.profile === 'SUAVE') {
+      this.playSequence([
+        { freq: 988, durationMs: 140, delayMs: 0, type: 'sine', gain: 0.11 },
+        { freq: 1174, durationMs: 170, delayMs: 170, type: 'sine', gain: 0.12 },
+        { freq: 1318, durationMs: 220, delayMs: 380, type: 'sine', gain: 0.12 },
+      ]);
+      return;
+    }
+
+    // CAMPAINHA de conclusão (mais destacada).
+    this.playSequence([
+      { freq: 1046, durationMs: 170, delayMs: 0, type: 'triangle', gain: 0.2 },
+      { freq: 1318, durationMs: 200, delayMs: 190, type: 'triangle', gain: 0.22 },
+      { freq: 1568, durationMs: 260, delayMs: 420, type: 'triangle', gain: 0.24 },
+    ]);
+  }
+
   private playSequence(notes: Array<{
     freq: number;
     durationMs: number;
