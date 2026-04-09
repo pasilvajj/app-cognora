@@ -2,7 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { delay, finalize, map } from 'rxjs/operators';
+import { forkJoin, of } from 'rxjs';
+import { catchError, delay, finalize } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
@@ -17,6 +18,14 @@ import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../d
 type ProgressItem = {
   disciplina: string;
   percent: number; // 0..100proxima
+};
+
+type ObservacaoMateriaItem = {
+  sessaoId: number;
+  disciplina: string;
+  observacao: string;
+  dataIso: string;
+  dataLabel: string;
 };
 @Component({
   selector: 'app-estudar-agora',
@@ -44,6 +53,8 @@ export class EstudarAgora implements OnInit {
   modalOpen = false;
   progress: ProgressItem[] = [];
   recentSessions: RecentSession[] = [];
+  observacoesMateria: ObservacaoMateriaItem[] = [];
+  observacoesLoading = signal(false);
   private progressoBruto: ProgressoDisciplinaDto[] = [];
 
   constructor(
@@ -95,14 +106,12 @@ export class EstudarAgora implements OnInit {
 
   getSessoesRecentes(): void {
     this.estudoApi.getSessoesRecentes(this.usuarioId, this.cicloId, 10)
-      .pipe(
-        map(sessoes => sessoes.map(s => this.mapSessaoParaCard(s)))
-      )
       .subscribe({
-        next: (list) => {
-          this.recentSessions = list;
+        next: (sessoes) => {
+          this.recentSessions = (sessoes ?? []).map(s => this.mapSessaoParaCard(s));
+          this.carregarObservacoesDasSessoes(sessoes ?? []);
         },
-        error: (e) => this.toastr.error('Erro ao carregar sessões recentes')
+        error: () => this.toastr.error('Erro ao carregar sessões recentes')
       });
   }
 
@@ -330,6 +339,59 @@ export class EstudarAgora implements OnInit {
     if (diffDays === 0) return 'Hoje';
     if (diffDays === 1) return 'Ontem';
 
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${dd}/${mm}`;
+  }
+
+  trackByObservacao(_: number, item: ObservacaoMateriaItem): number {
+    return item.sessaoId;
+  }
+
+  private carregarObservacoesDasSessoes(sessoes: SessaoCardDto[]): void {
+    const ids = [...new Set((sessoes ?? []).map(s => Number(s.id)).filter(id => Number.isFinite(id) && id > 0))];
+    if (!ids.length) {
+      this.observacoesMateria = [];
+      return;
+    }
+
+    this.observacoesLoading.set(true);
+
+    forkJoin(
+      ids.map(id =>
+        this.estudoApi.getSessao(id).pipe(
+          catchError(() => of(null)),
+        ),
+      ),
+    ).pipe(
+      finalize(() => this.observacoesLoading.set(false)),
+    ).subscribe((detalhes) => {
+      const notas = (detalhes ?? [])
+        .filter((s): s is NonNullable<typeof s> => !!s)
+        .map((s) => {
+          const dataSessao = s.inicio ?? s.fim;
+          return {
+          sessaoId: s.id,
+          disciplina: s.disciplinaNome,
+          observacao: (s.observacoes ?? '').trim(),
+          dataIso: dataSessao,
+          dataLabel: this.formatDataHora(dataSessao),
+        };
+        })
+        .filter((n) => !!n.observacao)
+        .sort((a, b) => Date.parse(b.dataIso) - Date.parse(a.dataIso));
+
+      this.observacoesMateria = notas;
+      this.cdr.detectChanges();
+    });
+  }
+
+  private formatDataHora(iso?: string | null): string {
+    if (!iso) return 'Sem data';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return 'Sem data';
+
+    // Exibição fixa no card: dd/MM
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     return `${dd}/${mm}`;

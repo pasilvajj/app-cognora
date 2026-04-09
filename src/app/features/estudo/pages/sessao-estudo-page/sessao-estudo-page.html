@@ -37,7 +37,10 @@
 
     <!-- ================= POMODORO ================= -->
     @if (pomodoroEnabled()) {
-    <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()" (skipStage)="onPomodoroSkipStage()">
+    <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()"
+      [desativado]="pomodoroTemporariamenteDesativado()"
+      (skipStage)="onPomodoroSkipStage()"
+      (toggleEnabled)="onPomodoroToggleEnabled()">
     </app-pomodoro-timer>
     }
 

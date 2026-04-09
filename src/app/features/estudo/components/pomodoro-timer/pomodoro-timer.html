@@ -16,12 +16,12 @@
       {{ engine.timeLabel() }}
     </div>
 
-    <button class="btn-ghost" type="button" (click)="onSkipStage()" [disabled]="sessaoFinalizada()">
+    <button class="btn-ghost" type="button" (click)="onSkipStage()" [disabled]="!canSkip()">
       Pular etapa
     </button>
 
     <button class="btn-warning" type="button" (click)="onToggleEnabled()" [disabled]="sessaoFinalizada()">
-      Desativar agora
+      {{ desativado() ? 'Ativar agora' : 'Desativar agora' }}
     </button>
   </div>
 </div>

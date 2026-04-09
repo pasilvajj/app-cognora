@@ -16,6 +16,7 @@ export class PomodoroTimer {
 
   // 2. Signal Inputs (Modern Angular)
   sessaoFinalizada = input(false);
+  desativado = input(false);
 
   // 3. Signal Outputs
   skipStage = output<void>();
@@ -23,7 +24,7 @@ export class PomodoroTimer {
 
   // 4. Computed local para UI (Otimiza re-render do HTML)
   // Exemplo: se precisar de uma lógica específica apenas para o botão de pular
-  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished());
+  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished() && !this.desativado());
 
   // ===============================
   // AÇÕES DO TEMPLATE

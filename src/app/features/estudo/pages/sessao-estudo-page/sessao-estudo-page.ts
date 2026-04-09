@@ -42,6 +42,7 @@ export class SessaoEstudoPage implements OnDestroy {
   acaoLoading = signal(false);
   pomodoroEnabled = signal(false);
   private readonly finalizandoSessao = signal(false);
+  readonly pomodoroTemporariamenteDesativado = signal(false);
 
   /**
    * Cópia local do último DTO recebido da API (via initSessao).
@@ -139,6 +140,11 @@ export class SessaoEstudoPage implements OnDestroy {
   private initSessao(s: SessaoDetalheDto, defer = false): void {
     if (!s) return;
 
+    const sessaoAnteriorId = this._sessao()?.id ?? null;
+    if (sessaoAnteriorId !== s.id) {
+      this.pomodoroTemporariamenteDesativado.set(false);
+    }
+
     // Mantém o sinal local sempre atualizado com o último DTO da API.
     this._sessao.set(s);
 
@@ -177,7 +183,8 @@ export class SessaoEstudoPage implements OnDestroy {
       });
     }
 
-    const sessaoRodando = !!s.inicio && !s.fim && !s.pausadoEm;
+    const sessaoRodandoBackend = !!s.inicio && !s.fim && !s.pausadoEm;
+    const sessaoRodando = sessaoRodandoBackend && !this.pomodoroTemporariamenteDesativado();
     const estudadoSeg = s.estudadoTotalSeg ?? 0;
     const focoSeg = (s.pomodoroFocoMin ?? 25) * 60;
     const snapshotLocal = this.pomodoroSnapshot.get(s.id);
@@ -341,7 +348,10 @@ export class SessaoEstudoPage implements OnDestroy {
 
       this.initSessao(s, true);
 
-      this.coordenador.ativarRelógios(Date.now(), this.pomodoroEnabled());
+      this.coordenador.ativarRelógios(
+        Date.now(),
+        this.pomodoroEnabled() && !this.pomodoroTemporariamenteDesativado(),
+      );
     });
   }
 
@@ -379,12 +389,15 @@ export class SessaoEstudoPage implements OnDestroy {
           modo: localPomodoro.modo,
           cicloIndex: localPomodoro.cicloIndex,
           restanteSeg: localPomodoro.restanteSeg,
-          rodando: true,
+          rodando: !this.pomodoroTemporariamenteDesativado(),
           deferTicker: true,
         });
       }
 
-      this.coordenador.ativarRelógios(Date.now(), this.pomodoroEnabled());
+      this.coordenador.ativarRelógios(
+        Date.now(),
+        this.pomodoroEnabled() && !this.pomodoroTemporariamenteDesativado(),
+      );
     });
   }
 
@@ -431,6 +444,24 @@ export class SessaoEstudoPage implements OnDestroy {
 
   onPomodoroSkipStage(): void {
     this.pomodoro.skip();
+  }
+
+  onPomodoroToggleEnabled(): void {
+    const s = this.sessao();
+    if (!s || !!s.fim || this.timer.finalizada()) return;
+
+    const desativado = this.pomodoroTemporariamenteDesativado();
+    if (!desativado) {
+      this.pomodoro.pause();
+      this.pomodoro.dismissOverlay();
+      this.pomodoroTemporariamenteDesativado.set(true);
+      return;
+    }
+
+    this.pomodoroTemporariamenteDesativado.set(false);
+    if (!this.timer.pausada() && !this.timer.finalizada() && !this.pomodoro.finished()) {
+      this.pomodoro.startAt(Date.now());
+    }
   }
 
   onPomodoroCloseOverlay(): void {
