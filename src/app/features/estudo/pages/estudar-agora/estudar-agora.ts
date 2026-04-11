@@ -8,6 +8,11 @@ import { AuthService } from '../../../../core/auth/auth.service';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
+import {
+  formatPercent as formatPercentUtil,
+  normalizarNomeDisciplina,
+  normalizarPercentualProgresso as normalizarPercentualProgressoUtil,
+} from '../../../../shared/utils/progresso-disciplina.util';
 import { CicloDto } from '../../../ciclos/data/ciclos.models'; // ajuste para seu tipo real
 import { CicloItemView, EscolherMateriaModalCircular } from '../../components/escolher-materia-modal-circular/escolher-materia-modal-circular';
 import { RecentSession, UltimasSessoesCard } from '../../components/ultimas-sessoes-card/ultimas-sessoes-card';
@@ -158,86 +163,21 @@ export class EstudarAgora implements OnInit {
   private recalcularProgresso(): void {
     this.progress = this.progressoBruto.map((p) => ({
       disciplina: p.disciplinaNome,
-      percent: this.normalizarPercentualProgresso(p),
+      percent: normalizarPercentualProgressoUtil(p, (nome) => this.obterMetaDaDisciplina(nome)),
     }));
     this.cdr.detectChanges();
   }
 
-  private normalizarPercentualProgresso(p: ProgressoDisciplinaDto): number {
-    const obj = p as unknown as Record<string, unknown>;
-    const feitos =
-      this.lerNumeroFlexivel(obj['minutosFeitos']) ??
-      this.lerNumeroFlexivel(obj['minutosEstudados']) ??
-      this.lerNumeroFlexivel(obj['minFeitos']) ??
-      this.lerNumeroFlexivel(obj['feitoMin']) ??
-      0;
-    const metaDto =
-      this.lerNumeroFlexivel(obj['minutosMeta']) ??
-      this.lerNumeroFlexivel(obj['metaMinutos']) ??
-      this.lerNumeroFlexivel(obj['minMeta']) ??
-      this.lerNumeroFlexivel(obj['metaMin']) ??
-      0;
-    const meta = metaDto > 0 ? metaDto : this.obterMetaDaDisciplina(p.disciplinaNome);
-    const percentualRaw =
-      this.lerNumeroFlexivel(obj['percentual']) ??
-      this.lerNumeroFlexivel(obj['percent']) ??
-      this.lerNumeroFlexivel(obj['porcentagem']) ??
-      this.lerNumeroFlexivel(obj['percentualConcluido']) ??
-      this.lerNumeroFlexivel(obj['progressoPercentual']) ??
-      0;
-
-    const percentualCalculado = meta > 0 ? (Math.max(0, feitos) / Math.max(0, meta)) * 100 : 0;
-    let percentual = percentualCalculado;
-
-    // Fallback: se não conseguir calcular por feitos/meta, tenta valor percentual bruto.
-    if ((!Number.isFinite(percentual) || percentual <= 0) && Number.isFinite(percentualRaw) && percentualRaw > 0) {
-      percentual = percentualRaw > 0 && percentualRaw <= 1 ? percentualRaw * 100 : percentualRaw;
-    }
-
-    const clamped = Math.max(0, Math.min(100, percentual));
-    return clamped < 10 ? Math.round(clamped * 10) / 10 : Math.round(clamped);
-  }
-
   private obterMetaDaDisciplina(disciplinaNome: string): number {
-    const key = this.normalizarNome(disciplinaNome);
+    const key = normalizarNomeDisciplina(disciplinaNome);
     if (!key) return 0;
-    const item = this.itens.find((i) => this.normalizarNome(i.disciplinaNome) === key);
+    const item = this.itens.find((i) => normalizarNomeDisciplina(i.disciplinaNome) === key);
     const meta = Number(item?.tempoMinutos ?? 0);
     return Number.isFinite(meta) && meta > 0 ? meta : 0;
   }
 
-  private normalizarNome(nome: string): string {
-    return String(nome ?? '').trim().toLowerCase();
-  }
-
   formatPercent(value: number): string {
-    if (!Number.isFinite(value)) return '0%';
-    return value < 10 && value > 0 ? `${value.toFixed(1)}%` : `${Math.round(value)}%`;
-  }
-
-  private lerNumeroFlexivel(value: unknown): number | null {
-    if (value == null) return null;
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value !== 'string') return null;
-
-    const raw = value.trim();
-    if (!raw) return null;
-
-    // Formato tempo HH:MM[:SS] -> converte para minutos decimais.
-    if (/^\d{1,2}:\d{1,2}(:\d{1,2})?$/.test(raw)) {
-      const parts = raw.split(':').map(Number);
-      if (parts.length === 2) {
-        const [h, m] = parts;
-        return h * 60 + m;
-      }
-      const [h, m, s] = parts;
-      return h * 60 + m + (s / 60);
-    }
-
-    // Suporta "12,5", "12.5", "12%", etc.
-    const normalized = raw.replace('%', '').replace(',', '.');
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
+    return formatPercentUtil(value);
   }
 
 

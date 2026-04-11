@@ -4,27 +4,31 @@
     <h3>Progresso por disciplina</h3>
   </div>
 
-  <div class="discipline-list">
+  <div class="discipline-list" *ngIf="items().length > 0">
 
-    <div class="discipline-item" *ngFor="let d of disciplines">
+    <div class="discipline-item" *ngFor="let d of items(); trackBy: trackByName">
 
       <div class="discipline-info">
         <span class="name">{{ d.name }}</span>
-        <span class="percent">{{ d.progress }}%</span>
+        <span class="percent">{{ formatPct(d.percent) }}</span>
       </div>
 
       <div class="progress-bar">
         <div
           class="progress-fill"
-          [class.success]="getColor(d.progress) === 'success'"
-          [class.warning]="getColor(d.progress) === 'warning'"
-          [class.danger]="getColor(d.progress) === 'danger'"
-          [style.width.%]="d.progress">
+          [class.success]="getColor(d.percent) === 'success'"
+          [class.warning]="getColor(d.percent) === 'warning'"
+          [class.danger]="getColor(d.percent) === 'danger'"
+          [style.width.%]="d.percent">
         </div>
       </div>
 
     </div>
 
   </div>
+
+  <p class="empty-hint" *ngIf="items().length === 0">
+    Nenhum dado de progresso para este ciclo ainda.
+  </p>
 
 </div>

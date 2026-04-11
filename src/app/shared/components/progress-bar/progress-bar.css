@@ -13,6 +13,13 @@
   color: var(--text);
 }
 
+.empty-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .discipline-list {
   display: flex;
   flex-direction: column;

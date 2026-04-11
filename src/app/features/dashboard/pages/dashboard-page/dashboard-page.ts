@@ -2,13 +2,21 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
 import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
-import { ProgressBar } from '../../../../shared/components/progress-bar/progress-bar';
+import { ProgressBar, ProgressDisciplinaItem } from '../../../../shared/components/progress-bar/progress-bar';
 import { WeekChart } from '../../../../shared/components/week-chart/week-chart';
+import {
+  normalizarNomeDisciplina,
+  normalizarPercentualProgresso,
+} from '../../../../shared/utils/progresso-disciplina.util';
 import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
-import { CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
+import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
+import { EstudoApiService } from '../../../estudo/data/estudo-api.service';
+import { ProgressoDisciplinaDto as ProgressoEstudoDto } from '../../../estudo/data/estudo.models';
 
 import {
   DashboardApiService, DashboardResumoDto, ProgressoDisciplinaDto,
@@ -58,12 +66,14 @@ export class DashboardPage implements OnInit {
   private actionIsRetomar = signal(false);
 
   semana: WeekDayDto[] = [];
-  progresso: ProgressoDisciplinaDto[] = [];
+  /** Mesma fonte/normalização que Estudar Agora (`getProgressoCiclo` + meta das matérias). */
+  progressoItems: ProgressDisciplinaItem[] = [];
 
   private readonly LS_KEY = 'cognora:lastCicloId';
 
   dashboardApi = inject(DashboardApiService);
   ciclosApi = inject(CiclosApiService);
+  estudoApi = inject(EstudoApiService);
   router = inject(Router);
   cdr = inject(ChangeDetectorRef);
   auth = inject(AuthService);
@@ -129,7 +139,6 @@ export class DashboardPage implements OnInit {
     this.dashboardApi.getResumo(this.usuarioId, this.cicloId).subscribe({
       next: (r) => {
         this.resumo = r;
-        // ===== TIME =====
         this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
         this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
 
@@ -143,7 +152,7 @@ export class DashboardPage implements OnInit {
 
         // ===== CHART / PROGRESSO =====
         this.semana = r.semana ?? [];
-        this.progresso = r.progresso ?? [];
+        this.carregarProgressoPorDisciplina(r.progresso ?? []);
 
         this.loading = false;
         this.cdr.detectChanges();
@@ -152,6 +161,48 @@ export class DashboardPage implements OnInit {
         this.loading = false;
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  /**
+   * Progresso por disciplina: `EstudoApiService.getProgressoCiclo` + meta via matérias do ciclo
+   * (equivalente ao painel em Estudar Agora). Em falha parcial, usa `progresso` do resumo do dashboard.
+   */
+  private carregarProgressoPorDisciplina(fallbackResumo: ProgressoDisciplinaDto[]): void {
+    if (!this.cicloId) {
+      this.progressoItems = [];
+      return;
+    }
+
+    const cicloId = this.cicloId;
+    const usuarioId = this.usuarioId;
+
+    forkJoin({
+      progresso: this.estudoApi.getProgressoCiclo(cicloId, usuarioId).pipe(
+        catchError(() => of([] as ProgressoEstudoDto[])),
+      ),
+      materias: this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
+        catchError(() => of([] as CicloMateriaDto[])),
+      ),
+    }).subscribe(({ progresso, materias }) => {
+      const materiasList = materias ?? [];
+      const getMeta = (nome: string): number => {
+        const key = normalizarNomeDisciplina(nome);
+        const item = materiasList.find((m) => normalizarNomeDisciplina(m.disciplinaNome) === key);
+        const meta = Number(item?.tempoMinutos ?? 0);
+        return Number.isFinite(meta) && meta > 0 ? meta : 0;
+      };
+
+      let lista: ProgressoEstudoDto[] = progresso ?? [];
+      if (!lista.length && fallbackResumo.length) {
+        lista = fallbackResumo as unknown as ProgressoEstudoDto[];
+      }
+
+      this.progressoItems = lista.map((p) => ({
+        name: p.disciplinaNome,
+        percent: normalizarPercentualProgresso(p, getMeta),
+      }));
+      this.cdr.detectChanges();
     });
   }
 
