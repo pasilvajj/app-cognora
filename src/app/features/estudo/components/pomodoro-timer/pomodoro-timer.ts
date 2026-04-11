@@ -24,7 +24,8 @@ export class PomodoroTimer {
 
   // 4. Computed local para UI (Otimiza re-render do HTML)
   // Exemplo: se precisar de uma lógica específica apenas para o botão de pular
-  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished() && !this.desativado());
+  /** Pular etapa deve funcionar mesmo com Pomodoro “Desativar agora” (senão o usuário fica preso na PAUSA_CURTA). */
+  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished());
 
   // ===============================
   // AÇÕES DO TEMPLATE
@@ -35,9 +36,9 @@ export class PomodoroTimer {
     this.engine.toggle();
   }
 
+  /** O `skip()` real fica no pai — evita dupla chamada (FOCO → pular de novo → voltava para PAUSA). */
   onSkipStage(): void {
-    this.engine.skip();
-    this.skipStage.emit(); // Notifica o pai se necessário (ex: para logs)
+    this.skipStage.emit();
   }
 
   onToggleEnabled(): void {

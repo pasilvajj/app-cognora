@@ -158,11 +158,26 @@ export class PomodoroEngineService {
       anchorMs:        0,
       running,
       focusFinished:   false,
+      overlayVisible:  false,
+      overlayText:     '',
     }));
 
     if (running && !snapshot.deferTicker) {
       this.startAt(snapshot.anchorEpochMs ?? Date.now());
     }
+  }
+
+  /**
+   * Reabre o modal de alerta após reload (persistido em localStorage).
+   * Não inicia o cronômetro da pausa — isso ocorre só em `closeOverlay()`.
+   */
+  applyPendingOverlay(p: { texto: string; focusFinished: boolean }): void {
+    this.state.update(s => ({
+      ...s,
+      overlayVisible: true,
+      overlayText:    p.texto,
+      focusFinished:  p.focusFinished,
+    }));
   }
 
   // ── Controles ────────────────────────────────────────────────────────────────
@@ -225,6 +240,15 @@ export class PomodoroEngineService {
   }
 
   skip(): void {
+    const s = this.state();
+    if (s.finished) return;
+
+    // Na pausa (curta ou longa): pular etapa = ir direto ao FOCO, sem modal intermediário.
+    if (s.mode === 'PAUSA_CURTA' || s.mode === 'PAUSA_LONGA') {
+      this.transitionBreakToFoco(false);
+      return;
+    }
+
     this.avancarEtapa();
   }
 
@@ -356,6 +380,29 @@ export class PomodoroEngineService {
       return;
     }
 
+    this.transitionBreakToFoco(true);
+  }
+
+  /**
+   * Fim natural do descanso (cronômetro zerou) ou “Pular etapa” na pausa.
+   * `mostrarOverlay`: true quando o tempo da pausa acabou (modal antes de voltar ao foco); false ao pular etapa.
+   */
+  private transitionBreakToFoco(mostrarOverlay: boolean): void {
+    this.stopTicker();
+    const s = this.state();
+
+    if (s.cicloAtual >= this.config.longaACada) {
+      this.state.update(curr => ({
+        ...curr,
+        finished:        true,
+        running:         false,
+        restanteSegBase: 0,
+        remainingMs:     0,
+        anchorMs:        0,
+      }));
+      return;
+    }
+
     const focoSeg = this.duracaoEtapaSeg('FOCO');
     this.sounds.playBreakEnded();
     this.state.update(curr => ({
@@ -366,8 +413,9 @@ export class PomodoroEngineService {
       remainingMs:     focoSeg * 1000,
       anchorMs:        0,
       running:         false,
-      overlayVisible:  true,
-      overlayText:     'Pausa encerrada. Pronto para voltar ao foco?',
+      overlayVisible:  mostrarOverlay,
+      overlayText:     mostrarOverlay ? 'Pausa encerrada. Pronto para voltar ao foco?' : '',
+      focusFinished:   false,
     }));
   }
 

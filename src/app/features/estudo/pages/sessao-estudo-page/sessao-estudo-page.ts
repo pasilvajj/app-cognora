@@ -76,6 +76,7 @@ export class SessaoEstudoPage implements OnDestroy {
   readonly pomodoroMode = computed(() => this.pomodoro.mode());
   readonly pomodoroTexto = computed(() => this.pomodoro.overlayText());
   readonly pomodoroVisible = computed(() => this.pomodoro.overlayVisible());
+  /** Bloqueia Retomar na sessão enquanto estiver em PAUSA_CURTA (regra de negócio), inclusive com Pomodoro “desativado”. */
   readonly retomarBloqueadoNaPausaCurta = computed(() =>
     this.timer.pausada() && this.pomodoroEnabled() && this.pomodoroMode() === 'PAUSA_CURTA',
   );
@@ -101,6 +102,19 @@ export class SessaoEstudoPage implements OnDestroy {
       if (this.finalizandoSessao()) return;
 
       untracked(() => this.finalizar(true));
+    });
+
+    // Persiste o modal Pomodoro (F5) até o usuário confirmar em Ok / Próxima etapa.
+    effect(() => {
+      const id = this.sessao()?.id;
+      const vis = this.pomodoro.overlayVisible();
+      const txt = this.pomodoro.overlayText();
+      const ff = this.pomodoro.focusFinished();
+      if (!id || !vis || !txt) return;
+
+      untracked(() => {
+        this.pomodoroSnapshot.setOverlayPending(id, { texto: txt, focusFinished: ff });
+      });
     });
   }
 
@@ -213,6 +227,7 @@ export class SessaoEstudoPage implements OnDestroy {
         rodando: false,
         deferTicker: defer,
       });
+      this.reaplicarOverlayPomodoroSePendente(s.id);
       return;
     }
 
@@ -264,6 +279,17 @@ export class SessaoEstudoPage implements OnDestroy {
       rodando:     sessaoRodando,
       deferTicker: defer,
     });
+    this.reaplicarOverlayPomodoroSePendente(s.id);
+  }
+
+  /** Reabre o alerta Pomodoro após F5, se ainda não houve Ok. */
+  private reaplicarOverlayPomodoroSePendente(sessaoId: number): void {
+    if (!this.pomodoroEnabled()) return;
+
+    const p = this.pomodoroSnapshot.getOverlayPending(sessaoId);
+    if (!p) return;
+
+    this.pomodoro.applyPendingOverlay({ texto: p.texto, focusFinished: p.focusFinished });
   }
 
   /**
@@ -352,6 +378,7 @@ export class SessaoEstudoPage implements OnDestroy {
         Date.now(),
         this.pomodoroEnabled() && !this.pomodoroTemporariamenteDesativado(),
       );
+      this.pomodoroSnapshot.clearOverlayPending(s.id);
     });
   }
 
@@ -398,6 +425,7 @@ export class SessaoEstudoPage implements OnDestroy {
         Date.now(),
         this.pomodoroEnabled() && !this.pomodoroTemporariamenteDesativado(),
       );
+      this.pomodoroSnapshot.clearOverlayPending(s.id);
     });
   }
 
@@ -444,6 +472,15 @@ export class SessaoEstudoPage implements OnDestroy {
 
   onPomodoroSkipStage(): void {
     this.pomodoro.skip();
+    // Com Pomodoro em “Ativar agora”, volta o rótulo para “Desativar agora” após pular etapa.
+    this.pomodoroTemporariamenteDesativado.set(false);
+    const id = this.sessao()?.id;
+    if (id && !this.pomodoro.overlayVisible()) {
+      this.pomodoroSnapshot.clearOverlayPending(id);
+    }
+    if (id) {
+      this.salvarSnapshotPomodoro(id);
+    }
   }
 
   onPomodoroToggleEnabled(): void {
@@ -454,12 +491,18 @@ export class SessaoEstudoPage implements OnDestroy {
     if (!desativado) {
       this.pomodoro.pause();
       this.pomodoro.dismissOverlay();
+      this.pomodoroSnapshot.clearOverlayPending(s.id);
       this.pomodoroTemporariamenteDesativado.set(true);
       return;
     }
 
     this.pomodoroTemporariamenteDesativado.set(false);
-    if (!this.timer.pausada() && !this.timer.finalizada() && !this.pomodoro.finished()) {
+    // PAUSA_CURTA/LONGA: sessão pausada, mas o descanso do Pomodoro segue no cliente ao reativar.
+    // FOCO + sessão pausada: não iniciar o Pomodoro aqui — só após Retomar (coordenador.ativarRelógios).
+    const adiarPomodoroAteRetomar =
+      this.timer.pausada() && this.pomodoro.mode() === 'FOCO';
+
+    if (!this.timer.finalizada() && !this.pomodoro.finished() && !adiarPomodoroAteRetomar) {
       this.pomodoro.startAt(Date.now());
     }
   }
@@ -470,10 +513,12 @@ export class SessaoEstudoPage implements OnDestroy {
     }
 
     this.pomodoro.closeOverlay();
+    this.pomodoroSnapshot.clearOverlayPending(this.sessao()!.id);
   }
 
   onPomodoroNextStage(): void {
     this.pomodoro.closeOverlay();
+    this.pomodoroSnapshot.clearOverlayPending(this.sessao()!.id);
   }
 
   // ================= GUARD =================
