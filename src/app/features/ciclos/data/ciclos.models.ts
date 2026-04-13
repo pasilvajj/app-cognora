@@ -1,6 +1,9 @@
 export type ConcursoDto = {
   id: number;
   nome: string;
+  /** Presente quando a API retorna o cadastro completo (filtro por região). */
+  escopo?: 'NACIONAL' | 'ESTADUAL';
+  uf?: string | null;
   banca?: string;
   dataProva?: string; // ISO yyyy-MM-dd
 };

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
@@ -20,8 +20,19 @@ export class CiclosApiService {
 
   constructor(private http: HttpClient) { }
 
-  listConcursos(): Observable<ConcursoDto[]> {
-    return this.http.get<ConcursoDto[]>(`${this.base}/concursos`);
+  /**
+   * @param escopo `NACIONAL` | `ESTADUAL` — filtra concursos por região (backend).
+   * @param uf Sigla de 2 letras, obrigatória quando escopo é estadual.
+   */
+  listConcursos(escopo?: 'NACIONAL' | 'ESTADUAL', uf?: string): Observable<ConcursoDto[]> {
+    let params = new HttpParams();
+    if (escopo) {
+      params = params.set('escopo', escopo);
+    }
+    if (uf) {
+      params = params.set('uf', uf);
+    }
+    return this.http.get<ConcursoDto[]>(`${this.base}/concursos`, { params });
   }
 
   // escolha UM: por concursoId ou por editalId (ou ambos)

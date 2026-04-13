@@ -48,20 +48,74 @@
       </div>
     </section>
 
-    <!-- Concurso / Edital -->
+    <!-- Região → Concurso → Cargo -->
     <section class="card">
       <div class="card-header">
-        <h2>Selecionar Concurso/Cargo</h2>
+        <h2>Região, concurso e cargo</h2>
       </div>
 
       <div class="card-body form">
+        <div
+          class="row"
+          [ngClass]="{
+            'row--equal': escopoRegiao === 'ESTADUAL',
+            'row--regiao-solo': escopoRegiao !== 'ESTADUAL'
+          }"
+        >
+          <div class="field">
+            <label>Região</label>
+            <select
+              [(ngModel)]="escopoRegiao"
+              (ngModelChange)="onRegiaoChange()"
+              name="escopoRegiao"
+            >
+              <option [ngValue]="null">Selecione (Nacional ou Estadual)</option>
+              <option [ngValue]="'NACIONAL'">Nacional</option>
+              <option [ngValue]="'ESTADUAL'">Estadual</option>
+            </select>
+            <small class="field-hint">A lista de concursos é filtrada pela região escolhida.</small>
+          </div>
+
+          <div class="field" *ngIf="escopoRegiao === 'ESTADUAL'">
+            <label>UF</label>
+            <select
+              [(ngModel)]="ufRegiao"
+              (ngModelChange)="onRegiaoChange()"
+              name="ufRegiao"
+            >
+              <option [ngValue]="null">Selecione o estado</option>
+              <option *ngFor="let u of ufsBr" [ngValue]="u.sigla">
+                {{ u.sigla }} — {{ u.nome }}
+              </option>
+            </select>
+          </div>
+        </div>
+
         <div class="row">
           <div class="field">
             <label>Concurso</label>
-            <select [(ngModel)]="concursoId" (change)="onCarregarCargoChange()">
-              <option [ngValue]="null">Selecione um concurso</option>
+            <select
+              [(ngModel)]="concursoId"
+              (ngModelChange)="onConcursoModelChange($event)"
+              [disabled]="
+                !escopoRegiao ||
+                (escopoRegiao === 'ESTADUAL' && !ufRegiao) ||
+                loadingConcursos
+              "
+            >
+              <option [ngValue]="null">
+                {{
+                  !escopoRegiao
+                    ? 'Selecione a região primeiro'
+                    : escopoRegiao === 'ESTADUAL' && !ufRegiao
+                      ? 'Selecione o estado (UF)'
+                      : loadingConcursos
+                        ? 'Carregando...'
+                        : 'Selecione um concurso'
+                }}
+              </option>
               <option *ngFor="let c of concursos" [ngValue]="c.id">
-                {{ c.nome }}
+                {{ labelConcurso(c) }}
               </option>
             </select>
           </div>
@@ -71,7 +125,7 @@
             <select
               [(ngModel)]="cargoId"
               [disabled]="!concursoId || loadingCargo"
-              (change)="onDisciplinaChange()"
+              (ngModelChange)="onCargoModelChange($event)"
             >
               <option [ngValue]="null">Selecione um cargo</option>
               <option *ngFor="let e of cargos" [ngValue]="e.id">
@@ -87,7 +141,7 @@
     <app-materias-ciclo-list
       *ngIf="cargoId && !loadingDisciplinas"
       [items]="disciplinas"
-       (itemsChange)="onItemsChange($event)">
+      (itemsChange)="onItemsChange($event)"
     ></app-materias-ciclo-list>
    
     <!-- Pomodoro (Opção A) -->

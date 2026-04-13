@@ -83,6 +83,23 @@
   align-items: end;
 }
 
+/* Região + UF: alinhar pelo topo — o hint abaixo de "Região" não pode deslocar a coluna UF */
+.row.row--equal {
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .row.row--equal {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Só o select de Região (sem UF): largura total */
+.row.row--regiao-solo {
+  grid-template-columns: 1fr;
+}
+
 .field { display: flex; flex-direction: column; gap: 6px; }
 
 .field label {

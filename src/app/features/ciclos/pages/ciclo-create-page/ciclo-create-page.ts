@@ -4,13 +4,20 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
 import { CiclosApiService } from '../../data/ciclos-api.service';
+import { BR_UFS } from '../../constants/br-ufs';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {  MateriasCicloList, DisciplinaCicloItem} from '../materias-ciclo-list/materias-ciclo-list';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 
-type Concurso = { id: number; nome: string };
+type Concurso = {
+  id: number;
+  nome: string;
+  escopo?: 'NACIONAL' | 'ESTADUAL';
+  uf?: string | null;
+};
 type Cargo = { id: number; nome: string };
 type EstrategiaCiclo = 'FIXA' | 'AUTO' | 'ATRASADAS';
+type EscopoRegiao = 'NACIONAL' | 'ESTADUAL';
 
 @Component({
   selector: 'app-ciclo-create-page',
@@ -29,6 +36,11 @@ export class CicloCreatePage implements OnInit {
 
   estrategia: EstrategiaCiclo = 'AUTO';
   disciplinas: DisciplinaCicloItem[] = [];
+
+  /** Filtro de região antes de listar concursos (cadastro no backend por escopo + UF). */
+  escopoRegiao: EscopoRegiao | null = null;
+  ufRegiao: string | null = null;
+  readonly ufsBr = BR_UFS;
 
   concursos: Concurso[] = [];
   cargos: Cargo[] = [];
@@ -67,7 +79,6 @@ export class CicloCreatePage implements OnInit {
       return;
     }
     this.ownerId = user.id;
-    this.carregarConcursos();
     this.aplicarHorasPorMateria();
   }
 
@@ -75,40 +86,89 @@ export class CicloCreatePage implements OnInit {
     this.router.navigate(['/ciclos']);
   }
 
-  onDisciplinaChange(): void {
-    if (this.cargoId == null) {
+  /** Rótulo no select: nome + indicação de escopo/UF quando vier da API. */
+  labelConcurso(c: Concurso): string {
+    if (c.escopo === 'ESTADUAL' && c.uf) {
+      return `${c.nome} (${c.uf})`;
+    }
+    if (c.escopo === 'NACIONAL') {
+      return `${c.nome} — Nacional`;
+    }
+    return c.nome;
+  }
+
+  /**
+   * Usa o valor emitido pelo ngModel (não o evento `change`), para o modelo já estar
+   * atualizado ao buscar disciplinas — evita lista só atualizar no blur.
+   */
+  onCargoModelChange(cargoId: number | null): void {
+    if (cargoId == null) {
       this.disciplinas = [];
       this.cdr.detectChanges();
       return;
     }
-    this.carregarDisciplinas(this.cargoId);
+    this.carregarDisciplinas(cargoId);
   }
 
-  onCarregarCargoChange(): void {
+  onConcursoModelChange(concursoId: number | null): void {
     this.cargos = [];
     this.cargoId = null;
     this.disciplinas = [];
     this.cdr.detectChanges();
 
-    if (this.concursoId == null) return;
-    this.carregarCargo(this.concursoId);
+    if (concursoId == null) {
+      return;
+    }
+    this.carregarCargo(concursoId);
   }
 
-  carregarConcursos(): void {
+  /** Ao mudar Nacional / Estadual ou UF: zera concurso/cargo/disciplinas e recarrega lista de concursos. */
+  onRegiaoChange(): void {
+    this.concursoId = null;
+    this.cargoId = null;
+    this.cargos = [];
+    this.disciplinas = [];
+
+    if (this.escopoRegiao === 'NACIONAL') {
+      this.ufRegiao = null;
+      this.carregarConcursosFiltrados();
+      return;
+    }
+
+    if (this.escopoRegiao === 'ESTADUAL') {
+      if (this.ufRegiao) {
+        this.carregarConcursosFiltrados();
+      } else {
+        this.concursos = [];
+      }
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.ufRegiao = null;
+    this.concursos = [];
+    this.cdr.detectChanges();
+  }
+
+  private carregarConcursosFiltrados(): void {
+    if (!this.escopoRegiao) {
+      return;
+    }
+    if (this.escopoRegiao === 'ESTADUAL' && !this.ufRegiao) {
+      return;
+    }
+
     this.loadingConcursos = true;
 
-    this.api.listConcursos().subscribe({
+    const uf = this.escopoRegiao === 'ESTADUAL' ? this.ufRegiao ?? undefined : undefined;
+
+    this.api.listConcursos(this.escopoRegiao, uf).subscribe({
       next: (data) => {
         this.concursos = data ?? [];
-
-        // padrão: usuário escolhe manualmente
         this.concursoId = null;
-
-        // limpa dependências
         this.cargos = [];
         this.cargoId = null;
         this.disciplinas = [];
-
         this.cdr.detectChanges();
       },
       error: (err) => {
@@ -170,6 +230,16 @@ export class CicloCreatePage implements OnInit {
 
     if (!this.cargaHorariaSemanal || this.cargaHorariaSemanal <= 0) {
       console.error('Carga horária semanal é obrigatória.');
+      return;
+    }
+
+    if (!this.escopoRegiao) {
+      console.error('Selecione a região (Nacional ou Estadual).');
+      return;
+    }
+
+    if (this.escopoRegiao === 'ESTADUAL' && !this.ufRegiao) {
+      console.error('Selecione o estado (UF).');
       return;
     }
 
