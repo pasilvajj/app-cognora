@@ -41,6 +41,9 @@ export type SessaoCardDto = {
   segundosRestantes?: number | null;
 
   status: 'PAUSADA' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'ENCERRADA';
+
+  /** Ordem da matéria no ciclo (CicloItem.ordem). */
+  ordemNoCiclo?: number | null;
 };
 
 export type DashboardResumoDto = {

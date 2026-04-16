@@ -109,7 +109,7 @@
     </app-ultimas-sessoes-card>
 
     <app-escolher-materia-modal-circular [open]="modalOpen" [items]="itens"
-      [defaultSelectedItemId]="selecionadoCicloItemId" [recommendedItemId]="proximaSessaoDto?.cicloItemId"
+      [defaultSelectedItemId]="selecionadoCicloItemId" [recommendedItemId]="selecionadoCicloItemId"
       (close)="modalOpen = false" (startSession)="onStartSession($event)">
     </app-escolher-materia-modal-circular>
   </div>

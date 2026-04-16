@@ -4,9 +4,9 @@
       <div class="header-left">
         <h2>Escolher matéria</h2>
         <div class="header-sub">
-          <span><b>{{ vistas }}</b> vistas</span>
+          <span><b>{{ materiasConcluidas }}</b> concluídas</span>
           <span class="dot">•</span>
-          <span><b>{{ restantes }}</b> restantes</span>
+          <span><b>{{ materiasPendentes }}</b> pendentes</span>
         </div>
       </div>
 
@@ -22,6 +22,7 @@
     </div>
 
     <div class="modal-body" [class.with-list]="showList">
+      <div class="modal-main">
       <!-- STAGE -->
       <div class="stage">
         <div class="ring-wrap">
@@ -33,10 +34,11 @@
             <ng-container *ngFor="let seg of segments">
               <path
                 class="seg seg-fill"
-                [class.is-empty]="!seg.active"
+                [class.is-empty]="!seg.selectable && !seg.concluida"
+                [class.is-locked]="!seg.selectable && seg.concluida"
                 [class.is-selected]="seg.selected"
                 [class.is-rec]="seg.recommended"
-                [class.is-seen]="seg.visto"
+                [class.is-new]="seg.naoInicializada"
                 [class.is-running]="seg.emAndamento"
                 [class.is-done]="seg.concluida"
                 [attr.d]="seg.d"
@@ -52,19 +54,20 @@
             <button
               type="button"
               class="badge"
-              [class.badge-empty]="!seg.active"
+              [class.badge-empty]="!seg.selectable && !seg.concluida"
+              [class.badge-locked]="!seg.selectable && seg.concluida"
               [class.badge-selected]="seg.selected"
               [style.--deg]="seg.midDeg"
               (click)="selectBySegment(seg)"
               (mouseenter)="seg.item ? hover(seg.item) : null"
               (mouseleave)="hover(null)"
-              [disabled]="!seg.active"
+              [disabled]="!seg.selectable"
             >
               <span class="badge-order">{{ seg.ordemLabel }}</span>
 
               <span class="badge-dot running" *ngIf="seg.emAndamento" aria-hidden="true"></span>
               <span class="badge-dot done" *ngIf="!seg.emAndamento && seg.concluida" aria-hidden="true"></span>
-              <span class="badge-check" *ngIf="!seg.emAndamento && !seg.concluida && seg.visto" aria-hidden="true">✓</span>
+              <span class="badge-dot idle" *ngIf="seg.naoInicializada" aria-hidden="true"></span>
             </button>
           </ng-container>
 
@@ -90,13 +93,13 @@
         </div>
         <div class="legend">
               <span class="lg">
+                <i class="dot muted"></i> Não inicializada
+              </span>
+              <span class="lg">
                 <i class="dot blue"></i> Em andamento
               </span>
               <span class="lg">
-                <i class="dot green"></i> Concluída
-              </span>
-              <span class="lg">
-                <i class="dot check">✓</i> Já vista
+                <i class="dot green"></i> Concluído
               </span>
             </div>
       </div>
@@ -105,8 +108,9 @@
       <div class="list" *ngIf="showList">
         <div
           class="list-item"
-          *ngFor="let it of items; trackBy: trackById"
+          *ngFor="let it of itemsOrdenados; trackBy: trackById"
           [class.is-selected]="selectedItem?.cicloItemId === it.cicloItemId"
+          [class.is-locked]="it.concluida"
           (mouseenter)="hover(it)"
           (mouseleave)="hover(null)"
           (click)="select(it)"
@@ -120,17 +124,21 @@
             <span class="li-time">{{ it.tempoMinutos }} min</span>
 
             <span class="li-status" [attr.data-status]="statusKey(it)">
-              <span class="li-dot running" *ngIf="it.sessaoAbertaId"></span>
-              <span class="li-dot done" *ngIf="!it.sessaoAbertaId && it.concluida"></span>
-              <span class="li-check" *ngIf="!it.sessaoAbertaId && !it.concluida && it.visto">✓</span>
+              <ng-container [ngSwitch]="statusKey(it)">
+                <span class="li-dot running" *ngSwitchCase="'RUNNING'" aria-hidden="true"></span>
+                <span class="li-dot done" *ngSwitchCase="'DONE'" aria-hidden="true"></span>
+                <span class="li-dot idle" *ngSwitchCase="'NEW'" aria-hidden="true"></span>
+              </ng-container>
               <span class="li-text">{{ statusText(it) }}</span>
             </span>
           </div>
         </div>
       </div>
 
+      </div>
+
       <div class="hint">
-        Dica: ative “Mostrar lista” para ver os nomes completos. O check indica “já vista” e o ponto azul indica “em andamento”.
+        Dica: ative “Mostrar lista” para ver os nomes completos. Estados: <strong>Não inicializada</strong>, <strong>Em andamento</strong> (após iniciar uma sessão nesta matéria) e <strong>Concluído</strong>. Matérias concluídas não podem ser escolhidas de novo.
       </div>
     </div>
   </div>

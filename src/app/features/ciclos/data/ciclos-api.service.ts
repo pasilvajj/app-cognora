@@ -12,6 +12,8 @@ export type CicloMateriaDto = {
   visto: boolean;
   sessaoAbertaId: number | null;
   concluida: boolean;
+  /** true após comecar() na sessão (cronómetro); só iniciar() reserva sessão sem isto. */
+  cronometroIniciado: boolean;
 };
 
 @Injectable({ providedIn: 'root' })

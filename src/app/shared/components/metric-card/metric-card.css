@@ -46,7 +46,7 @@
 .metric-title {
   font-size: 14px;
   font-weight: 700;
-  color: #334155;
+  color: #cbd5e1;
 }
 
 .metric-value-row {
@@ -59,14 +59,14 @@
 .metric-value {
   font-size: 26px;
   font-weight: 900;
-  color: var(--text);
+  color: #f8fafc;
   letter-spacing: -0.02em;
 }
 
 .metric-sub {
   font-size: 14px;
   font-weight: 600;
-  color: var(--muted);
+  color: #e2e8f0;
   margin-top: -2px;
 }
 
@@ -94,10 +94,10 @@
   font-weight: 900;
 }
 
-.metric-footer.muted { color: var(--muted); }
-.metric-footer.primary { color: var(--primary); }
-.metric-footer.success { color: #16a34a; }
-.metric-footer.warn { color: #f59e0b; }
+.metric-footer.muted { color: #cbd5e1; }
+.metric-footer.primary { color: #93c5fd; }
+.metric-footer.success { color: #4ade80; }
+.metric-footer.warn { color: #fbbf24; }
 
 /* Botão (Next) */
 .study-btn {

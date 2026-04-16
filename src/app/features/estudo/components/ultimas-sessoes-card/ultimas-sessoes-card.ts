@@ -4,6 +4,8 @@ import { RouterModule } from '@angular/router';
 
 export type RecentSession = {
   sessaoId: number;
+  /** Ordem da matéria no ciclo (#N), quando a API envia ordemNoCiclo. */
+  numero?: number;
   label: string;
   disciplina: string;
 

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
 import {
   AtualizarObservacoesRequest,
@@ -17,8 +18,34 @@ export class EstudoApiService {
 
   private readonly base = environment.apiBaseUrl;
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
 
   constructor() { }
+
+  /**
+   * Pausa via {@link fetch} com {@code keepalive: true} para o pedido ter mais chance de completar
+   * ao fechar a aba/navegador (o HttpClient costuma ser cancelado antes de enviar).
+   */
+  pausarSessaoKeepAlive(id: number, estudadoTotalSeg: number): void {
+    const url = `${this.base}/estudo/sessoes/${id}/${estudadoTotalSeg}/pausar`;
+    const token = this.auth.getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    try {
+      void fetch(url, {
+        method: 'POST',
+        keepalive: true,
+        headers,
+        body: '{}',
+      });
+    } catch {
+      /* noop: página já está a descarregar */
+    }
+  }
 
 
   getProximaSessao(cicloId: number): Observable<ProximaSessaoDto> {

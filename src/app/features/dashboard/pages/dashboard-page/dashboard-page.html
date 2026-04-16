@@ -21,10 +21,23 @@
       [footerText]="streakFooterText" footerTone="primary">
     </app-metric-card>
 
+    <app-metric-card
+      type="time"
+      icon="book"
+      title="Horas do ciclo"
+      [value]="cicloHorasFeitas"
+      [subtitle]="'Esperado: ' + cicloHorasEsperadas"
+      [footerText]="cicloHorasFooterText"
+      [footerTone]="cicloHorasFooterTone">
+    </app-metric-card>
+
     <!-- CARD INTELIGENTE -->
-    <app-metric-card type="next" title="Sessão" [value]="actionTitle" [subtitle]="actionSubtitle" actionLabel="Retomar"
-      [footerText]="actionFooterText" [footerTone]="actionFooterTone" [actionText]="actionText"
-      [actionDisabled]="actionDisabled() || loading" (action)="onActionClick()">
+    <app-metric-card type="next" title="Sessão" [value]="actionTitle" [subtitle]="actionSubtitle"
+      [actionLabel]="actionText"
+      [footerText]="actionFooterText" [footerTone]="actionFooterTone"
+      [actionDisabled]="actionDisabled() || loading"
+      [actionLoading]="acaoCardLoading()"
+      (action)="onActionClick()">
     </app-metric-card>
   </section>
 

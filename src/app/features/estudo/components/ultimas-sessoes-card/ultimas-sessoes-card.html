@@ -14,6 +14,7 @@
           [routerLink]="['/estudo/sessao', s.sessaoId]"
         >
           <div class="session-left">
+            <span class="sess-num" *ngIf="s.numero != null">{{ s.numero }}</span>
             <!-- STATUS ICON -->
             <span
               class="status"
@@ -87,6 +88,7 @@
         <ng-template #rowStatic>
           <div class="session-row">
             <div class="session-left">
+              <span class="sess-num" *ngIf="s.numero != null">{{ s.numero }}</span>
               <span
                 class="status"
                 [class.done]="s.status === 'CONCLUIDA'"

@@ -85,9 +85,7 @@ export class CicloDetailPage implements OnInit {
   iniciarCiclo(): void {
     if (!this.ciclo) return;
 
-    this.router.navigate(['/estudaAgora'], {
-      queryParams: { cicloId: this.ciclo.id },
-    });
+    this.router.navigate(['/estudaAgora', this.ciclo.id]);
   }
 
   salvar(): void{

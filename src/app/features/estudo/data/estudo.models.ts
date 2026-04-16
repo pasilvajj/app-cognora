@@ -77,7 +77,8 @@ export interface SessaoCardDto {
   id: number;
   disciplinaNome: string;
   metaMinutos: number;
-  inicio: string;
+  /** null se a sessão foi só reservada (iniciar) e o cronómetro nunca foi iniciado (comecar). */
+  inicio: string | null;
   fim: string | null;
   pausadoEm: string | null;
   pausadoTotalSeg: number;
@@ -85,6 +86,8 @@ export interface SessaoCardDto {
   segundosRestantes: number;
   status: 'EM_ANDAMENTO' | 'PAUSADA' | 'CONCLUIDA';
   estudadoTotalSeg: number;
+  /** Ordem da matéria no ciclo (CicloItem.ordem). */
+  ordemNoCiclo?: number | null;
 }
 
 export interface SessaoResumoDto {

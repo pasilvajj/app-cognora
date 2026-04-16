@@ -9,6 +9,8 @@ export type CicloItemView = {
 
   visto?: boolean;
   sessaoAbertaId?: number | null;
+  /** Só true depois de iniciar o cronómetro na sessão (comecar), não só ao reservar. */
+  cronometroIniciado?: boolean;
   concluida?: boolean;
 };
 
@@ -16,12 +18,14 @@ type Segment = {
   d: string;
 
   item?: CicloItemView;
-  active: boolean;
+  /** Pode clicar para iniciar trocar sessão (matérias concluídas são bloqueadas). */
+  selectable: boolean;
 
   selected: boolean;
   recommended: boolean;
 
-  visto: boolean;
+  /** Matéria ainda sem sessão ativa (inclui o que antes era “já vista”). */
+  naoInicializada: boolean;
   emAndamento: boolean;
   concluida: boolean;
 
@@ -64,20 +68,35 @@ export class EscolherMateriaModalCircular implements OnChanges {
 
   segments: Segment[] = [];
 
+  /**
+   * Itens ordenados pelo número do ciclo (`ordem` = #1…#N), não pela ordem do array na API.
+   * Usado no anel e na lista para o desenho coincidir com os rótulos #ordem.
+   */
+  itemsOrdenados: CicloItemView[] = [];
+
   ngOnChanges(): void {
+    this.itemsOrdenados = this.ordenarItemsPorOrdemDoCiclo();
     this.recalc();
+  }
+
+  private ordenarItemsPorOrdemDoCiclo(): CicloItemView[] {
+    return [...(this.items ?? [])].sort(
+      (a, b) => (Number(a.ordem) || 0) - (Number(b.ordem) || 0),
+    );
   }
 
   get totalItens(): number {
     return this.items?.length ?? 0;
   }
 
-  get vistas(): number {
-    return (this.items ?? []).filter(i => !!i.visto).length;
+  /** Itens com estudo concluído no ciclo. */
+  get materiasConcluidas(): number {
+    return (this.items ?? []).filter((i) => !!i.concluida).length;
   }
 
-  get restantes(): number {
-    return Math.max(0, this.totalItens - this.vistas);
+  /** Ainda não concluídos (inclui “Não inicializada” e “Em andamento”). */
+  get materiasPendentes(): number {
+    return (this.items ?? []).filter((i) => !i.concluida).length;
   }
 
   onClose(): void {
@@ -99,9 +118,21 @@ export class EscolherMateriaModalCircular implements OnChanges {
     this.centerFocus = this.selectedItem ? this.formatCenter(this.selectedItem) : '';
   }
 
+  /** Matéria concluída não pode ser escolhida para novo estudo. */
+  podeSelecionar(it: CicloItemView): boolean {
+    return !it.concluida;
+  }
+
+  private primeiroItemSelecionavel(): CicloItemView | undefined {
+    const list = this.itemsOrdenados;
+    const emAndamento = list.find((i) => !!i.cronometroIniciado && !i.concluida);
+    if (emAndamento) return emAndamento;
+    return list.find((i) => !i.concluida);
+  }
+
   // Clique já continua/troca
   selectBySegment(seg: Segment): void {
-    if (!seg.item) return;
+    if (!seg.item || !seg.selectable) return;
 
     this.selectedItem = seg.item;
     this.centerFocus = this.formatCenter(seg.item);
@@ -112,6 +143,8 @@ export class EscolherMateriaModalCircular implements OnChanges {
 
   // Clique na lista também continua/troca
   select(it: CicloItemView): void {
+    if (!this.podeSelecionar(it)) return;
+
     this.selectedItem = it;
     this.centerFocus = this.formatCenter(it);
     this.buildSegments();
@@ -121,21 +154,25 @@ export class EscolherMateriaModalCircular implements OnChanges {
 
   // fallback do botão central
   confirmar(): void {
-    if (!this.selectedItem) return;
+    if (!this.selectedItem || !this.podeSelecionar(this.selectedItem)) return;
     this.startSession.emit(this.selectedItem);
   }
 
+  /**
+   * Apenas três estados na UI:
+   * - Concluído — meta do ciclo cumprida
+   * - Em andamento — existe sessão aberta (após iniciar estudo / “inicializar” o item)
+   * - Não inicializada — demais casos (o flag “visto” não gera estado próprio)
+   */
   statusText(it: CicloItemView): string {
-    if (it.sessaoAbertaId) return 'Em andamento';
-    if (it.concluida) return 'Concluída';
-    if (it.visto) return 'Já vista';
-    return 'Não vista';
+    if (it.concluida) return 'Concluído';
+    if (it.cronometroIniciado) return 'Em andamento';
+    return 'Não inicializada';
   }
 
-  statusKey(it: CicloItemView): 'RUNNING' | 'DONE' | 'SEEN' | 'NEW' {
-    if (it.sessaoAbertaId) return 'RUNNING';
+  statusKey(it: CicloItemView): 'RUNNING' | 'DONE' | 'NEW' {
     if (it.concluida) return 'DONE';
-    if (it.visto) return 'SEEN';
+    if (it.cronometroIniciado) return 'RUNNING';
     return 'NEW';
   }
 
@@ -146,19 +183,27 @@ export class EscolherMateriaModalCircular implements OnChanges {
   private recalc(): void {
     const list = this.items ?? [];
 
-    // seleção padrão
+    // seleção padrão (nunca aponta para matéria já concluída)
     if (!this.selectedItem) {
-      if (this.defaultSelectedItemId != null) {
-        const found = list.find(i => i.cicloItemId === this.defaultSelectedItemId);
-        if (found) this.selectedItem = found;
-      } else if (this.recommendedItemId != null) {
-        const found = list.find(i => i.cicloItemId === this.recommendedItemId);
-        if (found) this.selectedItem = found;
-      }
+      const tryId = (id: number | undefined): CicloItemView | undefined => {
+        if (id == null) return undefined;
+        const found = list.find((i) => i.cicloItemId === id);
+        if (found && this.podeSelecionar(found)) return found;
+        return undefined;
+      };
+
+      const fromDefault = tryId(this.defaultSelectedItemId);
+      const fromRec = tryId(this.recommendedItemId);
+      this.selectedItem =
+        fromDefault ?? fromRec ?? this.primeiroItemSelecionavel();
     } else {
       // se items foi recarregado, re-aponta a selectedItem pelo id (evita referência antiga)
       const refreshed = list.find(i => i.cicloItemId === this.selectedItem!.cicloItemId);
-      if (refreshed) this.selectedItem = refreshed;
+      if (refreshed) {
+        this.selectedItem = this.podeSelecionar(refreshed)
+          ? refreshed
+          : this.primeiroItemSelecionavel();
+      }
     }
 
     this.centerFocus = this.selectedItem ? this.formatCenter(this.selectedItem) : '';
@@ -166,7 +211,7 @@ export class EscolherMateriaModalCircular implements OnChanges {
   }
 
   private buildSegments(): void {
-    const list = this.items ?? [];
+    const list = this.itemsOrdenados;
     const totalSeg = list.length;
 
     // sem itens: zera o anel
@@ -189,19 +234,26 @@ export class EscolherMateriaModalCircular implements OnChanges {
       const it = list[i];
 
       const isSelected = !!this.selectedItem && it.cicloItemId === this.selectedItem.cicloItemId;
-      const isRec = this.recommendedItemId != null && it.cicloItemId === this.recommendedItemId;
+      const sel = this.podeSelecionar(it);
+      const isRec =
+        sel &&
+        this.recommendedItemId != null &&
+        it.cicloItemId === this.recommendedItemId;
+
+      const concluida = !!it.concluida;
+      const emAndamento = !!it.cronometroIniciado && !concluida;
 
       segs.push({
         d,
         item: it,
-        active: true,
+        selectable: sel,
 
         selected: isSelected,
         recommended: isRec,
 
-        visto: !!it.visto,
-        emAndamento: !!it.sessaoAbertaId,
-        concluida: !!it.concluida,
+        naoInicializada: !concluida && !emAndamento,
+        emAndamento,
+        concluida,
 
         ordemLabel: `#${it.ordem}`,
         midDeg: mid,
@@ -212,7 +264,6 @@ export class EscolherMateriaModalCircular implements OnChanges {
   }
 
   private formatCenter(it: CicloItemView): string {
-    const status = this.statusText(it);
     return `#${it.ordem} • ${it.disciplinaNome}`;
   }
 

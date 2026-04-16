@@ -55,6 +55,16 @@
   min-width: 0;
 }
 
+.sess-num {
+  flex: 0 0 auto;
+  min-width: 1.5rem;
+  font-size: 12px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--text) 55%, transparent);
+  text-align: right;
+}
+
 /* ===== STATUS (círculo + ícone) ===== */
 .status {
   width: 15px;

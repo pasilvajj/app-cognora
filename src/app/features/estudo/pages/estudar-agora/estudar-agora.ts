@@ -113,11 +113,23 @@ export class EstudarAgora implements OnInit {
     this.estudoApi.getSessoesRecentes(this.usuarioId, this.cicloId, 10)
       .subscribe({
         next: (sessoes) => {
-          this.recentSessions = (sessoes ?? []).map(s => this.mapSessaoParaCard(s));
-          this.carregarObservacoesDasSessoes(sessoes ?? []);
+          const lista = sessoes ?? [];
+          const inicializadas = lista.filter((s) => this.sessaoCronometroJaIniciou(s));
+          this.recentSessions = inicializadas.map((s) => this.mapSessaoParaCard(s));
+          this.carregarObservacoesDasSessoes(inicializadas);
         },
         error: () => this.toastr.error('Erro ao carregar sessões recentes')
       });
+  }
+
+  /** Só entra em “Últimas sessões” após o primeiro comecar (campo inicio preenchido). */
+  private sessaoCronometroJaIniciou(s: SessaoCardDto): boolean {
+    const ini = s.inicio;
+    if (ini == null || String(ini).trim() === '') {
+      return false;
+    }
+    const t = Date.parse(String(ini));
+    return !Number.isNaN(t);
   }
 
   private mapSessaoParaCard(s: SessaoCardDto) {
@@ -126,8 +138,13 @@ export class EstudarAgora implements OnInit {
     const baseDate = s.fim ?? s.inicio;
     const statusNormalizado = this.normalizarStatusSessao(s.status, estudadoSeg, restanteSeg);
 
+    const ordem = s.ordemNoCiclo;
+    const numero =
+      ordem != null && Number.isFinite(Number(ordem)) && Number(ordem) > 0 ? Number(ordem) : undefined;
+
     return {
       sessaoId: s.id,
+      numero,
       label: baseDate ? this.formatLabelFromFimOrInicio(baseDate) : '—',
       disciplina: s.disciplinaNome,
       studiedLabel: this.formatSeconds(estudadoSeg),
@@ -188,6 +205,52 @@ export class EstudarAgora implements OnInit {
     this.executarInicioDeSessao(this.proximaSessaoDto.cicloItemId);
   }
 
+  /** Prioridade: sessão em aberto; senão primeira matéria do ciclo ainda não concluída. */
+  private escolherProximaMateriaElegivel(itens: CicloItemView[]): CicloItemView | undefined {
+    const list = [...itens].sort((a, b) => a.ordem - b.ordem);
+    const emAndamento = list.find((i) => !!i.cronometroIniciado && !i.concluida);
+    if (emAndamento) return emAndamento;
+    return list.find((i) => !i.concluida);
+  }
+
+  /**
+   * Se a API indicar como próxima uma matéria já concluída, alinha ao primeiro item elegível do ciclo
+   * (não exibir / não recomendar estudo em matéria concluída).
+   */
+  private alinharProximaSessaoAoCiclo(): void {
+    const dto = this.proximaSessaoDto;
+    if (!dto || !this.itens.length) {
+      return;
+    }
+
+    const alvo = this.itens.find((i) => i.cicloItemId === dto.cicloItemId);
+    if (alvo && !alvo.concluida) {
+      this.selecionadoCicloItemId = dto.cicloItemId;
+      this.selecionado = alvo;
+      this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(alvo.tempoMinutos);
+      return;
+    }
+
+    const elegivel = this.escolherProximaMateriaElegivel(this.itens);
+    if (elegivel) {
+      this.proximaSessaoDto = {
+        ...dto,
+        cicloItemId: elegivel.cicloItemId,
+        ordem: elegivel.ordem,
+        disciplinaNome: elegivel.disciplinaNome,
+        tempoMinutos: elegivel.tempoMinutos,
+      };
+      this.selecionadoCicloItemId = elegivel.cicloItemId;
+      this.selecionado = elegivel;
+      this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(elegivel.tempoMinutos);
+    } else {
+      this.proximaSessaoDto = undefined;
+      this.selecionadoCicloItemId = undefined;
+      this.selecionado = undefined;
+      this.tempoPlanejadoLabel = '';
+    }
+  }
+
   private carregarMateriasDoCiclo(): void {
     this.ciclosApi.getMateriasCiclo(this.cicloId, this.usuarioId).
       pipe(finalize(() => (this.loading.set(false)))).subscribe({
@@ -199,13 +262,10 @@ export class EstudarAgora implements OnInit {
             tempoMinutos: m.tempoMinutos,
             visto: m.visto,
             sessaoAbertaId: m.sessaoAbertaId,
+            cronometroIniciado: m.cronometroIniciado ?? false,
             concluida: m.concluida,
           }));
-          // opcional: seleciona recomendado se você tiver
-          if (!this.selecionado && this.proximaSessaoDto) {
-            const found = this.itens.find(i => i.cicloItemId === this.proximaSessaoDto!.cicloItemId);
-            if (found) this.selecionado = found;
-          }
+          this.alinharProximaSessaoAoCiclo();
           this.recalcularProgresso();
           this.cdr.detectChanges();
         },
@@ -214,12 +274,22 @@ export class EstudarAgora implements OnInit {
   }
 
   onStartSession(item: CicloItemView): void {
+    if (item.concluida) {
+      this.toastr.warning('Esta matéria já foi concluída no ciclo.');
+      return;
+    }
     this.modalOpen = false;
     this.executarInicioDeSessao(item.cicloItemId);
   }
 
   private executarInicioDeSessao(cicloItemId: number): void {
     if (this.isProcessando()) return;
+
+    const meta = this.itens.find((i) => i.cicloItemId === cicloItemId);
+    if (meta?.concluida) {
+      this.toastr.warning('Esta matéria já foi concluída no ciclo.');
+      return;
+    }
 
     this.estudoApi.iniciarSessao({
       usuarioId: this.usuarioId,

@@ -43,6 +43,8 @@ export class SessaoEstudoPage implements OnDestroy {
   pomodoroEnabled = signal(false);
   private readonly finalizandoSessao = signal(false);
   readonly pomodoroTemporariamenteDesativado = signal(false);
+  /** Evita duplicar POST ao sair quando {@code beforeunload} e {@code pagehide} disparam os dois. */
+  private pausaAoSairJaEnviada = false;
 
   /**
    * Cópia local do último DTO recebido da API (via initSessao).
@@ -572,15 +574,35 @@ export class SessaoEstudoPage implements OnDestroy {
 
   @HostListener('window:beforeunload')
   beforeUnload(): void {
+    this.tentarPausarAoFecharAba();
+  }
+
+  @HostListener('window:pagehide', ['$event'])
+  pageHide(ev: PageTransitionEvent): void {
+    if (ev.persisted) {
+      return;
+    }
+    this.tentarPausarAoFecharAba();
+  }
+
+  /**
+   * Usa fetch keepalive (via API) para a pausa chegar ao servidor ao fechar a aba;
+   * o HttpClient comum é frequentemente abortado antes do envio.
+   */
+  private tentarPausarAoFecharAba(): void {
+    if (this.pausaAoSairJaEnviada) {
+      return;
+    }
     const s = this.sessao();
+    if (!s || this.timer.finalizada() || this.timer.pausada() || this.sessaoAindaNaoIniciada(s)) {
+      return;
+    }
 
-    if (!s || this.timer.finalizada() || this.timer.pausada() || this.sessaoAindaNaoIniciada(s)) return;
-
+    this.pausaAoSairJaEnviada = true;
     const estudadoSeg = this.timer.pause();
     this.pomodoro.pause();
     this.salvarSnapshotPomodoro(s.id);
-
-    this.api.pausarSessao(s.id, estudadoSeg).subscribe();
+    this.api.pausarSessaoKeepAlive(s.id, estudadoSeg);
   }
 
   private salvarSnapshotPomodoro(sessaoId: number): void {

@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin, of } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
@@ -55,6 +55,12 @@ export class DashboardPage implements OnInit {
   streakValue = '—';
   streakFooterText = '';
 
+  // ===== Card HORAS DO CICLO =====
+  cicloHorasFeitas = '—';
+  cicloHorasEsperadas = '—';
+  cicloHorasFooterText = '';
+  cicloHorasFooterTone: FooterTone = 'muted';
+
   // ===== Card AÇÃO (Retomar OU Próxima) =====
   actionTitle = '—';
   actionSubtitle = '';
@@ -62,7 +68,11 @@ export class DashboardPage implements OnInit {
   actionFooterTone: FooterTone = 'muted';
   actionText = '';
   actionDisabled = signal(true);
+  /** Loading ao iniciar sessão (próxima matéria) antes de ir para `/estudo/sessao`. */
+  acaoCardLoading = signal(false);
   private actionSessaoId: number | null = null;
+  /** Para “Iniciar”: `cicloItemId` da próxima matéria recomendada. */
+  private actionCicloItemId: number | null = null;
   private actionIsRetomar = signal(false);
 
   semana: WeekDayDto[] = [];
@@ -198,12 +208,44 @@ export class DashboardPage implements OnInit {
         lista = fallbackResumo as unknown as ProgressoEstudoDto[];
       }
 
+      this.aplicarCardHorasCiclo(lista, materiasList, getMeta);
+
       this.progressoItems = lista.map((p) => ({
         name: p.disciplinaNome,
         percent: normalizarPercentualProgresso(p, getMeta),
       }));
       this.cdr.detectChanges();
     });
+  }
+
+  private aplicarCardHorasCiclo(
+    lista: ProgressoEstudoDto[],
+    materias: CicloMateriaDto[],
+    getMeta: (nome: string) => number,
+  ): void {
+    const metaTotalMin = (materias ?? []).reduce((acc, m) => acc + Math.max(0, Number(m.tempoMinutos ?? 0)), 0);
+
+    const feitosTotalMin = (lista ?? []).reduce((acc, p) => {
+      const feitosDireto = Number((p as any).minutosFeitos ?? 0);
+      if (Number.isFinite(feitosDireto) && feitosDireto > 0) {
+        return acc + feitosDireto;
+      }
+
+      // Fallback quando vier apenas percentual no DTO.
+      const meta = Number((p as any).minutosMeta ?? getMeta(p.disciplinaNome) ?? 0);
+      const perc = Number((p as any).percentual ?? 0);
+      if (!Number.isFinite(meta) || !Number.isFinite(perc) || meta <= 0 || perc <= 0) {
+        return acc;
+      }
+      return acc + Math.round((meta * perc) / 100);
+    }, 0);
+
+    this.cicloHorasEsperadas = this.formatMinutesToHMin(metaTotalMin);
+    this.cicloHorasFeitas = this.formatMinutesToHMin(feitosTotalMin);
+
+    const percentual = metaTotalMin > 0 ? Math.min(100, Math.round((feitosTotalMin / metaTotalMin) * 100)) : 0;
+    this.cicloHorasFooterText = `${percentual}% concluído do ciclo`;
+    this.cicloHorasFooterTone = percentual >= 70 ? 'success' : percentual >= 35 ? 'primary' : 'warn';
   }
 
   private aplicarCardAcao(recentes: SessaoCardDto[], proxima: any): void {
@@ -215,6 +257,7 @@ export class DashboardPage implements OnInit {
     if (ultima && podeRetomar) {
       this.actionIsRetomar.set(true);
       this.actionSessaoId = Number(ultima.id);
+      this.actionCicloItemId = null;
 
       this.actionTitle = ultima.disciplinaNome ?? 'Sessão em andamento';
       this.actionSubtitle = `Estudado: ${this.formatSecondsClock(
@@ -232,13 +275,17 @@ export class DashboardPage implements OnInit {
     if (proxima) {
       this.actionIsRetomar.set(false);
       this.actionSessaoId = null;
+      this.actionCicloItemId =
+        proxima.cicloItemId != null && Number.isFinite(Number(proxima.cicloItemId))
+          ? Number(proxima.cicloItemId)
+          : null;
 
       this.actionTitle = proxima.disciplinaNome ?? 'Próxima sessão';
       this.actionSubtitle = `${proxima.tempoMinutos ?? 0} minutos`;
       this.actionFooterText = 'Próxima sessão recomendada';
       this.actionFooterTone = 'success';
       this.actionText = 'Iniciar';
-      this.actionDisabled.set(false);
+      this.actionDisabled.set(this.actionCicloItemId == null);
       return;
     }
 
@@ -248,19 +295,45 @@ export class DashboardPage implements OnInit {
     this.actionFooterText = '';
     this.actionFooterTone = 'muted';
     this.actionText = '';
+    this.actionCicloItemId = null;
     this.actionDisabled.set(true);
   }
 
   onActionClick(): void {
+    if (this.loading || this.acaoCardLoading()) {
+      return;
+    }
+
     if (this.actionIsRetomar() && this.actionSessaoId) {
       this.router.navigate(['/estudo/sessao', this.actionSessaoId]);
       return;
     }
 
-    if (this.cicloId) {
-      this.router.navigate(['/estudaAgora'], {
-        queryParams: { cicloId: this.cicloId },
-      });
+    const cicloItemId = this.actionCicloItemId;
+    if (this.cicloId && cicloItemId) {
+      this.acaoCardLoading.set(true);
+      this.estudoApi
+        .iniciarSessao({
+          usuarioId: this.usuarioId,
+          cicloId: this.cicloId,
+          cicloItemId,
+        })
+        .pipe(
+          finalize(() => {
+            this.acaoCardLoading.set(false);
+            this.cdr.detectChanges();
+          }),
+        )
+        .subscribe({
+          next: (s) => {
+            if (s?.id) {
+              this.router.navigate(['/estudo/sessao', s.id]);
+            } else {
+              this.toast.error('Resposta da sessão inválida.');
+            }
+          },
+          error: () => this.toast.error('Não foi possível abrir a sessão de estudo.'),
+        });
     }
   }
 
@@ -293,6 +366,13 @@ export class DashboardPage implements OnInit {
     return h > 0
       ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
       : `${m}:${String(s).padStart(2, '0')}`;
+  }
+
+  private formatMinutesToHMin(totalMin: number): string {
+    const mins = Math.max(0, Math.floor(totalMin || 0));
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return h > 0 ? `${h}h ${m}min` : `${m}min`;
   }
 
   private mapStatus(status: string): string {
