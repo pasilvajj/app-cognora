@@ -1,155 +1,178 @@
 * {
   box-sizing: border-box;
-  font-family: 'Segoe UI', sans-serif;
 }
+
 .login-container {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fb;
+  width: 100%;
+  /* Tema claro na auth (inputs legíveis mesmo com tema escuro global) */
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --bg-input: #ffffff;
+  --surface: #ffffff;
+  --surface-soft: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #e2e8f0;
+  --color-border-input: #e2e8f0;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  color: var(--text);
 }
 
+/* ===== LADO ESQUERDO (espelha cadastro) ===== */
 .login-left {
   flex: 1;
   background-image: url('/register-illustration-semt-texto.png');
   background-size: cover;
-  background-position: center bottom;
+  background-position: center;
   background-repeat: no-repeat;
-
-  display: flex;
-  align-items: flex-start;
-  padding: 48px;
   position: relative;
-  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: slideFadeIn 0.6s ease forwards;
 }
 
-/* ===== LEFT ===== */
 .login-left::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 20%, rgba(255,255,255,.15), transparent 40%),
-    radial-gradient(circle at 80% 80%, rgba(255,255,255,.1), transparent 40%);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.65),
+    rgba(15, 23, 42, 0.85)
+  );
+}
+
+.left-content {
+  position: relative;
+  color: #ffffff;
+  max-width: 420px;
+  padding: 40px;
 }
 
 .brand {
-  font-weight: 700;
-  letter-spacing: 1px;
-  opacity: 0.85;
-}
-
-.welcome {
-  margin-top: 120px;
-  max-width: 420px;
-}
-
-.welcome h1 {
-  font-size: 48px;
-  margin: 10px 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 40px;
 }
 
 .welcome .small {
+  font-size: 13px;
   opacity: 0.85;
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
 
+.welcome h1 {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0 0 16px;
+}
 
-
-.description {
-  font-size: 14px;
+.welcome .description {
+  font-size: 15px;
   line-height: 1.6;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-/* ===== RIGHT ===== */
+/* ===== LADO DIREITO ===== */
 .login-right {
   flex: 1;
-  background: #ffffff;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 40px 24px;
 }
 
 .form-box {
   width: 100%;
-  max-width: 360px;
+  max-width: 420px;
 }
 
 .form-box h2 {
-  color: #0b4dcf;
-  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: #0f172a;
 }
 
 .subtitle {
-  font-size: 13px;
-  color: #777;
-  margin-bottom: 30px;
-}
-
-.field {
-  margin-bottom: 20px;
-}
-
-.field input {
-  width: 100%;
-  border: none;
-  border-bottom: 2px solid #e0e0e0;
-  padding: 10px 5px;
   font-size: 14px;
-  outline: none;
+  color: #64748b;
+  margin-bottom: 24px;
 }
 
-.field input:focus {
-  border-color: #0b4dcf;
+.form-error {
+  font-size: 13px;
+  color: #dc2626;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
 }
 
 .options {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  font-size: 12px;
-  margin-bottom: 30px;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-.options a {
-  color: #0b4dcf;
+.keep-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  cursor: pointer;
+  user-select: none;
+}
+
+.keep-label input {
+  width: 16px;
+  height: 16px;
+  accent-color: #2563eb;
+}
+
+.register-link {
+  color: #2563eb;
   font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
 }
 
-button {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #0b4dcf, #0a2f8f);
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
+.register-link:hover {
+  text-decoration: underline;
 }
 
-button:disabled {
-  opacity: 0.7;
+@keyframes slideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-/* ===== FOOTER ===== */
-footer {
-  text-align: center;
-  font-size: 12px;
-  color: #999;
-  padding: 10px;
-}
-
-/* ===== RESPONSIVO ===== */
 @media (max-width: 900px) {
   .login-container {
     flex-direction: column;
   }
 
   .login-left {
-    min-height: 280px;
+    display: none;
   }
 
-  .welcome {
-    margin-top: 60px;
+  .login-right {
+    flex: none;
+    min-height: 100vh;
   }
 }

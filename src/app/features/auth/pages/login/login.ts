@@ -1,26 +1,34 @@
-import { Component,ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { Router ,RouterModule} from '@angular/router';
-// import { LoginService } from '../../service/login.service';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { finalize } from 'rxjs/operators';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
+import { FormInputComponent } from '../../../../shared/components/form-input/form-input';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule,RouterModule,AppButtonComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    AppButtonComponent,
+    FormInputComponent,
+  ],
   templateUrl: './login.html',
   styleUrl: './login.css',
 })
 export class Login {
-
-  email = '';
-  password = '';
-  keepSignedIn = false;
   loading = false;
   error = '';
+
+  loginForm = new FormGroup({
+    email: new FormControl('', [Validators.required, Validators.email]),
+    password: new FormControl('', [Validators.required]),
+    keepSignedIn: new FormControl(false),
+  });
 
   constructor(
     private authService: AuthService,
@@ -28,22 +36,28 @@ export class Login {
     private cdr: ChangeDetectorRef
   ) {}
 
-submit(): void {
-  this.loading = true;
-  this.error = '';
+  submit(): void {
+    this.error = '';
+    this.loginForm.markAllAsTouched();
 
-  this.authService
-    .login(this.email, this.password)
-    .pipe(finalize(() => (this.loading = false)))
-    .subscribe({
-      next: () => {
-         this.loading = false;
-        this.router.navigate(['/dashboard']);
-      },
-      error: () => {
-        this.loading = false;
-        this.error = 'Email ou senha inválidos';
-      },
-    });
-}
+    if (this.loginForm.invalid) {
+      return;
+    }
+
+    const { email, password } = this.loginForm.getRawValue();
+
+    this.loading = true;
+    this.authService
+      .login(email!, password!)
+      .pipe(finalize(() => (this.loading = false)))
+      .subscribe({
+        next: () => {
+          this.router.navigate(['/dashboard']);
+        },
+        error: () => {
+          this.error = 'Email ou senha inválidos';
+          this.cdr.markForCheck();
+        },
+      });
+  }
 }

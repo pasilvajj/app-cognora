@@ -55,6 +55,10 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "proxyConfig": "proxy.conf.json",
+            "allowedHosts": true
+          },
           "configurations": {
             "production": {
               "buildTarget": "app-cognora:build:production"

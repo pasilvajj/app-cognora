@@ -22,7 +22,9 @@ export const erroInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (error.status === 403) {
         mensagem = 'Você não tem permissão para esta ação.';
       } else if (error.status === 0) {
-        mensagem = 'Não foi possível conectar ao servidor.';
+        console.error('[HTTP 0]', error.message, error.url ?? '(sem URL)');
+        mensagem =
+          'Sem resposta da API. Se usa `ng serve`, confirme o proxy (proxy.conf.json) e que o Spring está em :8080. Veja o URL no console.';
       }
       toastr.error(mensagem);
       return throwError(() => error);

@@ -13,7 +13,9 @@ export class FormInputComponent {
   @Input() label = '';
   @Input() type: 'text' | 'email' | 'password' = 'text';
   @Input() placeholder = '';
-  
+  /** Em telas de login, oculta checklist/força da senha. */
+  @Input() passwordHints = true;
+
   @Input({ required: true }) control!: AbstractControl;
 
    @Input() errorText = 'Campo inválido';
@@ -67,7 +69,7 @@ export class FormInputComponent {
   }
 
   get showChecklist(): boolean {
-    return this.type === 'password' && this.value.length > 0;
+    return this.passwordHints && this.type === 'password' && this.value.length > 0;
   }
 
   get showError(): boolean {

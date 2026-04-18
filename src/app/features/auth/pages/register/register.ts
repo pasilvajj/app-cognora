@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { FormInputComponent } from '../../../../shared/components/form-input/form-input';
@@ -11,11 +11,12 @@ import { AppButtonComponent } from '../../../../shared/components/app-button/app
   selector: 'app-register',
   standalone: true,
   imports: [
-            CommonModule,
-            ReactiveFormsModule,
-            FormInputComponent,
-            AppButtonComponent
-          ],
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    FormInputComponent,
+    AppButtonComponent,
+  ],
   templateUrl: './register.html',
   styleUrl: './register.css',
 })

@@ -54,16 +54,21 @@ export class CicloCreatePage implements OnInit {
   minimoHorasViolado = false;
 
   // =========================
-  // Pomodoro (Opção A)
+  // Pomodoro (alinhado aos defaults de CicloEstudo / backend)
   // =========================
   usarPomodoro = false;
 
-  // Se você quiser salvar configurações no ciclo (opcional, backend já suporta na entidade):
-  // pomodoroFocoMin = 25;
-  // pomodoroPausaCurtaMin = 5;
-  // pomodoroPausaLongaMin = 15;
-  // pomodoroLongaACada = 4;
-  // =========================
+  readonly pomodoroDefaults = {
+    focoMin: 25,
+    pausaCurtaMin: 5,
+    pausaLongaMin: 15,
+    longaACada: 4,
+  } as const;
+
+  pomodoroFocoMin = this.pomodoroDefaults.focoMin;
+  pomodoroPausaCurtaMin = this.pomodoroDefaults.pausaCurtaMin;
+  pomodoroPausaLongaMin = this.pomodoroDefaults.pausaLongaMin;
+  pomodoroLongaACada = this.pomodoroDefaults.longaACada;
 
   constructor(
     private router: Router,
@@ -269,14 +274,24 @@ export class CicloCreatePage implements OnInit {
         nivel: d.nivel ?? 0
       })),
 
-      // Pomodoro (backend: CicloCreateDto precisa ter pomodoroAtivo)
       pomodoroAtivo: this.usarPomodoro,
-
-      // Se for persistir configs no ciclo, descomente e garanta no backend DTO:
-      // pomodoroFocoMin: this.pomodoroFocoMin,
-      // pomodoroPausaCurtaMin: this.pomodoroPausaCurtaMin,
-      // pomodoroPausaLongaMin: this.pomodoroPausaLongaMin,
-      // pomodoroLongaACada: this.pomodoroLongaACada,
+      ...(this.usarPomodoro
+        ? {
+            pomodoroFocoMin: this.normPomodoroInt(this.pomodoroFocoMin, this.pomodoroDefaults.focoMin),
+            pomodoroPausaCurtaMin: this.normPomodoroInt(
+              this.pomodoroPausaCurtaMin,
+              this.pomodoroDefaults.pausaCurtaMin
+            ),
+            pomodoroPausaLongaMin: this.normPomodoroInt(
+              this.pomodoroPausaLongaMin,
+              this.pomodoroDefaults.pausaLongaMin
+            ),
+            pomodoroLongaACada: this.normPomodoroInt(
+              this.pomodoroLongaACada,
+              this.pomodoroDefaults.longaACada
+            ),
+          }
+        : {}),
     };
 
     console.log('Salvar ciclo', payload);
@@ -321,5 +336,14 @@ export class CicloCreatePage implements OnInit {
         horasLabel: calc?.horasLabel ?? '0:00h',
       };
     });
+  }
+
+  /** Garante inteiro ≥ 1 para a API; campo vazio/ inválido volta ao default (igual ao backend). */
+  private normPomodoroInt(value: unknown, fallback: number): number {
+    const n = typeof value === 'string' ? parseInt(value, 10) : Number(value);
+    if (!Number.isFinite(n) || n < 1) {
+      return fallback;
+    }
+    return Math.min(Math.floor(n), 999);
   }
 }

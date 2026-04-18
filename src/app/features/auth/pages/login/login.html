@@ -1,83 +1,58 @@
 <div class="login-container">
-
-  <!-- LADO ESQUERDO -->
+  <!-- LADO ESQUERDO (alinhado ao cadastro: overlay + ilustração central) -->
   <section class="login-left">
-    <div class="brand">COGNORA</div>
+    <div class="left-content">
+      <div class="brand">COGNORA</div>
 
-    <div class="welcome">
-      <p class="small">Bom te ver por aqui.</p>
-      <h1>BEM VINDO</h1>
-      <p class="description">
-        Organize seus estudos, acompanhe seu progresso
-        e alcance seus objetivos com método.
-      </p>
+      <div class="welcome">
+        <p class="small">Bom te ver por aqui.</p>
+        <h1>BEM-VINDO</h1>
+        <p class="description">
+          Organize seus estudos, acompanhe seu progresso e alcance seus objetivos com método.
+        </p>
+      </div>
     </div>
   </section>
 
-  <!-- LADO DIREITO -->
   <section class="login-right">
-    <div class="form-box">
-      <h2>Login Account</h2>
+    <form [formGroup]="loginForm" (ngSubmit)="submit()" class="form-box">
+      <h2>Entrar</h2>
+      <p class="subtitle">Use seu e-mail e senha para continuar</p>
 
-      <p class="subtitle">
-        Entre com seus dados para continuar
-      </p>
+      <div class="form-error" *ngIf="error">{{ error }}</div>
 
-      <form (ngSubmit)="submit()">
-        <div class="field">
-          <input
-            type="email"
-            placeholder="Email ID"
-            [(ngModel)]="email"
-            name="email"
-            required
-          />
-        </div>
+      <app-form-input
+        label="E-mail"
+        type="email"
+        placeholder="Digite seu e-mail"
+        [control]="loginForm.controls.email"
+        errorText="Informe um e-mail válido"
+      />
 
-        <div class="field">
-          <input
-            type="password"
-            placeholder="Password"
-            [(ngModel)]="password"
-            name="password"
-            required
-          />
-        </div>
+      <app-form-input
+        label="Senha"
+        type="password"
+        placeholder="Digite sua senha"
+        [passwordHints]="false"
+        [control]="loginForm.controls.password"
+        errorText="Senha obrigatória"
+      />
 
-        <div class="options">
-          <label>
-            <input
-              type="checkbox"
-              [(ngModel)]="keepSignedIn"
-              name="keepSignedIn"
-            />
-            Keep me signed in
-          </label>
+      <div class="options">
+        <label class="keep-label">
+          <input type="checkbox" [formControl]="loginForm.controls.keepSignedIn" />
+          Manter conectado
+        </label>
+        <a routerLink="/register" class="register-link">Não tem conta? Cadastre-se</a>
+      </div>
 
-          <!-- <a href="#">Already a member?</a> -->
-          <a routerLink="/register">Não tem conta? Cadastre-se</a>
-        </div>
-
-        <app-button
-          type="submit"
-          label="ENTRAR"
-          [loading]="loading"
-          [fullWidth]="true">
-        </app-button>
-
-
-        <!-- <button type="submit" [disabled]="loading">
-          {{ loading ? 'ENTRANDO...' : 'SUBSCRIBE' }}
-        </button> -->
-      </form>
-    </div>
-    
+      <app-button
+        type="submit"
+        label="ENTRAR"
+        [loading]="loading"
+        [disabled]="loginForm.invalid"
+        [fullWidth]="true"
+      />
+    </form>
   </section>
-
 </div>
-
-
-
-<footer>
-  <!-- designed by <strong>freepik</strong> -->
-</footer>

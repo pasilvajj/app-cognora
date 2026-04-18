@@ -183,19 +183,39 @@
         <div class="row" *ngIf="usarPomodoro">
           <div class="field small">
             <label>Foco (min)</label>
-            <input type="number"  min="1" />
+            <input
+              type="number"
+              min="1"
+              name="pomodoroFocoMin"
+              [(ngModel)]="pomodoroFocoMin"
+            />
           </div>
           <div class="field small">
             <label>Pausa curta (min)</label>
-            <input type="number"  min="1" />
+            <input
+              type="number"
+              min="1"
+              name="pomodoroPausaCurtaMin"
+              [(ngModel)]="pomodoroPausaCurtaMin"
+            />
           </div>
           <div class="field small">
             <label>Pausa longa (min)</label>
-            <input type="number"  min="1" />
+            <input
+              type="number"
+              min="1"
+              name="pomodoroPausaLongaMin"
+              [(ngModel)]="pomodoroPausaLongaMin"
+            />
           </div>
           <div class="field small">
             <label>Longa a cada</label>
-            <input type="number" min="1" />
+            <input
+              type="number"
+              min="1"
+              name="pomodoroLongaACada"
+              [(ngModel)]="pomodoroLongaACada"
+            />
           </div>
         </div>
         

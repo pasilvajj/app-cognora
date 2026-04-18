@@ -54,7 +54,7 @@
 
   <!-- FORÇA DA SENHA -->
   <div
-    *ngIf="type === 'password' && control.value"
+    *ngIf="passwordHints && type === 'password' && control.value"
     class="password-strength"
   >
     <div class="bar">
@@ -72,5 +72,5 @@
   </div>
 
   <!-- ERRO -->
-  <small class="error" *ngIf="showError">Campo inválido</small>
+  <small class="error" *ngIf="showError">{{ errorText }}</small>
 </div>

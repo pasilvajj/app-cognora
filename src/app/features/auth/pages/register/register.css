@@ -20,6 +20,19 @@ body {
   display: flex;
   min-height: 100vh;
   width: 100%;
+  /* Tema claro nas telas de auth (inputs legíveis mesmo com tema escuro global) */
+  --text: #0f172a;
+  --text-muted: #64748b;
+  --bg-input: #ffffff;
+  --surface: #ffffff;
+  /* app-button secundário usa estes — sem override herdavam o tema escuro (#161f31) */
+  --surface-soft: #f1f5f9;
+  --surface-hover: #e2e8f0;
+  --border: #e2e8f0;
+  --color-border-input: #e2e8f0;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  color: var(--text);
 }
 
 /* =========================
@@ -193,15 +206,15 @@ button[type='submit']:disabled {
   text-align: center;
 }
 
-.footer-link a {
-  margin-left: 4px;
+.footer-link-action {
+  margin-left: 6px;
   color: #2563eb;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
 }
 
-.footer-link a:hover {
+.footer-link-action:hover {
   text-decoration: underline;
 }
 

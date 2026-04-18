@@ -1,24 +1,21 @@
-
 <div class="register-container">
+  <!-- LADO ESQUERDO -->
+  <section class="register-left">
+    <div class="left-content">
+      <div class="brand">COGNORA</div>
 
-   <!-- LADO ESQUERDO -->
- <section class="register-left">
-  <div class="left-content">
-    <div class="brand">COGNORA</div>
-
-    <div class="welcome">
-      <p class="small">Comece agora</p>
-      <h1>CRIAR CONTA</h1>
-      <p class="description">
-        Crie sua conta e comece a organizar seus estudos de forma inteligente.
-      </p>
+      <div class="welcome">
+        <p class="small">Comece agora</p>
+        <h1>CRIAR CONTA</h1>
+        <p class="description">
+          Crie sua conta e comece a organizar seus estudos de forma inteligente.
+        </p>
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
   <section class="register-right">
     <form [formGroup]="signupForm" (ngSubmit)="submit()" class="form-box">
-
       <h2>Criar conta</h2>
       <p class="subtitle">Preencha seus dados</p>
 
@@ -50,18 +47,18 @@
         [control]="signupForm.controls.passwordConfirm">
       </app-form-input>
 
-       <app-button
-          type="submit"
-          label="CRIAR CONTA"
-          [loading]="loading"
-          [disabled]="signupForm.invalid"
-          [fullWidth]="true">
-        </app-button>
+      <app-button
+        type="submit"
+        label="CRIAR CONTA"
+        [loading]="loading"
+        [disabled]="signupForm.invalid"
+        [fullWidth]="true"
+      />
 
       <div class="footer-link">
         Já tem conta?
+        <a routerLink="/login" class="footer-link-action">Entrar</a>
       </div>
-
     </form>
   </section>
 </div>

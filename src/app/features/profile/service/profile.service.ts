@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 /**
  * DTO retornado pelo backend
@@ -34,7 +35,7 @@ export interface UpdatePasswordPayload {
 })
 export class ProfileService {
 
-  private readonly apiUrl = 'http://localhost:8080/api/profile';
+  private readonly apiUrl = `${environment.apiBaseUrl}/profile`;
 
   constructor(private http: HttpClient) {}
 

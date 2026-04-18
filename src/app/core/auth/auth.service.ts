@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type LoginResponse = {
     userId: number,
@@ -17,7 +18,7 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'auth_user';
 
-  private readonly apiUrl = 'http://localhost:8080/auth';
+  private readonly apiUrl = environment.authBaseUrl;
 
   constructor(private httpClient: HttpClient) {}
 

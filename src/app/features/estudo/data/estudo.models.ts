@@ -67,7 +67,8 @@ export interface SessaoDetalheDto {
   pomodoroPausaLongaMin: number;
   pomodoroLongaACada: number;
 
-  pomodoroModo: 'FOCO' | 'PAUSA_CURTA' | 'PAUSA_LONGA';
+  /** Vindo da API; antes da sincronização pode estar ausente em respostas antigas. */
+  pomodoroModo: 'FOCO' | 'PAUSA_CURTA' | 'PAUSA_LONGA' | null;
   pomodoroCicloIndex: number;
   pomodoroEtapaInicio: string | null;
   pomodoroRestanteSeg: number;

@@ -11,7 +11,7 @@ import { PomodoroTimer } from '../../components/pomodoro-timer/pomodoro-timer';
 import { TimerDisplay } from '../../components/timer-display/timer-display';
 import { EstudoApiService } from '../../data/estudo-api.service';
 import { SessaoDetalheDto } from '../../data/estudo.models';
-import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
+import { PomodoroEngineService, PomodoroMode } from '../../services/pomodoro-engine-service';
 import { SessionTimerService } from '../../services/session-timer-service';
 import { StudyAlertSoundService } from '../../services/study-alert-sound.service';
 import { StudySessionClockCoordinatorService } from '../../services/study-session-clock-coordinator.service';
@@ -219,13 +219,18 @@ export class SessaoEstudoPage implements OnDestroy {
       return;
     }
 
-    // Sessão pausada: o snapshot local é a fonte mais confiável (cliente),
-    // principalmente no primeiro retorno à tela, quando o backend pode vir stale.
-    if (!sessaoRodando && snapshotLocal && snapshotLocal.restanteSeg > 0) {
+    // Sessão pausada: snapshot local é confiável nas PAUSAS (servidor manda duração cheia).
+    // Em FOCO o restante deve vir de estudadoTotalSeg (ver corrigirRestantePomodoro):
+    // após "Pular etapa" o cliente gravava FOCO com bloco cheio — desincronizava 1s do cronômetro principal.
+    const snapshotEhPausa =
+      snapshotLocal &&
+      (snapshotLocal.modo === 'PAUSA_CURTA' || snapshotLocal.modo === 'PAUSA_LONGA');
+
+    if (!sessaoRodando && snapshotEhPausa && snapshotLocal!.restanteSeg > 0) {
       this.pomodoro.restore({
-        modo: snapshotLocal.modo,
-        cicloIndex: snapshotLocal.cicloIndex,
-        restanteSeg: snapshotLocal.restanteSeg,
+        modo: snapshotLocal!.modo,
+        cicloIndex: snapshotLocal!.cicloIndex,
+        restanteSeg: snapshotLocal!.restanteSeg,
         rodando: false,
         deferTicker: defer,
       });
@@ -233,25 +238,39 @@ export class SessaoEstudoPage implements OnDestroy {
       return;
     }
 
-    if (s.pomodoroCicloIndex == null) return;
+    const cicloIndexApiOuSnap = s.pomodoroCicloIndex ?? snapshotLocal?.cicloIndex;
+    if (cicloIndexApiOuSnap == null) return;
 
-    let   modo          = s.pomodoroModo;
-    let   cicloIndex    = s.pomodoroCicloIndex;
-    let   restanteSeg   = this.corrigirRestantePomodoro(s);
+    const modoParaSync = this.resolveModoPomodoro(s);
+    let modo = modoParaSync;
+    let cicloIndex = cicloIndexApiOuSnap;
+    if (
+      snapshotLocal?.modo === 'FOCO' &&
+      (s.pomodoroModo === 'PAUSA_CURTA' || s.pomodoroModo === 'PAUSA_LONGA') &&
+      snapshotLocal.cicloIndex != null
+    ) {
+      cicloIndex = snapshotLocal.cicloIndex;
+    }
+    let restanteSeg = this.corrigirRestantePomodoro(s, modoParaSync);
 
     // Fallback para pausas: quando a API vier stale, deriva do início da etapa
     // até o instante de pausa (ou agora, se rodando).
-    const restantePorEtapaInicio = this.calcularRestantePorEtapaInicio(s);
+    const restantePorEtapaInicio = this.calcularRestantePorEtapaInicio(s, modoParaSync);
     if (restantePorEtapaInicio != null) {
       restanteSeg = restanteSeg > 0
         ? Math.min(restanteSeg, restantePorEtapaInicio)
         : restantePorEtapaInicio;
     }
 
-    // Sessão pausada ao voltar para a tela: prioriza snapshot local
-    // (incluindo modo/ciclo), pois o backend pode retornar etapa/restante stale.
-    if (!sessaoRodando && snapshotLocal && snapshotLocal.restanteSeg > 0) {
-      modo = snapshotLocal.modo;
+    // Sessão pausada: mescla snapshot só em pausa — em FOCO o mínimo com snapshot cheio
+    // escondia o tempo já estudado no bloco (mesma origem do bug do “Pular etapa”).
+    if (
+      !sessaoRodando &&
+      snapshotLocal &&
+      snapshotLocal.restanteSeg > 0 &&
+      (snapshotLocal.modo === 'PAUSA_CURTA' || snapshotLocal.modo === 'PAUSA_LONGA')
+    ) {
+      modo = snapshotLocal.modo as PomodoroMode;
       cicloIndex = snapshotLocal.cicloIndex;
       restanteSeg = Math.min(restanteSeg, snapshotLocal.restanteSeg);
     }
@@ -275,7 +294,7 @@ export class SessaoEstudoPage implements OnDestroy {
     }
 
     this.pomodoro.restore({
-      modo,
+      modo: modo as PomodoroMode,
       cicloIndex,
       restanteSeg,
       rodando:     sessaoRodando,
@@ -313,12 +332,28 @@ export class SessaoEstudoPage implements OnDestroy {
    * limitado à duração máxima da etapa. Zeros são passados como-está
    * (break encerrado).
    */
-  private corrigirRestantePomodoro(s: SessaoDetalheDto): number {
+  /**
+   * "Pular etapa" coloca o motor em FOCO antes do backend atualizar pomodoroModo.
+   * O snapshot gravado em salvarSnapshotPomodoro reflete o modo real — senão
+   * corrigirRestantePomodoro usaria a fórmula de PAUSA e dessincronizava do estudadoTotalSeg.
+   */
+  private resolveModoPomodoro(s: SessaoDetalheDto): string {
+    const api = s.pomodoroModo ?? 'FOCO';
+    const snap = this.pomodoroSnapshot.get(s.id);
+    const apiPausa = api === 'PAUSA_CURTA' || api === 'PAUSA_LONGA';
+    if (snap?.modo === 'FOCO' && apiPausa) {
+      return 'FOCO';
+    }
+    return api;
+  }
+
+  private corrigirRestantePomodoro(s: SessaoDetalheDto, modoEfetivo?: string): number {
+    const modo = modoEfetivo ?? this.resolveModoPomodoro(s);
     const estudadoSeg  = s.estudadoTotalSeg ?? 0;
     const restanteServ = s.pomodoroRestanteSeg ?? 0;
     const focoSeg      = (s.pomodoroFocoMin ?? 25) * 60;
 
-    if (s.pomodoroModo === 'FOCO') {
+    if (modo === 'FOCO') {
       // Segundos estudados no ciclo corrente = estudadoSeg módulo focoSeg.
       // Ex.: 25 s estudados, ciclo 1 → 1500 − 25 = 1475 = 24:35
       // Ex.: 600 s estudados, ciclo 1 → 1500 − 600 = 900 = 15:00
@@ -331,15 +366,16 @@ export class SessaoEstudoPage implements OnDestroy {
     if (restanteServ <= 0) return 0;
 
     // PAUSA_CURTA / PAUSA_LONGA: compensar floor() do servidor.
-    const maxSeg = s.pomodoroModo === 'PAUSA_CURTA'
+    const maxSeg = modo === 'PAUSA_CURTA'
       ? (s.pomodoroPausaCurtaMin ?? 5) * 60
       : (s.pomodoroPausaLongaMin ?? 15) * 60;
 
     return Math.min(restanteServ + 1, maxSeg);
   }
 
-  private calcularRestantePorEtapaInicio(s: SessaoDetalheDto): number | null {
-    if (s.pomodoroModo === 'FOCO' || !s.pomodoroEtapaInicio) return null;
+  private calcularRestantePorEtapaInicio(s: SessaoDetalheDto, modoEfetivo?: string): number | null {
+    const modo = modoEfetivo ?? this.resolveModoPomodoro(s);
+    if (modo === 'FOCO' || !s.pomodoroEtapaInicio) return null;
 
     const inicioEtapaMs = Date.parse(s.pomodoroEtapaInicio);
     if (Number.isNaN(inicioEtapaMs)) return null;
@@ -347,7 +383,7 @@ export class SessaoEstudoPage implements OnDestroy {
     const fimRefMs = s.pausadoEm ? Date.parse(s.pausadoEm) : Date.now();
     if (Number.isNaN(fimRefMs) || fimRefMs <= inicioEtapaMs) return null;
 
-    const duracaoSeg = s.pomodoroModo === 'PAUSA_CURTA'
+    const duracaoSeg = modo === 'PAUSA_CURTA'
       ? (s.pomodoroPausaCurtaMin ?? 5) * 60
       : (s.pomodoroPausaLongaMin ?? 15) * 60;
 
@@ -390,7 +426,9 @@ export class SessaoEstudoPage implements OnDestroy {
       this.pomodoro.pause();
       this.salvarSnapshotPomodoro(this.sessao()!.id);
 
-      await firstValueFrom(this.api.pausarSessao(this.sessao()!.id, estudadoSeg));
+      await firstValueFrom(
+        this.api.pausarSessao(this.sessao()!.id, estudadoSeg, this.pomodoroPausaParaApi()),
+      );
     });
   }
 
@@ -411,13 +449,18 @@ export class SessaoEstudoPage implements OnDestroy {
 
       this.initSessao(s, true);
 
-      // Se houver estado local válido, ele prevalece no Retomar para evitar
-      // reinício indevido da etapa (ex.: voltar para 15:00 em vez de continuar).
-      if (localPomodoro && localPomodoro.restanteSeg > 0) {
+      // Em PAUSA o servidor manda duração cheia — o cliente preserva o restante real.
+      // Em FOCO o restante deve seguir estudadoTotalSeg (initSessao + corrigirRestantePomodoro);
+      // restaurar FOCO local aqui após “Pular etapa” reintroduzia o bloco cheio e o desvio de 1s.
+      const localEhPausa =
+        localPomodoro &&
+        (localPomodoro.modo === 'PAUSA_CURTA' || localPomodoro.modo === 'PAUSA_LONGA');
+
+      if (localEhPausa && localPomodoro!.restanteSeg > 0) {
         this.pomodoro.restore({
-          modo: localPomodoro.modo,
-          cicloIndex: localPomodoro.cicloIndex,
-          restanteSeg: localPomodoro.restanteSeg,
+          modo: localPomodoro!.modo,
+          cicloIndex: localPomodoro!.cicloIndex,
+          restanteSeg: localPomodoro!.restanteSeg,
           rodando: !this.pomodoroTemporariamenteDesativado(),
           deferTicker: true,
         });
@@ -483,6 +526,35 @@ export class SessaoEstudoPage implements OnDestroy {
     if (id) {
       this.salvarSnapshotPomodoro(id);
     }
+
+    const s = this.sessao();
+    // Sincroniza se o ciclo tem Pomodoro OU o motor local já foi inicializado (evita bloqueio por DTO/HMR).
+    if (!s || !!s.fim || (!s.pomodoroAtivo && !this.pomodoroEnabled())) return;
+
+    this.api
+      .sincronizarPomodoroEstado(s.id, {
+        pomodoroModo: this.pomodoro.mode(),
+        pomodoroRestanteSeg: Math.floor(this.pomodoro.restanteSegAtual()),
+        pomodoroCiclo: this.pomodoro.cicloAtual(),
+      })
+      .subscribe({
+        next: (dto) => {
+          this._sessao.update((prev) => {
+            if (!prev || prev.id !== dto.id) return prev;
+            return {
+              ...prev,
+              pomodoroModo: dto.pomodoroModo,
+              pomodoroCicloIndex: dto.pomodoroCicloIndex,
+              pomodoroRestanteSeg: dto.pomodoroRestanteSeg,
+              pomodoroEtapaInicio: dto.pomodoroEtapaInicio,
+            };
+          });
+          this.salvarSnapshotPomodoro(s.id);
+        },
+        error: (err) => {
+          console.warn('[Pomodoro] Falha ao sincronizar com o servidor após pular etapa', err);
+        },
+      });
   }
 
   onPomodoroToggleEnabled(): void {
@@ -545,7 +617,7 @@ export class SessaoEstudoPage implements OnDestroy {
     this.pomodoro.pause();
     this.salvarSnapshotPomodoro(s.id);
 
-    return this.api.pausarSessao(s.id, estudadoSeg).pipe(
+    return this.api.pausarSessao(s.id, estudadoSeg, this.pomodoroPausaParaApi()).pipe(
       map(() => true),
       // Se a sessão já expirou no backend, não bloqueia a navegação.
       catchError(() => of(true)),
@@ -602,7 +674,19 @@ export class SessaoEstudoPage implements OnDestroy {
     const estudadoSeg = this.timer.pause();
     this.pomodoro.pause();
     this.salvarSnapshotPomodoro(s.id);
-    this.api.pausarSessaoKeepAlive(s.id, estudadoSeg);
+    this.api.pausarSessaoKeepAlive(s.id, estudadoSeg, this.pomodoroPausaParaApi());
+  }
+
+  /** Modo, restante e ciclo após pausar — enviados ao servidor para gravar Pomodoro na sessão. */
+  private pomodoroPausaParaApi():
+    | { modo: string; restanteSeg: number; cicloIndex: number }
+    | undefined {
+    if (!this.pomodoroEnabled()) return undefined;
+    return {
+      modo: this.pomodoro.mode(),
+      restanteSeg: this.pomodoro.restanteSegAtual(),
+      cicloIndex: this.pomodoro.cicloAtual(),
+    };
   }
 
   private salvarSnapshotPomodoro(sessaoId: number): void {
