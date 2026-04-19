@@ -152,6 +152,54 @@
   height: 4px;
   background: #cbd5e1;
   border-radius: 50%;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.meta-cargo {
+  min-width: 0;
+}
+
+/* Voltas concluídas — chip */
+.voltas-chip {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 6px 12px 6px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #047857;
+  background: color-mix(in srgb, #22c55e 16%, var(--bg-card, #ffffff));
+  border: 1px solid color-mix(in srgb, #22c55e 38%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, #fff 40%, transparent);
+}
+
+.voltas-chip-icon {
+  display: flex;
+  flex-shrink: 0;
+  color: color-mix(in srgb, #047857 85%, #15803d);
+}
+
+.voltas-chip-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.voltas-chip-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.voltas-chip-text {
+  font-weight: 750;
+  line-height: 1.2;
 }
 
 /* FOOTER */
@@ -238,6 +286,17 @@
 
 :host-context([data-theme='dark']) .menu .divider {
   background: var(--border);
+}
+
+:host-context([data-theme='dark']) .voltas-chip {
+  color: #6ee7b7;
+  background: color-mix(in srgb, #22c55e 18%, var(--bg-card, #0f172a));
+  border-color: color-mix(in srgb, #22c55e 42%, transparent);
+  box-shadow: none;
+}
+
+:host-context([data-theme='dark']) .voltas-chip-icon {
+  color: #34d399;
 }
 
 /* Desktop grande */

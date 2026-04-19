@@ -3,17 +3,18 @@ import { ChangeDetectorRef, Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
-import { catchError, delay, finalize } from 'rxjs/operators';
+import { catchError, finalize } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
-import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
+import { CicloMateriaDto, CiclosApiService, CicloMateriasComEstadoDto } from '../../../ciclos/data/ciclos-api.service';
 import {
   formatPercent as formatPercentUtil,
   normalizarNomeDisciplina,
   normalizarPercentualProgresso as normalizarPercentualProgressoUtil,
 } from '../../../../shared/utils/progresso-disciplina.util';
 import { CicloDto } from '../../../ciclos/data/ciclos.models'; // ajuste para seu tipo real
+import { alinharProximaSessaoAoItensDoCiclo } from '../../../../shared/utils/proxima-sessao-ciclo.util';
 import { CicloItemView, EscolherMateriaModalCircular } from '../../components/escolher-materia-modal-circular/escolher-materia-modal-circular';
 import { RecentSession, UltimasSessoesCard } from '../../components/ultimas-sessoes-card/ultimas-sessoes-card';
 import { EstudoApiService, } from '../../data/estudo-api.service';
@@ -62,6 +63,12 @@ export class EstudarAgora implements OnInit {
   observacoesLoading = signal(false);
   private progressoBruto: ProgressoDisciplinaDto[] = [];
 
+  /** Ciclo completo na última rodada — à espera de confirmar nova volta. */
+  aguardandoNovaRodada = signal(false);
+  ultimaRodadaConcluidaNumero = signal<number | null>(null);
+  rodadaAtualNumero = signal<number | null>(null);
+  iniciandoNovaRodada = signal(false);
+
   constructor(
     private readonly ciclosApi: CiclosApiService,
     private readonly estudoApi: EstudoApiService,
@@ -74,51 +81,97 @@ export class EstudarAgora implements OnInit {
 
   ngOnInit(): void {
 
-    this.loading.set(true);
-
     const user = this.auth.getUser()!;
     this.usuarioId = user.id;
 
     const idRaw = this.route.snapshot.paramMap.get('cicloId');
     this.cicloId = Number(idRaw);
 
-    this.getProximaSessao();
-    this.carregarMateriasDoCiclo();
-    this.getProgressoCiclo();
-    this.getSessoesRecentes();
-
+    this.carregarEstudarAgora();
   }
 
   voltarParaMeusCiclos(): void {
     this.router.navigate(['/ciclos']);
   }
 
-  getProximaSessao(): void {
-    this.estudoApi.getProximaSessao(this.cicloId).pipe(
-      delay(0)
-    ).subscribe({
-      next: (r) => {
-        this.proximaSessaoDto = r;
-        this.selecionadoCicloItemId = r.cicloItemId; // default = recomendado
-        this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(r.tempoMinutos);
-        // força atualização da UI imediatamente
-        this.cdr.detectChanges();
-        this.carregarMateriasDoCiclo();
-      },
-      error: (e) => console.error('Erro proxima sessão', e),
-    });
-  }
-
-  getSessoesRecentes(): void {
-    this.estudoApi.getSessoesRecentes(this.usuarioId, this.cicloId, 10)
+  /** Recarrega próxima sessão, matérias (com estado de rodada), progresso e últimas sessões. */
+  private carregarEstudarAgora(): void {
+    this.loading.set(true);
+    forkJoin({
+      proxima: this.estudoApi.getProximaSessao(this.cicloId).pipe(catchError(() => of(undefined))),
+      estadoMaterias: this.ciclosApi.getMateriasCiclo(this.cicloId, this.usuarioId).pipe(
+        catchError(() => of(undefined as CicloMateriasComEstadoDto | undefined)),
+      ),
+      progresso: this.estudoApi.getProgressoCiclo(this.cicloId, this.usuarioId).pipe(
+        catchError(() => of([] as ProgressoDisciplinaDto[])),
+      ),
+      sessoes: this.estudoApi.getSessoesRecentes(this.usuarioId, this.cicloId, 10).pipe(
+        catchError(() => of([] as SessaoCardDto[])),
+      ),
+    })
+      .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: (sessoes) => {
+        next: ({ proxima, estadoMaterias, progresso, sessoes }) => {
+          if (!estadoMaterias) {
+            this.toastr.error('Não foi possível carregar as matérias do ciclo.');
+            return;
+          }
+
+          this.aguardandoNovaRodada.set(estadoMaterias.aguardandoNovaRodada);
+          this.ultimaRodadaConcluidaNumero.set(estadoMaterias.ultimaRodadaConcluidaNumero ?? null);
+          this.rodadaAtualNumero.set(estadoMaterias.rodadaAtualNumero ?? null);
+
+          this.itens = estadoMaterias.materias.map((m) => ({
+            cicloItemId: m.cicloItemId,
+            ordem: m.ordem,
+            disciplinaNome: m.disciplinaNome,
+            tempoMinutos: m.tempoMinutos,
+            visto: m.visto,
+            sessaoAbertaId: m.sessaoAbertaId,
+            cronometroIniciado: m.cronometroIniciado ?? false,
+            concluida: m.concluida,
+          }));
+
+          if (estadoMaterias.aguardandoNovaRodada) {
+            this.proximaSessaoDto = undefined;
+            this.selecionadoCicloItemId = undefined;
+            this.selecionado = undefined;
+            this.tempoPlanejadoLabel = '';
+          } else if (proxima) {
+            this.proximaSessaoDto = proxima;
+            this.selecionadoCicloItemId = proxima.cicloItemId;
+            this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(proxima.tempoMinutos);
+            this.alinharProximaSessaoAoCiclo();
+          }
+
+          this.progressoBruto = progresso ?? [];
+          this.recalcularProgresso();
+
           const lista = sessoes ?? [];
           const inicializadas = lista.filter((s) => this.sessaoCronometroJaIniciou(s));
           this.recentSessions = inicializadas.map((s) => this.mapSessaoParaCard(s));
           this.carregarObservacoesDasSessoes(inicializadas);
+
+          this.cdr.detectChanges();
         },
-        error: () => this.toastr.error('Erro ao carregar sessões recentes')
+        error: () => this.toastr.error('Erro ao carregar a página de estudo.'),
+      });
+  }
+
+  iniciarNovaRodadaConfirmada(): void {
+    if (this.iniciandoNovaRodada()) {
+      return;
+    }
+    this.iniciandoNovaRodada.set(true);
+    this.ciclosApi
+      .iniciarNovaRodada(this.cicloId)
+      .pipe(finalize(() => this.iniciandoNovaRodada.set(false)))
+      .subscribe({
+        next: (nr) => {
+          this.toastr.success(`Nova rodada iniciada (rodada nº ${nr.numeroRodada}).`);
+          this.carregarEstudarAgora();
+        },
+        error: () => this.toastr.error('Não foi possível iniciar a nova rodada. Tente novamente.'),
       });
   }
 
@@ -167,16 +220,6 @@ export class EstudarAgora implements OnInit {
     return status;
   }
 
-  getProgressoCiclo(): void {
-    this.estudoApi.getProgressoCiclo(this.cicloId, this.usuarioId).subscribe({
-      next: (list: ProgressoDisciplinaDto[]) => {
-        this.progressoBruto = list ?? [];
-        this.recalcularProgresso();
-      },
-      error: (e) => console.error('Erro progresso ciclo', e),
-    });
-  }
-
   private recalcularProgresso(): void {
     this.progress = this.progressoBruto.map((p) => ({
       disciplina: p.disciplinaNome,
@@ -199,23 +242,19 @@ export class EstudarAgora implements OnInit {
 
 
   iniciarEstudo(): void {
+    if (this.aguardandoNovaRodada()) {
+      this.toastr.info('Inicie uma nova rodada para continuar estudando este ciclo.');
+      return;
+    }
     if (!this.proximaSessaoDto) {
       return;
     }
     this.executarInicioDeSessao(this.proximaSessaoDto.cicloItemId);
   }
 
-  /** Prioridade: sessão em aberto; senão primeira matéria do ciclo ainda não concluída. */
-  private escolherProximaMateriaElegivel(itens: CicloItemView[]): CicloItemView | undefined {
-    const list = [...itens].sort((a, b) => a.ordem - b.ordem);
-    const emAndamento = list.find((i) => !!i.cronometroIniciado && !i.concluida);
-    if (emAndamento) return emAndamento;
-    return list.find((i) => !i.concluida);
-  }
-
   /**
    * Se a API indicar como próxima uma matéria já concluída, alinha ao primeiro item elegível do ciclo
-   * (não exibir / não recomendar estudo em matéria concluída).
+   * (lógica partilhada com o dashboard — ver {@link alinharProximaSessaoAoItensDoCiclo}).
    */
   private alinharProximaSessaoAoCiclo(): void {
     const dto = this.proximaSessaoDto;
@@ -223,57 +262,31 @@ export class EstudarAgora implements OnInit {
       return;
     }
 
-    const alvo = this.itens.find((i) => i.cicloItemId === dto.cicloItemId);
-    if (alvo && !alvo.concluida) {
-      this.selecionadoCicloItemId = dto.cicloItemId;
-      this.selecionado = alvo;
-      this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(alvo.tempoMinutos);
-      return;
-    }
-
-    const elegivel = this.escolherProximaMateriaElegivel(this.itens);
-    if (elegivel) {
-      this.proximaSessaoDto = {
-        ...dto,
-        cicloItemId: elegivel.cicloItemId,
-        ordem: elegivel.ordem,
-        disciplinaNome: elegivel.disciplinaNome,
-        tempoMinutos: elegivel.tempoMinutos,
-      };
-      this.selecionadoCicloItemId = elegivel.cicloItemId;
-      this.selecionado = elegivel;
-      this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(elegivel.tempoMinutos);
-    } else {
+    const alinhado = alinharProximaSessaoAoItensDoCiclo(
+      dto,
+      this.itens as unknown as CicloMateriaDto[],
+    );
+    if (!alinhado) {
       this.proximaSessaoDto = undefined;
       this.selecionadoCicloItemId = undefined;
       this.selecionado = undefined;
       this.tempoPlanejadoLabel = '';
+      return;
     }
-  }
 
-  private carregarMateriasDoCiclo(): void {
-    this.ciclosApi.getMateriasCiclo(this.cicloId, this.usuarioId).
-      pipe(finalize(() => (this.loading.set(false)))).subscribe({
-        next: (list: CicloMateriaDto[]) => {
-          this.itens = list.map((m) => ({
-            cicloItemId: m.cicloItemId,
-            ordem: m.ordem,
-            disciplinaNome: m.disciplinaNome,
-            tempoMinutos: m.tempoMinutos,
-            visto: m.visto,
-            sessaoAbertaId: m.sessaoAbertaId,
-            cronometroIniciado: m.cronometroIniciado ?? false,
-            concluida: m.concluida,
-          }));
-          this.alinharProximaSessaoAoCiclo();
-          this.recalcularProgresso();
-          this.cdr.detectChanges();
-        },
-        error: (e) => console.error('Erro ao carregar matérias do ciclo', e),
-      });
+    this.proximaSessaoDto = alinhado;
+    const sel = this.itens.find((i) => i.cicloItemId === alinhado.cicloItemId);
+    this.selecionadoCicloItemId = alinhado.cicloItemId;
+    this.selecionado = sel;
+    this.tempoPlanejadoLabel = TempoFormatUtil.minutosParaHorasMin(alinhado.tempoMinutos);
   }
 
   onStartSession(item: CicloItemView): void {
+    if (this.aguardandoNovaRodada()) {
+      this.toastr.info('Inicie uma nova rodada para escolher uma matéria.');
+      this.modalOpen = false;
+      return;
+    }
     if (item.concluida) {
       this.toastr.warning('Esta matéria já foi concluída no ciclo.');
       return;
@@ -284,6 +297,10 @@ export class EstudarAgora implements OnInit {
 
   private executarInicioDeSessao(cicloItemId: number): void {
     if (this.isProcessando()) return;
+    if (this.aguardandoNovaRodada()) {
+      this.toastr.info('Inicie uma nova rodada antes de abrir uma sessão.');
+      return;
+    }
 
     const meta = this.itens.find((i) => i.cicloItemId === cicloItemId);
     if (meta?.concluida) {
@@ -310,6 +327,10 @@ export class EstudarAgora implements OnInit {
   }
 
   abrirEscolha(): void {
+    if (this.aguardandoNovaRodada()) {
+      this.toastr.info('Inicie uma nova rodada para escolher uma matéria.');
+      return;
+    }
     this.modalOpen = true;
   }
 

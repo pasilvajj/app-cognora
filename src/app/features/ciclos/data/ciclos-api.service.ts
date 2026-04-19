@@ -16,6 +16,19 @@ export type CicloMateriaDto = {
   cronometroIniciado: boolean;
 };
 
+/** Resposta de GET /ciclo/materias/:id */
+export type CicloMateriasComEstadoDto = {
+  materias: CicloMateriaDto[];
+  aguardandoNovaRodada: boolean;
+  ultimaRodadaConcluidaNumero: number | null;
+  rodadaAtualNumero: number | null;
+};
+
+export type NovaRodadaDto = {
+  execucaoId: number;
+  numeroRodada: number;
+};
+
 @Injectable({ providedIn: 'root' })
 export class CiclosApiService {
   private readonly base = environment.apiBaseUrl;
@@ -62,9 +75,14 @@ export class CiclosApiService {
   }
 
   getMateriasCiclo(cicloId: number, usuarioId: number) {
-    return this.http.get<CicloMateriaDto[]>(`${this.base}/ciclo/materias/${cicloId}`, {
-      params: { usuarioId },
+    return this.http.get<CicloMateriasComEstadoDto>(`${this.base}/ciclo/materias/${cicloId}`, {
+      params: { usuarioId: String(usuarioId) },
     });
+  }
+
+  /** Confirma início da próxima rodada após concluir o ciclo (requer JWT). */
+  iniciarNovaRodada(cicloId: number) {
+    return this.http.post<NovaRodadaDto>(`${this.base}/ciclo/${cicloId}/execucao/iniciar-nova`, {});
   }
 
   deletarCiclo(cicloId: number) {

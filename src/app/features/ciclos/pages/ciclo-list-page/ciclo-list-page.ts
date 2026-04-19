@@ -43,6 +43,10 @@ export class CicloListPage {
     this.router.navigate(['/estudaAgora', id]);
   }
 
+  labelVoltas(n: number): string {
+    return n === 1 ? '1 volta concluída neste ciclo' : `${n} voltas concluídas neste ciclo`;
+  }
+
   // toggleMenu(id: number, event: MouseEvent): void {
   //   event.stopPropagation();
   //   this.openMenuId = this.openMenuId === id ? null : id;

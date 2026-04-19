@@ -68,6 +68,18 @@ export class PomodoroEngineService {
   private readonly state = signal<PomodoroState>(IDLE_STATE);
   private config: PomodoroConfig = { focoMin: 25, pausaCurtaMin: 5, pausaLongaMin: 15, longaACada: 4 };
 
+  /**
+   * Incrementado quando o relógio conclui uma etapa sozinho (ex.: pausa curta → FOCO).
+   * A página de sessão faz POST do estado Pomodoro para o servidor.
+   * Não incrementa em “Pular etapa” (origem utilizador) — aí o próprio componente envia.
+   */
+  private readonly _pomodoroServerSyncTick = signal(0);
+  readonly pomodoroServerSyncTick = this._pomodoroServerSyncTick.asReadonly();
+
+  private schedulePomodoroServerSyncAfterTimer(): void {
+    this._pomodoroServerSyncTick.update((v) => v + 1);
+  }
+
   // ── Selectors ───────────────────────────────────────────────────────────────
 
   readonly mode           = computed(() => this.state().mode);
@@ -245,7 +257,7 @@ export class PomodoroEngineService {
 
     // Na pausa (curta ou longa): pular etapa = ir direto ao FOCO, sem modal intermediário.
     if (s.mode === 'PAUSA_CURTA' || s.mode === 'PAUSA_LONGA') {
-      this.transitionBreakToFoco(false);
+      this.transitionBreakToFoco(false, 'skip');
       return;
     }
 
@@ -377,17 +389,18 @@ export class PomodoroEngineService {
         remainingMs:     0,
         anchorMs:        0,
       }));
+      this.schedulePomodoroServerSyncAfterTimer();
       return;
     }
 
-    this.transitionBreakToFoco(true);
+    this.transitionBreakToFoco(true, 'timer');
   }
 
   /**
    * Fim natural do descanso (cronômetro zerou) ou “Pular etapa” na pausa.
    * `mostrarOverlay`: true quando o tempo da pausa acabou (modal antes de voltar ao foco); false ao pular etapa.
    */
-  private transitionBreakToFoco(mostrarOverlay: boolean): void {
+  private transitionBreakToFoco(mostrarOverlay: boolean, origem: 'timer' | 'skip'): void {
     this.stopTicker();
     const s = this.state();
 
@@ -400,6 +413,9 @@ export class PomodoroEngineService {
         remainingMs:     0,
         anchorMs:        0,
       }));
+      if (origem === 'timer') {
+        this.schedulePomodoroServerSyncAfterTimer();
+      }
       return;
     }
 
@@ -417,6 +433,9 @@ export class PomodoroEngineService {
       overlayText:     mostrarOverlay ? 'Pausa encerrada. Pronto para voltar ao foco?' : '',
       focusFinished:   false,
     }));
+    if (origem === 'timer') {
+      this.schedulePomodoroServerSyncAfterTimer();
+    }
   }
 
   private duracaoEtapaSeg(mode: PomodoroMode): number {

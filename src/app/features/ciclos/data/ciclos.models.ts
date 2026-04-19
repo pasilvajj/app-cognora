@@ -58,6 +58,8 @@ export type CicloDto = {
   ativo: boolean;
   cargoId: number;
   cargoNome: string;
+  /** Execuções já encerradas (voltas completas anteriores). */
+  voltasCompletas?: number;
   itens: CicloItemDto[];
 };
 

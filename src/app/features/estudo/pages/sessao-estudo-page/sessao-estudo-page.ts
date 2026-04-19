@@ -118,6 +118,18 @@ export class SessaoEstudoPage implements OnDestroy {
         this.pomodoroSnapshot.setOverlayPending(id, { texto: txt, focusFinished: ff });
       });
     });
+
+    // Quando o tempo da pausa (curta/longa) esgota no relógio, o motor incrementa o ciclo localmente;
+    // sem POST o servidor continua no modo/ciclo anteriores até pausar manualmente.
+    effect(() => {
+      const tick = this.pomodoro.pomodoroServerSyncTick();
+      if (tick === 0) return;
+      untracked(() => {
+        const s = this.sessao();
+        if (s?.id) this.salvarSnapshotPomodoro(s.id);
+        this.enviarEstadoPomodoroAoServidor('fim-pausa-por-timer');
+      });
+    });
   }
 
   // ================= STATUS =================
@@ -527,8 +539,12 @@ export class SessaoEstudoPage implements OnDestroy {
       this.salvarSnapshotPomodoro(id);
     }
 
+    this.enviarEstadoPomodoroAoServidor('pular-etapa');
+  }
+
+  /** Persiste modo / restante / ciclo após transição local (pular etapa ou fim da pausa pelo timer). */
+  private enviarEstadoPomodoroAoServidor(contexto: string): void {
     const s = this.sessao();
-    // Sincroniza se o ciclo tem Pomodoro OU o motor local já foi inicializado (evita bloqueio por DTO/HMR).
     if (!s || !!s.fim || (!s.pomodoroAtivo && !this.pomodoroEnabled())) return;
 
     this.api
@@ -552,7 +568,7 @@ export class SessaoEstudoPage implements OnDestroy {
           this.salvarSnapshotPomodoro(s.id);
         },
         error: (err) => {
-          console.warn('[Pomodoro] Falha ao sincronizar com o servidor após pular etapa', err);
+          console.warn(`[Pomodoro] Falha ao sincronizar (${contexto})`, err);
         },
       });
   }

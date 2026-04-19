@@ -3,7 +3,7 @@ import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/c
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { finalize, forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
 import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
@@ -13,6 +13,7 @@ import {
   normalizarNomeDisciplina,
   normalizarPercentualProgresso,
 } from '../../../../shared/utils/progresso-disciplina.util';
+import { alinharProximaSessaoAoItensDoCiclo } from '../../../../shared/utils/proxima-sessao-ciclo.util';
 import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
 import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
 import { EstudoApiService } from '../../../estudo/data/estudo-api.service';
@@ -144,10 +145,18 @@ export class DashboardPage implements OnInit {
   private carregarResumo(): void {
     if (!this.cicloId) return;
 
+    const cicloId = this.cicloId;
+    const usuarioId = this.usuarioId;
+
     this.loading = true;
 
-    this.dashboardApi.getResumo(this.usuarioId, this.cicloId).subscribe({
-      next: (r) => {
+    forkJoin({
+      resumo: this.dashboardApi.getResumo(usuarioId, cicloId),
+      estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
+        catchError(() => of(null)),
+      ),
+    }).subscribe({
+      next: ({ resumo: r, estadoMaterias }) => {
         this.resumo = r;
         this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
         this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
@@ -157,12 +166,18 @@ export class DashboardPage implements OnInit {
         this.streakValue = `${streak} dia${streak === 1 ? '' : 's'} consecutivo${streak === 1 ? '' : 's'}`;
         this.streakFooterText = `Recorde: ${r.recordeStreakDias ?? 0} dias`;
 
-        // ===== CARD DE AÇÃO =====
-        this.aplicarCardAcao(r.recentes ?? [], r.proximaSessao);
+        const materiasList = estadoMaterias?.materias ?? [];
+        const aguardandoNovaRodada = estadoMaterias?.aguardandoNovaRodada ?? false;
+        const proximaAlinhada = aguardandoNovaRodada
+          ? null
+          : alinharProximaSessaoAoItensDoCiclo(r.proximaSessao ?? undefined, materiasList);
+
+        // ===== CARD DE AÇÃO (sem “próxima matéria” entre rodadas até confirmar nova volta no Estudar Agora) =====
+        this.aplicarCardAcao(r.recentes ?? [], proximaAlinhada);
 
         // ===== CHART / PROGRESSO =====
         this.semana = r.semana ?? [];
-        this.carregarProgressoPorDisciplina(r.progresso ?? []);
+        this.carregarProgressoPorDisciplina(r.progresso ?? [], materiasList);
 
         this.loading = false;
         this.cdr.detectChanges();
@@ -178,7 +193,10 @@ export class DashboardPage implements OnInit {
    * Progresso por disciplina: `EstudoApiService.getProgressoCiclo` + meta via matérias do ciclo
    * (equivalente ao painel em Estudar Agora). Em falha parcial, usa `progresso` do resumo do dashboard.
    */
-  private carregarProgressoPorDisciplina(fallbackResumo: ProgressoDisciplinaDto[]): void {
+  private carregarProgressoPorDisciplina(
+    fallbackResumo: ProgressoDisciplinaDto[],
+    materiasPrefetched?: CicloMateriaDto[],
+  ): void {
     if (!this.cicloId) {
       this.progressoItems = [];
       return;
@@ -187,13 +205,19 @@ export class DashboardPage implements OnInit {
     const cicloId = this.cicloId;
     const usuarioId = this.usuarioId;
 
+    const materias$ =
+      materiasPrefetched !== undefined
+        ? of(materiasPrefetched)
+        : this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
+            map((resp) => resp?.materias ?? []),
+            catchError(() => of([] as CicloMateriaDto[])),
+          );
+
     forkJoin({
       progresso: this.estudoApi.getProgressoCiclo(cicloId, usuarioId).pipe(
         catchError(() => of([] as ProgressoEstudoDto[])),
       ),
-      materias: this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
-        catchError(() => of([] as CicloMateriaDto[])),
-      ),
+      materias: materias$,
     }).subscribe(({ progresso, materias }) => {
       const materiasList = materias ?? [];
       const getMeta = (nome: string): number => {
