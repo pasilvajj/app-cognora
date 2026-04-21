@@ -160,6 +160,51 @@
   min-width: 0;
 }
 
+/* Barra de progresso da rodada */
+.progress-block {
+  margin-top: 14px;
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+
+.progress-title {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.progress-value {
+  font-size: 12px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary-dark, #2563eb);
+}
+
+.progress-track {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 14%, transparent);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary-dark, #2563eb) 88%, #1d4ed8),
+    color-mix(in srgb, var(--primary, #3b82f6) 95%, #60a5fa)
+  );
+  transition: width 0.35s ease;
+}
+
 /* Voltas concluídas — chip */
 .voltas-chip {
   margin-top: 10px;
@@ -297,6 +342,14 @@
 
 :host-context([data-theme='dark']) .voltas-chip-icon {
   color: #34d399;
+}
+
+:host-context([data-theme='dark']) .progress-track {
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+:host-context([data-theme='dark']) .progress-value {
+  color: var(--primary, #60a5fa);
 }
 
 /* Desktop grande */

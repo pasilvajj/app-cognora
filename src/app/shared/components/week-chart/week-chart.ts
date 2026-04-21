@@ -98,6 +98,14 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 6,
+            right: 4,
+            bottom: 28,
+            left: 2,
+          },
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
@@ -117,18 +125,22 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
             },
             ticks: {
               color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
-              font: { size: 12, weight: 600 },
+              font: { size: 11, weight: 600 },
+              padding: 8,
             },
           },
           y: {
+            type: 'linear',
             beginAtZero: true,
             grid: {
               color: this.isDarkTheme() ? 'rgba(148,163,184,.14)' : 'rgba(15,23,42,.08)',
             },
             ticks: {
+              stepSize: 50,
+              autoSkip: false,
               color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
               callback: (value) => this.formatYAxisMinutos(Number(value)),
-              font: { size: 12, weight: 600 },
+              font: { size: 11, weight: 600 },
             },
           },
         },

@@ -60,6 +60,8 @@ export type CicloDto = {
   cargoNome: string;
   /** Execuções já encerradas (voltas completas anteriores). */
   voltasCompletas?: number;
+  /** 0–100: blocos da rodada com sessão / total de blocos; ausente sem execução aplicável. */
+  progressoRodadaPercentual?: number | null;
   itens: CicloItemDto[];
 };
 
@@ -83,11 +85,29 @@ export interface DisciplinaEditDto {
 }
 
 export interface CicloEditResponseDto {
-   id: number;
-   nome: string;
-   cargaHorariaSemanal: number;
-   ativo: boolean;
-   cargoId: number;
-   cargoNome: string;
-   disciplinas: DisciplinaEditDto[];
+  cicloId: number;
+  nome: string;
+  cargaHorariaSemanal: number;
+  ativo: boolean;
+  cargoId: number;
+  cargoNome: string;
+  pomodoroAtivo?: boolean;
+  disciplinas: DisciplinaEditDto[];
 }
+
+/** PUT /api/ciclo/:id — alinhado ao CicloUpdateRequest do backend */
+export type CicloItemUpdateRequest = {
+  idDisciplina: number;
+  checked?: boolean;
+  completouEdital?: boolean;
+  nivel?: number;
+  peso?: number | null;
+};
+
+export type CicloUpdateRequest = {
+  nome?: string;
+  cargaHorariaSemanal?: number;
+  ativo?: boolean;
+  pomodoroAtivo?: boolean;
+  itens: CicloItemUpdateRequest[];
+};

@@ -82,6 +82,9 @@ export class DashboardPage implements OnInit {
 
   private readonly LS_KEY = 'cognora:lastCicloId';
 
+  /** Segunda-feira (yyyy-MM-dd) da semana exibida no resumo e no gráfico. */
+  private weekStartIso = '';
+
   dashboardApi = inject(DashboardApiService);
   ciclosApi = inject(CiclosApiService);
   estudoApi = inject(EstudoApiService);
@@ -106,6 +109,42 @@ export class DashboardPage implements OnInit {
     if (!id || id <= 0 || this.cicloId === id) return;
     this.cicloId = id;
     this.salvarCicloPreferido(id);
+    this.weekStartIso = this.getMondayIso(new Date());
+    this.carregarResumo();
+  }
+
+  get intervaloSemanaLabel(): string {
+    const start = this.weekStartIso || this.getMondayIso(new Date());
+    const end = this.addDaysIso(start, 6);
+    return this.formatarIntervaloSemana(start, end);
+  }
+
+  get semanaPosteriorDesabilitada(): boolean {
+    const cur = this.getMondayIso(new Date());
+    return !this.weekStartIso || this.weekStartIso >= cur;
+  }
+
+  semanaAnterior(): void {
+    if (!this.cicloId || this.loading) {
+      return;
+    }
+    if (!this.weekStartIso) {
+      this.weekStartIso = this.getMondayIso(new Date());
+    }
+    this.weekStartIso = this.addDaysIso(this.weekStartIso, -7);
+    this.carregarResumo();
+  }
+
+  proximaSemana(): void {
+    if (!this.cicloId || this.loading || this.semanaPosteriorDesabilitada) {
+      return;
+    }
+    const cur = this.getMondayIso(new Date());
+    const next = this.addDaysIso(this.weekStartIso, 7);
+    if (next > cur) {
+      return;
+    }
+    this.weekStartIso = next;
     this.carregarResumo();
   }
 
@@ -128,6 +167,10 @@ export class DashboardPage implements OnInit {
         this.salvarCicloPreferido(this.cicloId);
       }
 
+      if (!this.weekStartIso) {
+        this.weekStartIso = this.getMondayIso(new Date());
+      }
+
       // Como é uma sequência lógica, o resumo só carrega após o sucesso dos ciclos
       await this.carregarResumo();
 
@@ -148,10 +191,14 @@ export class DashboardPage implements OnInit {
     const cicloId = this.cicloId;
     const usuarioId = this.usuarioId;
 
+    if (!this.weekStartIso) {
+      this.weekStartIso = this.getMondayIso(new Date());
+    }
+
     this.loading = true;
 
     forkJoin({
-      resumo: this.dashboardApi.getResumo(usuarioId, cicloId),
+      resumo: this.dashboardApi.getResumo(usuarioId, cicloId, this.weekStartIso),
       estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
         catchError(() => of(null)),
       ),
@@ -407,6 +454,49 @@ export class DashboardPage implements OnInit {
       case 'ENCERRADA': return 'Encerrada';
       default: return '—';
     }
+  }
+
+  private getMondayIso(date: Date): string {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay();
+    const diffToMonday = (day + 6) % 7;
+    d.setDate(d.getDate() - diffToMonday);
+    return this.toIsoDate(d);
+  }
+
+  private addDaysIso(iso: string, days: number): string {
+    const d = this.parseIsoDate(iso);
+    d.setDate(d.getDate() + days);
+    return this.toIsoDate(d);
+  }
+
+  private parseIsoDate(iso: string): Date {
+    const [y, m, d] = (iso ?? '').split('-').map((x) => Number(x));
+    if (!y || !m || !d) {
+      return new Date();
+    }
+    return new Date(y, m - 1, d, 12, 0, 0, 0);
+  }
+
+  private toIsoDate(d: Date): string {
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${mo}-${dd}`;
+  }
+
+  private formatarIntervaloSemana(weekStart: string, weekEnd: string): string {
+    if (!weekStart || !weekEnd) {
+      return '—';
+    }
+    const a = this.parseIsoDate(weekStart);
+    const b = this.parseIsoDate(weekEnd);
+    const fmt = (x: Date) =>
+      x
+        .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+        .replace('.', '');
+    return `${fmt(a)} – ${fmt(b)} ${b.getFullYear()}`;
   }
 
   private lerCicloPreferido(): number | null {

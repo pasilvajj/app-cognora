@@ -76,6 +76,7 @@ export interface SessaoDetalheDto {
 
 export interface SessaoCardDto {
   id: number;
+  disciplinaId?: number;
   disciplinaNome: string;
   metaMinutos: number;
   /** null se a sessão foi só reservada (iniciar) e o cronómetro nunca foi iniciado (comecar). */

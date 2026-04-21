@@ -323,6 +323,40 @@ input:focus, select:focus {
     color: rgba(15, 23, 42, .70);
 }
 
+.duracao-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duracao-input {
+  width: 72px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #dbe6f3;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  background: #fff;
+}
+
+.duracao-suffix {
+  font-size: 13px;
+  font-weight: 650;
+  color: rgba(15, 23, 42, 0.65);
+}
+
+:host-context([data-theme='dark']) .duracao-input {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 88%, #0b1220);
+  border-color: color-mix(in srgb, var(--text) 16%, transparent);
+}
+
+:host-context([data-theme='dark']) .duracao-suffix {
+  color: var(--text-muted);
+}
+
 /* topo */
 /* .page-top {
   padding: 16px 32px;

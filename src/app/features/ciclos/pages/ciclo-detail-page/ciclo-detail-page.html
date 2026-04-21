@@ -3,11 +3,20 @@
 
     <ng-container *ngIf="ciclo as c">
       <app-ciclo-header
-        [nome]="c.nome"
+        [nome]="modo === 'edit' ? nomeEdit : c.nome"
+        (nomeChange)="nomeEdit = $event"
         [cargoNome]="c.cargoNome"
-        [cargaHorariaSemanal]="c.cargaHorariaSemanal"
+        [cargaHorariaSemanal]="modo === 'edit' ? cargaEdit : c.cargaHorariaSemanal"
+        (cargaHorariaSemanalChange)="onCargaChange($event)"
         [modo]="modo">
       </app-ciclo-header>
+
+      <div class="edit-extras" *ngIf="modo === 'edit'">
+        <label class="pomodoro-row">
+          <input type="checkbox" [(ngModel)]="pomodoroAtivo" />
+          <span>Usar técnica Pomodoro neste ciclo</span>
+        </label>
+      </div>
     </ng-container>
 
     <!-- Estado -->
@@ -18,16 +27,18 @@
       <app-materias-ciclo-list
         [items]="disciplinas"
         [readonly]="modo === 'view'"
-        (itemsChange)="modo === 'edit' && onItemsChange($event)">
+        (itemsChange)="onDisciplinasChange($event)">
       </app-materias-ciclo-list>
     </section>
 
     <div class="footer-actions" *ngIf="modo === 'edit'">
-    <button
-      class="action-primary"
-      (click)="salvar()">
-      Salvar alterações
-    </button>
-  </div>
+      <button
+        type="button"
+        class="action-primary"
+        (click)="salvar()"
+        [disabled]="salvando || loading">
+        {{ salvando ? 'Salvando…' : 'Salvar alterações' }}
+      </button>
+    </div>
   </div>
 </div>

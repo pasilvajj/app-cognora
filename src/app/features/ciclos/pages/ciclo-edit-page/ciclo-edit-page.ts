@@ -81,7 +81,7 @@ export class CicloEditPage implements OnInit{
 
   iniciarCiclo(): void {
     if (!this.ciclo) return;
-    this.router.navigate(['/estudaAgora', this.ciclo.id]);
+    this.router.navigate(['/estudaAgora', this.ciclo.cicloId]);
   }
 
   aplicarHorasPorMateria(): void {
@@ -110,38 +110,29 @@ export class CicloEditPage implements OnInit{
     }
 
 
-    atualizar(): void {
+  atualizar(): void {
+    if (!this.ciclo) return;
+
     const nome = (this.nomeCiclo ?? '').trim();
-  
-    const payload: any = {
-      ownerId: this.ownerId,
+    if (!nome) return;
+
+    const payload = {
       nome,
       cargaHorariaSemanal: this.cargaHorariaSemanal,
       ativo: this.ativo,
-      concursoId: this.concursoId,
-      cargoId: this.cargoId,
-      tempoBlocoMin: 120, // se você usa isso no backend, ajuste aqui conforme sua UI
-      itens: (this.disciplinas ?? []).map((d: any) => ({
-        idDisciplina: d.id,          // 👈 nome correto
+      pomodoroAtivo: this.usarPomodoro,
+      itens: (this.disciplinas ?? []).map(d => ({
+        idDisciplina: d.id,
         checked: !!d.checked,
         completouEdital: !!d.completouEdital,
-        nivel: d.nivel ?? 0
+        nivel: d.nivel ?? 0,
+        peso: d.peso ?? null,
       })),
-
-       pomodoroAtivo: this.usarPomodoro,
-     
     };
 
-    console.log('Salvar ciclo', payload);
-
-    this.api.saveCiclo(payload).subscribe({
-      next: (ciclo) => {
-        console.log('Ciclo criado:', ciclo);
-        this.router.navigate(['/ciclos']);
-      },
-      error: (err) => {
-        console.error('Erro ao salvar ciclo', err);
-      },
+    this.api.atualizarCiclo(this.ciclo.cicloId, payload).subscribe({
+      next: () => this.router.navigate(['/ciclos']),
+      error: err => console.error('Erro ao salvar ciclo', err),
     });
   }
 

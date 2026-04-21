@@ -15,7 +15,8 @@
         <input
           *ngIf="modo === 'edit'"
           class="ciclo-nome-input"
-          [(ngModel)]="nome"
+          [ngModel]="nome"
+          (ngModelChange)="nomeChange.emit($event)"
           maxlength="70"
           placeholder="Nome do ciclo"
         />
@@ -32,9 +33,23 @@
             <span class="value">{{ cargoNome }}</span>
           </div>
 
-          <div class="meta-item">
+          <div class="meta-item meta-item--duracao">
             <span class="label">Duração do ciclo</span>
-            <span class="value">{{ cargaHorariaSemanal }}h/sem</span>
+            <ng-container *ngIf="modo === 'view'">
+              <span class="value">{{ cargaHorariaSemanal }}h/sem</span>
+            </ng-container>
+            <div *ngIf="modo === 'edit'" class="duracao-edit">
+              <input
+                type="number"
+                class="duracao-input"
+                min="1"
+                max="168"
+                step="1"
+                [ngModel]="cargaHorariaSemanal"
+                (ngModelChange)="cargaHorariaSemanalChange.emit($event)"
+              />
+              <span class="duracao-suffix">h/semana</span>
+            </div>
           </div>
         </div>
       </div>

@@ -1,8 +1,12 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { finalize } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 import { CiclosApiService } from '../../data/ciclos-api.service';
+import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
@@ -10,13 +14,13 @@ import {
   MateriasCicloList,
   DisciplinaCicloItem,
   DisciplinaEditDto,
-  CicloEditResponseDto
+  CicloEditResponseDto,
 } from '../materias-ciclo-list/materias-ciclo-list';
 
 @Component({
   selector: 'app-ciclo-detail-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, MateriasCicloList, CicloHeaderComponent],
+  imports: [CommonModule, FormsModule, RouterModule, MateriasCicloList, CicloHeaderComponent],
   templateUrl: './ciclo-detail-page.html',
   styleUrl: './ciclo-detail-page.css',
 })
@@ -25,11 +29,17 @@ export class CicloDetailPage implements OnInit {
   ciclo?: CicloEditResponseDto;
   disciplinas: DisciplinaCicloItem[] = [];
 
+  nomeEdit = '';
+  cargaEdit = 30;
+  pomodoroAtivo = true;
+  salvando = false;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private api: CiclosApiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private toastr: ToastrService,
   ) {}
 
   modo: 'view' | 'edit' = 'view';
@@ -44,62 +54,104 @@ export class CicloDetailPage implements OnInit {
     }
   }
 
-  // ngOnInit(): void {
-  //   const id = Number(this.route.snapshot.paramMap.get('id'));
-  //   if (id) {
-  //     this.carregarCiclo(id);
-  //   }
-  // }
-
-  /* =====================================================
-     CARREGAR CICLO (VISUALIZAÇÃO)
-     ===================================================== */
   private carregarCiclo(cicloId: number): void {
     this.loading = true;
 
     this.api.detalharCicloParaEdicao(cicloId).subscribe({
       next: (data) => {
-        this.ciclo = data; // agora data é UM objeto
-       
-        this.disciplinas = this.mapEditDtoToCicloItems(data.disciplinas );
-        console.log('disciplina',this.disciplinas);
+        const raw = data as CicloEditResponseDto & { id?: number };
+        const cidApi = Number(raw.cicloId ?? raw.id);
+        const cicloIdNorm = Number.isFinite(cidApi) && cidApi > 0 ? cidApi : cicloId;
+        this.ciclo = { ...data, cicloId: cicloIdNorm };
+
+        this.nomeEdit = data.nome;
+        this.cargaEdit = data.cargaHorariaSemanal;
+        this.pomodoroAtivo = data.pomodoroAtivo ?? true;
+
+        this.disciplinas = this.mapEditDtoToCicloItems(data.disciplinas);
         this.aplicarHorasPorMateria();
       },
       error: err => console.error(err),
       complete: () => {
         this.loading = false;
         this.cdr.detectChanges();
-      }
+      },
     });
   }
 
-  onItemsChange(items: DisciplinaCicloItem[]): void {
-    this.disciplinas = items;
-   
+  onCargaChange(value: number): void {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return;
+    const clamped = Math.min(168, Math.max(1, Math.round(n)));
+    this.cargaEdit = clamped;
     this.aplicarHorasPorMateria();
   }
 
-  /* =====================================================
-     INICIAR CICLO
-     ===================================================== */
+  onDisciplinasChange(items: DisciplinaCicloItem[]): void {
+    if (this.modo !== 'edit') return;
+    this.disciplinas = items;
+    this.aplicarHorasPorMateria();
+  }
+
   iniciarCiclo(): void {
     if (!this.ciclo) return;
-
-    this.router.navigate(['/estudaAgora', this.ciclo.id]);
+    this.router.navigate(['/estudaAgora', this.ciclo.cicloId]);
   }
 
-  salvar(): void{
+  salvar(): void {
+    if (!this.ciclo || this.modo !== 'edit') return;
 
+    const cicloIdParaSalvar = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isFinite(cicloIdParaSalvar) || cicloIdParaSalvar <= 0) {
+      this.toastr.error('Identificador do ciclo inválido.');
+      return;
+    }
+
+    const nome = (this.nomeEdit ?? '').trim();
+    if (!nome) {
+      this.toastr.warning('Informe um nome para o ciclo.');
+      return;
+    }
+
+    const payload: CicloUpdateRequest = {
+      nome,
+      cargaHorariaSemanal: this.cargaEdit,
+      ativo: this.ciclo.ativo,
+      pomodoroAtivo: this.pomodoroAtivo,
+      itens: this.disciplinas.map(d => ({
+        idDisciplina: d.id,
+        checked: d.checked,
+        completouEdital: d.completouEdital,
+        nivel: d.nivel ?? 0,
+        peso: d.peso ?? null,
+      })),
+    };
+
+    this.salvando = true;
+    this.api
+      .atualizarCiclo(cicloIdParaSalvar, payload)
+      .pipe(
+        finalize(() => {
+          this.salvando = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.toastr.success('Alterações salvas.');
+          this.router.navigate(['/ciclos']);
+        },
+        error: err => console.error(err),
+      });
   }
 
-  /* =====================================================
-     CÁLCULO DE HORAS
-     ===================================================== */
   private aplicarHorasPorMateria(): void {
     if (!this.ciclo) return;
 
+    const cargaHorariaSemanal = this.cargaEdit ?? this.ciclo.cargaHorariaSemanal;
+
     const result = calcularHorasPorMateria({
-      cargaHorariaSemanal: this.ciclo.cargaHorariaSemanal,
+      cargaHorariaSemanal,
       materias: this.disciplinas.map(m => ({
         id: m.id,
         checked: m.checked,
@@ -107,7 +159,7 @@ export class CicloDetailPage implements OnInit {
       })),
       minHorasPorMateria: 2,
     });
-  console.log(result);  
+
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
 
     this.disciplinas = this.disciplinas.map(m => {
@@ -119,12 +171,7 @@ export class CicloDetailPage implements OnInit {
     });
   }
 
-  /* =====================================================
-     ADAPTER (BACKEND → UI)
-     ===================================================== */
-  private mapEditDtoToCicloItems( disciplinas: DisciplinaEditDto[]): DisciplinaCicloItem[] {
-     console.log('disciplina config:',disciplinas);
-    
+  private mapEditDtoToCicloItems(disciplinas: DisciplinaEditDto[]): DisciplinaCicloItem[] {
     return disciplinas.map(d => ({
       id: d.id,
       nome: d.nome,

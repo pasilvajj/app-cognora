@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -11,9 +11,13 @@ import { RouterModule } from '@angular/router';
   styleUrl: './ciclo-header.component.css',
 })
 export class CicloHeaderComponent {
-  @Input() nome!: string;
+  @Input() nome = '';
+  @Output() nomeChange = new EventEmitter<string>();
+
   @Input() cargoNome!: string;
   @Input() cargaHorariaSemanal!: number;
+  @Output() cargaHorariaSemanalChange = new EventEmitter<number>();
+
   @Input() editable = false;
   @Input() modo: 'view' | 'edit' = 'view';
 }

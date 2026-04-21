@@ -1,18 +1,23 @@
 :host {
-  display: block;
-  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex: 0 1 auto;
+  min-height: 0;
+  width: 100%;
 }
 
 /* Card base no padrão do dashboard */
 .chart-card {
-  height: 100%;
+  flex: 0 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
+  padding-bottom: 6px;
 }
 
 /* Header */
 .chart-header {
-  padding: 18px 18px 12px;
+  padding: 14px 16px 10px;
   border-bottom: 1px solid #eef2f7;
 }
 
@@ -30,11 +35,13 @@
   color: var(--text-muted);
 }
 
-/* Área do gráfico */
+/* Área do gráfico: altura fixa compacta (50 em 50 no eixo Y mantém-se com autoSkip: false) */
 .chart-container {
   position: relative;
-  flex: 1;
-  min-height: 0; /* importante */
+  flex: 0 0 auto;
+  height: 270px;
+  padding-bottom: 10px;
+  box-sizing: border-box;
 }
 
 .chart-container canvas {

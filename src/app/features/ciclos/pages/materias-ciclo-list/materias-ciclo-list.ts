@@ -29,13 +29,14 @@ export interface DisciplinaEditDto {
 }
 
 export interface CicloEditResponseDto {
-    id: number;
-    nome: string;
-    cargaHorariaSemanal: number;
-    ativo: boolean;
-    cargoId: number;
-    cargoNome: string;
-    disciplinas: DisciplinaEditDto[];
+  cicloId: number;
+  nome: string;
+  cargaHorariaSemanal: number;
+  ativo: boolean;
+  cargoId: number;
+  cargoNome: string;
+  pomodoroAtivo?: boolean;
+  disciplinas: DisciplinaEditDto[];
 }
 
 @Component({

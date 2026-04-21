@@ -43,6 +43,16 @@
 
   <section class="dashboard-main">
     <div class="dashboard-block chart">
+      @if (cicloId) {
+      <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico">
+        <button type="button" class="dashboard-nav-btn" (click)="semanaAnterior()" [disabled]="loading"
+          title="Semana anterior" aria-label="Semana anterior">‹</button>
+        <div class="dashboard-week-range">{{ intervaloSemanaLabel }}</div>
+        <button type="button" class="dashboard-nav-btn" (click)="proximaSemana()"
+          [disabled]="loading || semanaPosteriorDesabilitada" title="Semana seguinte"
+          aria-label="Semana seguinte">›</button>
+      </div>
+      }
       <app-week-chart [days]="semana"></app-week-chart>
     </div>
 

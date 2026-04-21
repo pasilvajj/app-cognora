@@ -1,11 +1,21 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
-import { CargoDto, CicloCreateRequest, CicloDto, CicloEditResponseDto, ConcursoDto, DisciplinaDto } from './ciclos.models';
+import {
+  CargoDto,
+  CicloCreateRequest,
+  CicloDto,
+  CicloEditResponseDto,
+  CicloUpdateRequest,
+  ConcursoDto,
+  DisciplinaDto,
+} from './ciclos.models';
 
 export type CicloMateriaDto = {
   cicloItemId: number;
+  disciplinaId?: number;
   ordem: number;
   disciplinaNome: string;
   tempoMinutos: number;
@@ -65,6 +75,16 @@ export class CiclosApiService {
 
   saveCiclo(payload: CicloCreateRequest): Observable<CicloDto[]> {
     return this.http.post<CicloDto[]>(`${this.base}/ciclo/salvar`, payload);
+  }
+
+  /**
+   * Backend responde 204 sem corpo; `responseType: 'text'` evita que o HttpClient
+   * tente fazer parse de JSON vazio (falha comum que impedia o `next` do subscribe).
+   */
+  atualizarCiclo(cicloId: number, body: CicloUpdateRequest): Observable<void> {
+    return this.http
+      .put(`${this.base}/ciclo/${cicloId}`, body, { responseType: 'text' })
+      .pipe(map(() => undefined));
   }
   listCiclos(): Promise<CicloDto[]> {
     return firstValueFrom(this.http.get<CicloDto[]>(`${this.base}/ciclo`));

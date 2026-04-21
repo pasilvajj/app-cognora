@@ -42,6 +42,25 @@
         <span class="meta-cargo">{{ c.cargoNome }}</span>
       </div>
 
+      @if (progressoRodadaPct(c) !== null) {
+      <div class="progress-block">
+        <div class="progress-header">
+          <span class="progress-title">Progresso da rodada</span>
+          <span class="progress-value">{{ progressoRodadaPct(c) }}%</span>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          [attr.aria-valuenow]="progressoRodadaPct(c)"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="'Progresso da rodada ' + progressoRodadaPct(c) + '%'"
+        >
+          <div class="progress-fill" [style.width.%]="progressoRodadaPct(c)!"></div>
+        </div>
+      </div>
+      }
+
       @if ((c.voltasCompletas ?? 0) > 0) {
       <div class="voltas-chip" [attr.title]="labelVoltas(c.voltasCompletas!)">
         <span class="voltas-chip-icon" aria-hidden="true">
@@ -51,7 +70,7 @@
           </svg>
         </span>
         <span class="voltas-chip-num">{{ c.voltasCompletas }}</span>
-        <span class="voltas-chip-text">{{ c.voltasCompletas === 1 ? 'volta concluída' : 'voltas concluídas' }}</span>
+        <span class="voltas-chip-text">{{ c.voltasCompletas === 1 ? 'ciclo concluída' : 'ciclos concluídas' }}</span>
       </div>
       }
 

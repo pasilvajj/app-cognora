@@ -61,6 +61,10 @@ export class EstudarAgora implements OnInit {
   recentSessions: RecentSession[] = [];
   observacoesMateria: ObservacaoMateriaItem[] = [];
   observacoesLoading = signal(false);
+  /** Disciplinas que ainda têm bloco no ciclo (ordem definida); exclui só linha de config / removidas do ciclo. */
+  private disciplinaIdsComExecNoCiclo = new Set<number>();
+  /** Fallback quando GET materias não trouxer disciplinaId (API antiga). */
+  private nomesDisciplinasComExecNoCiclo = new Set<string>();
   private progressoBruto: ProgressoDisciplinaDto[] = [];
 
   /** Ciclo completo na última rodada — à espera de confirmar nova volta. */
@@ -132,6 +136,15 @@ export class EstudarAgora implements OnInit {
             concluida: m.concluida,
           }));
 
+          this.disciplinaIdsComExecNoCiclo = new Set(
+            estadoMaterias.materias
+              .map((m) => m.disciplinaId)
+              .filter((id): id is number => typeof id === 'number' && Number.isFinite(id)),
+          );
+          this.nomesDisciplinasComExecNoCiclo = new Set(
+            estadoMaterias.materias.map((m) => normalizarNomeDisciplina(m.disciplinaNome)),
+          );
+
           if (estadoMaterias.aguardandoNovaRodada) {
             this.proximaSessaoDto = undefined;
             this.selecionadoCicloItemId = undefined;
@@ -148,7 +161,9 @@ export class EstudarAgora implements OnInit {
           this.recalcularProgresso();
 
           const lista = sessoes ?? [];
-          const inicializadas = lista.filter((s) => this.sessaoCronometroJaIniciou(s));
+          const inicializadas = lista
+            .filter((s) => this.sessaoCronometroJaIniciou(s))
+            .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome));
           this.recentSessions = inicializadas.map((s) => this.mapSessaoParaCard(s));
           this.carregarObservacoesDasSessoes(inicializadas);
 
@@ -173,6 +188,15 @@ export class EstudarAgora implements OnInit {
         },
         error: () => this.toastr.error('Não foi possível iniciar a nova rodada. Tente novamente.'),
       });
+  }
+
+  /** Mesma regra das observações: só matérias que ainda têm bloco com ordem no ciclo atual. */
+  private disciplinaAindaNoCicloExec(disciplinaId?: number | null, disciplinaNome?: string | null): boolean {
+    if (this.disciplinaIdsComExecNoCiclo.size > 0) {
+      return typeof disciplinaId === 'number' && Number.isFinite(disciplinaId)
+        && this.disciplinaIdsComExecNoCiclo.has(disciplinaId);
+    }
+    return this.nomesDisciplinasComExecNoCiclo.has(normalizarNomeDisciplina(disciplinaNome ?? ''));
   }
 
   /** Só entra em “Últimas sessões” após o primeiro comecar (campo inicio preenchido). */
@@ -399,6 +423,7 @@ export class EstudarAgora implements OnInit {
     ).subscribe((detalhes) => {
       const notas = (detalhes ?? [])
         .filter((s): s is NonNullable<typeof s> => !!s)
+        .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome))
         .map((s) => {
           const dataSessao = s.inicio ?? s.fim;
           return {

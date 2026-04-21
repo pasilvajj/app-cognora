@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -68,12 +68,16 @@ export class DashboardApiService {
 
   constructor(private http: HttpClient) {}
 
-  getResumo(usuarioId: number, cicloId: number): Observable<DashboardResumoDto> {
-    return this.http.get<DashboardResumoDto>(`${this.baseUrl}/dashboard/resumo`, {
-      params: {
-        usuarioId: String(usuarioId),
-        cicloId: String(cicloId),
-      },
-    });
+  /**
+   * @param weekStartIso segunda-feira da semana (yyyy-MM-dd); omitido = semana atual no servidor
+   */
+  getResumo(usuarioId: number, cicloId: number, weekStartIso?: string | null): Observable<DashboardResumoDto> {
+    let params = new HttpParams()
+      .set('usuarioId', String(usuarioId))
+      .set('cicloId', String(cicloId));
+    if (weekStartIso) {
+      params = params.set('weekStart', weekStartIso);
+    }
+    return this.http.get<DashboardResumoDto>(`${this.baseUrl}/dashboard/resumo`, { params });
   }
 }

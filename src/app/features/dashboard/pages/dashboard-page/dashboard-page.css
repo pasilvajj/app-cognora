@@ -16,6 +16,73 @@
   color: var(--text-muted);
 }
 
+/* Navegação por semana (acima do gráfico “Estudos da semana”) */
+.dashboard-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.dashboard-week-nav--above-chart {
+  flex-shrink: 0;
+  margin: 0 0 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border, #e2e8f0) 80%, transparent);
+}
+
+.dashboard-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.12));
+  background: var(--bg-card, #fff);
+  cursor: pointer;
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text, #334155);
+  flex-shrink: 0;
+}
+
+.dashboard-nav-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  color: var(--primary-dark, #1d4ed8);
+}
+
+.dashboard-nav-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.dashboard-week-range {
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-align: center;
+  min-width: 0;
+}
+
+:host-context([data-theme='dark']) .dashboard-nav-btn {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+:host-context([data-theme='dark']) .dashboard-nav-btn:hover:not(:disabled) {
+  color: var(--primary, #93c5fd);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+:host-context([data-theme='dark']) .dashboard-week-range {
+  color: var(--text);
+}
+
+:host-context([data-theme='dark']) .dashboard-week-nav--above-chart {
+  border-bottom-color: var(--border);
+}
+
 /* MÉTRICAS */
 .dashboard-cards {
   display: grid;
@@ -29,7 +96,8 @@
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 24px;
-  align-items: stretch;
+  /* Evita esticar o card do gráfico à altura do progresso (gráfico compacto fica proporcional) */
+  align-items: start;
 }
 
 /* BLOCOS */
@@ -88,9 +156,17 @@
   cursor: not-allowed;
   transform: none;
 }
+/* Altura fluida: cabe navegação + título + gráfico sem “vazar” para fora do card */
 .dashboard-block.chart {
-   height: 360px;      /* ajuste como preferir: 320~420 */
-  max-height: 360px;
+  min-height: 0;
+  height: auto;
+  max-height: none;
+}
+
+.dashboard-block.chart app-week-chart {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: block;
 }
 .dashboard-actions {
   display: flex;

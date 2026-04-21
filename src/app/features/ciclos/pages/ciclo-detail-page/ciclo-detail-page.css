@@ -51,6 +51,34 @@
   justify-content: center;
 }
 
+.edit-extras {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.pomodoro-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border, #e6edf7);
+  background: var(--bg-card, #fff);
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.pomodoro-row input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary, #2563eb);
+  cursor: pointer;
+}
+
 /* botões */
 .btn {
   display: inline-flex;

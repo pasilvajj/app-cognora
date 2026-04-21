@@ -44,7 +44,20 @@ export class CicloListPage {
   }
 
   labelVoltas(n: number): string {
-    return n === 1 ? '1 volta concluída neste ciclo' : `${n} voltas concluídas neste ciclo`;
+    return n === 1 ? '1 volta concluída neste ciclo' : `${n}  neste ciclo`;
+  }
+
+  /** Percentual 0–100 para a barra; null quando a API não envia progresso aplicável. */
+  progressoRodadaPct(c: CicloDto): number | null {
+    const raw = c.progressoRodadaPercentual;
+    if (raw === undefined || raw === null) {
+      return null;
+    }
+    const n = Number(raw);
+    if (!Number.isFinite(n)) {
+      return null;
+    }
+    return Math.max(0, Math.min(100, Math.round(n)));
   }
 
   // toggleMenu(id: number, event: MouseEvent): void {
