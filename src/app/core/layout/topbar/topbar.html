@@ -1,16 +1,20 @@
 <header class="topbar">
 
-  <button
-    *ngIf="mobile"
-    class="menu-btn"
-    (click)="onMenuClick()">
-    ☰
-  </button>
-
   <div class="topbar-left">
-    <span class="app-name">Cognora</span>
+    <button
+      type="button"
+      class="sidebar-toggle"
+      (click)="onMenuClick()"
+      [attr.aria-expanded]="ariaExpandedSidebar"
+      [attr.aria-label]="ariaLabelSidebarToggle"
+      [title]="ariaLabelSidebarToggle">
+      <span class="sidebar-toggle-bars" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+    </button>
   </div>
-
 
 <div class="topbar-right">
   <button

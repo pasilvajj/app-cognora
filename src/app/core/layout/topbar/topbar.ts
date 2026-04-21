@@ -13,6 +13,8 @@ import { ThemeService } from '../../theme/theme.service';
 export class Topbar implements OnInit {
 
   @Input() mobile = false;
+  /** No desktop: menu expandido (texto) vs rail (só ícones). No mobile: painel aberto vs fechado. */
+  @Input() sidebarOpen = true;
   @Output() menuClick = new EventEmitter<void>();
 
    menuOpen = false;
@@ -60,6 +62,17 @@ export class Topbar implements OnInit {
 
   onMenuClick(): void {
     this.menuClick.emit();
+  }
+
+  get ariaLabelSidebarToggle(): string {
+    if (this.mobile) {
+      return this.sidebarOpen ? 'Fechar menu lateral' : 'Abrir menu lateral';
+    }
+    return this.sidebarOpen ? 'Recolher menu lateral (só ícones)' : 'Expandir menu lateral';
+  }
+
+  get ariaExpandedSidebar(): string {
+    return this.sidebarOpen ? 'true' : 'false';
   }
 
   isDarkTheme(): boolean {

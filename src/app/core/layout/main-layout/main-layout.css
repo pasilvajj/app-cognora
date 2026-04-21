@@ -38,9 +38,13 @@
 
 
 
-/* Desktop com sidebar aberta */
-.layout-main.sidebar-open {
-  padding-left: 250px; /* largura da sidebar */
+/* Desktop: conteúdo alinha à largura real da sidebar */
+.layout-main.layout-main--sidebar-expanded {
+  padding-left: 260px;
+}
+
+.layout-main.layout-main--sidebar-rail {
+  padding-left: 72px;
 }
 
 /* =========================

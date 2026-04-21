@@ -15,10 +15,14 @@
       </div>
 
   <!-- ÁREA PRINCIPAL -->
-   <div class="layout-main" [class.sidebar-open]="!isMobile && isSidebarOpen">
+   <div
+     class="layout-main"
+     [class.layout-main--sidebar-expanded]="!isMobile && isSidebarOpen"
+     [class.layout-main--sidebar-rail]="!isMobile && !isSidebarOpen">
 
       <app-topbar
         [mobile]="isMobile"
+        [sidebarOpen]="isSidebarOpen"
         (menuClick)="toggleSidebar()">
       </app-topbar>
  

@@ -4,9 +4,10 @@
   z-index: 5;
 }
 
-/* CONTAINER */
+/* CONTAINER — altura = .sidebar-header (--shell-header-height) */
 .topbar {
-  height: 74px;
+  height: var(--shell-header-height, 64px);
+  min-height: var(--shell-header-height, 64px);
   width: 100%;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
@@ -15,7 +16,8 @@
   align-items: center;
   justify-content: space-between;
 
-  padding: 0 24px;
+  /* 32px alinha com .layout-content (padding horizontal) */
+  padding: 0 20px 0 32px;
   box-sizing: border-box;
   flex-shrink: 0;
 }
@@ -25,35 +27,63 @@
   backdrop-filter: blur(8px);
 }
 
-/* LADO ESQUERDO */
+/* LADO ESQUERDO — alinhado ao conteúdo da página */
 .topbar-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
+  flex-shrink: 0;
 }
 
-/* BOTÃO MENU (mobile) */
-.menu-btn {
-  display: none;
+/* Botão menu / recolher (desktop + mobile) */
+.sidebar-toggle {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
 
-  border: none;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   background: var(--surface-soft);
   color: var(--text);
 
-  font-size: 20px;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* HOVER DO BOTÃO */
-.menu-btn:hover {
+.sidebar-toggle:hover {
   background: var(--surface-hover);
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+}
+
+.sidebar-toggle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, #ffffff);
+  outline-offset: 2px;
+}
+
+:host-context([data-theme='dark']) .sidebar-toggle {
+  background: color-mix(in srgb, var(--surface) 70%, #0b1220);
+  border-color: color-mix(in srgb, var(--text) 14%, transparent);
+}
+
+.sidebar-toggle-bars {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 18px;
+}
+
+.sidebar-toggle-bars span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 1px;
+  background: currentColor;
 }
 
 /* TÍTULO */
@@ -234,12 +264,8 @@
 }
 
 @media (max-width: 768px) {
-  .menu-btn {
-    display: inline-flex;
-  }
-
   .topbar {
-    padding: 0 16px;
+    padding: 0 14px 0 16px;
   }
 
   .username {

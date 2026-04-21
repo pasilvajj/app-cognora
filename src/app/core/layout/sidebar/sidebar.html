@@ -1,30 +1,39 @@
 <aside
   class="sidebar"
-  [class.closed]="!open">
+  aria-label="Cognora — navegação principal"
+  [class.sidebar--rail]="!mobile && !open"
+  [class.sidebar--offcanvas]="mobile && !open">
 
-  <div class="sidebar-header">
-    <img src="assets/icons/logo.svg" class="logo-icon" alt="Logo Cognora">
+  <a
+    routerLink="/dashboard"
+    class="sidebar-header sidebar-brand"
+    aria-label="Cognora — ir para a página inicial"
+    title="Página inicial"
+    (click)="onNavigate()">
+    <img src="assets/icons/logo.svg" class="logo-icon" alt="" width="34" height="34">
     <span class="logo-text">Cognora</span>
-  </div>
+  </a>
 
   <nav class="menu">
-    <a routerLink="/dashboard" routerLinkActive="active" >
-      <img src="assets/icons/house.svg" class="icon-img" alt="Home">
-      Home
+    <a routerLink="/dashboard" routerLinkActive="active" title="Home" (click)="onNavigate()">
+      <img src="assets/icons/house.svg" class="icon-img" alt="">
+      <span class="nav-label">Home</span>
     </a>
 
-    <a routerLink="/ciclos" routerLinkActive="active">
-      <img src="assets/icons/arrow-repeat.svg" class="icon-img" alt="Meus Ciclos">
-      Meus Ciclos
+    <a routerLink="/ciclos" routerLinkActive="active" title="Meus Ciclos" (click)="onNavigate()">
+      <img src="assets/icons/arrow-repeat.svg" class="icon-img" alt="">
+      <span class="nav-label">Meus Ciclos</span>
     </a>
-      <a routerLink="/planejamento" routerLinkActive="active">
-          <img src="assets/icons/book.svg" class="icon-img" alt="Meu Planejamento">
-        Meu planejamento
-      </a>
-    <a routerLink="/configuracoes" routerLinkActive="active" class="bottom">
-      <i class="icon">⚙</i>
-      Configurações
-    </a> 
+
+    <a routerLink="/planejamento" routerLinkActive="active" title="Meu planejamento" (click)="onNavigate()">
+      <img src="assets/icons/book.svg" class="icon-img" alt="">
+      <span class="nav-label">Meu planejamento</span>
+    </a>
+
+    <a routerLink="/configuracoes" routerLinkActive="active" class="bottom" title="Configurações" (click)="onNavigate()">
+      <i class="icon" aria-hidden="true">⚙</i>
+      <span class="nav-label">Configurações</span>
+    </a>
   </nav>
 
 </aside>

@@ -22,28 +22,52 @@ export class MainLayout implements OnInit {
   isMobile = false;
 
   private readonly MOBILE_BREAKPOINT = 768;
+  private readonly STORAGE_KEY = 'cognora.sidebar.expanded';
 
   ngOnInit(): void {
-    this.updateLayout();
-  }
-  @HostListener('window:resize')
-  onResize(): void {
-    this.updateLayout();
-  }
-
-  private updateLayout(): void {
-    this.isMobile = window.innerWidth <= this.MOBILE_BREAKPOINT;
-
-    // mobile começa fechado
+    this.detectMobile();
     if (this.isMobile) {
       this.isSidebarOpen = false;
     } else {
-      this.isSidebarOpen = true;
+      this.isSidebarOpen = this.readStoredSidebarExpanded();
+    }
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    const wasMobile = this.isMobile;
+    this.detectMobile();
+    if (this.isMobile) {
+      this.isSidebarOpen = false;
+    } else if (wasMobile && !this.isMobile) {
+      this.isSidebarOpen = this.readStoredSidebarExpanded();
+    }
+  }
+
+  private detectMobile(): void {
+    this.isMobile = window.innerWidth <= this.MOBILE_BREAKPOINT;
+  }
+
+  private readStoredSidebarExpanded(): boolean {
+    try {
+      return localStorage.getItem(this.STORAGE_KEY) !== '0';
+    } catch {
+      return true;
+    }
+  }
+
+  private persistDesktopSidebar(): void {
+    if (this.isMobile) return;
+    try {
+      localStorage.setItem(this.STORAGE_KEY, this.isSidebarOpen ? '1' : '0');
+    } catch {
+      /* ignore */
     }
   }
 
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
+    this.persistDesktopSidebar();
   }
 
   closeSidebarOnMobile(): void {
