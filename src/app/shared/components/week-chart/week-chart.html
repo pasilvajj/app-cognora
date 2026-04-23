@@ -4,10 +4,12 @@
   </header>
 
   <div class="chart-container">
+    @if (hasStudyDataInWeek()) {
     <canvas #weekCanvas></canvas>
+    } @else {
+    <div class="chart-empty" role="status" aria-live="polite">
+      <p class="chart-empty-title">Sem estudos nesta semana.</p>
+    </div>
+    }
   </div>
-
-  <!-- <div class="chart-container">
-    <canvas id="weekChart"></canvas>
-  </div> -->
 </section>

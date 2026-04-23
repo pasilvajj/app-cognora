@@ -44,12 +44,8 @@
       <span class="footer-text">{{ footerText }}</span>
     </div>
 
-    <!-- Ação (normalmente no next) -->
-
-  <!-- <div class="metric-action" *ngIf="actionLabel"> -->
-
-    <app-button
-        *ngIf="actionLabel"
+    <div class="metric-cta" *ngIf="actionLabel">
+      <app-button
         [label]="safeActionLabel"
         size="sm"
         variant="primary"
@@ -58,7 +54,7 @@
         [loading]="actionLoading"
         (clicked)="onAction()">
       </app-button>
-      <!-- </div> -->
+    </div>
   </div>
 
 </div>

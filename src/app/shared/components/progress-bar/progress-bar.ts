@@ -21,9 +21,15 @@ export class ProgressBar {
     return d.name;
   }
 
-  getColor(progress: number): string {
-    if (progress >= 75) return 'success';
-    if (progress >= 50) return 'warning';
-    return 'danger';
+  /**
+   * Escala de cor por avanço — evita “vermelho de erro” para % baixas ainda válidas.
+   * empty: 0% · low/mid: azuis (continuidade) · high: verde (meta forte).
+   */
+  progressTone(progress: number): 'empty' | 'low' | 'mid' | 'high' {
+    const p = Math.max(0, Math.min(100, progress));
+    if (p <= 0) return 'empty';
+    if (p < 34) return 'low';
+    if (p < 72) return 'mid';
+    return 'high';
   }
 }

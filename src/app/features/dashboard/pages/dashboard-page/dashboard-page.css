@@ -4,7 +4,23 @@
   gap: 28px;
 }
 
-/* HEADER */
+/* HEADER — título + filtro alinhados (UX: hierarquia e alvo do ciclo no mesmo olhar) */
+.dashboard-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+
+.dashboard-header .title p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
 .dashboard-header h1 {
   margin: 0;
   font-size: 26px;
@@ -83,6 +99,52 @@
   border-bottom-color: var(--border);
 }
 
+/* Preferência A/B — só visível quando a grelha de métricas vira 1 coluna */
+.dashboard-mobile-order-bar {
+  display: none;
+}
+
+.dashboard-mobile-order-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.dashboard-mobile-order-toggle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.order-chip {
+  border: 1px solid var(--border);
+  background: var(--surface-soft, var(--bg-card));
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.order-chip:hover {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  color: var(--text);
+}
+
+.order-chip--active {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface-soft, var(--bg-card)));
+  color: var(--text);
+}
+
+.order-chip:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, #ffffff);
+  outline-offset: 2px;
+}
+
 /* MÉTRICAS */
 .dashboard-cards {
   display: grid;
@@ -126,8 +188,33 @@
 
 /* RESPONSIVO */
 @media (max-width: 1024px) {
+  .dashboard-mobile-order-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 14px;
+    max-width: 100%;
+  }
+
   .dashboard-cards {
     grid-template-columns: 1fr;
+  }
+
+  /* Variante B: “Sessão” (4.º card) primeiro ao scrollar em coluna */
+  .dashboard-cards.dashboard-cards--session-first > app-metric-card:nth-child(1) {
+    order: 2;
+  }
+
+  .dashboard-cards.dashboard-cards--session-first > app-metric-card:nth-child(2) {
+    order: 3;
+  }
+
+  .dashboard-cards.dashboard-cards--session-first > app-metric-card:nth-child(3) {
+    order: 4;
+  }
+
+  .dashboard-cards.dashboard-cards--session-first > app-metric-card:nth-child(4) {
+    order: 1;
   }
 
   .dashboard-main {

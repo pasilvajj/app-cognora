@@ -5,7 +5,11 @@
       <div class="subtitle">
         Gerencie e acompanhe seus ciclos de estudo
         <!-- Acessamos o valor do resource. Se nulo, mostra 0 -->
-        <span class="count">({{ (ciclosResource.value()?.length ?? 0) }} ciclos)</span>
+        <span class="count">@if (ciclosResource.isLoading()) {
+          (…)
+        } @else {
+          ({{ (ciclosResource.value()?.length ?? 0) }} ciclos)
+        }</span>
       </div>
     </div>
 
@@ -15,16 +19,63 @@
 
   <!-- Gerenciamento de Estados do Resource -->
   @if (ciclosResource.isLoading()) {
-  <div class="state">Carregando...</div>
+  <div class="cycle-list cycle-list--skeleton" aria-busy="true" aria-live="polite" aria-label="Carregando ciclos">
+    @for (i of skeletonCardIndices; track i) {
+    <div class="cycle-card cycle-card--skeleton">
+      <div class="cycle-card-accent cycle-card-accent--skeleton" aria-hidden="true"></div>
+      <div class="cycle-card-body cycle-card-body--skeleton">
+        <div class="skeleton-header">
+          <div class="skeleton-line skeleton-line--title"></div>
+          <div class="skeleton-dot"></div>
+        </div>
+        <div class="skeleton-line skeleton-line--meta"></div>
+        <div class="skeleton-line skeleton-line--meta-narrow"></div>
+        <div class="skeleton-progress">
+          <div class="skeleton-line skeleton-line--label"></div>
+          <div class="skeleton-bar"></div>
+        </div>
+        <div class="skeleton-actions">
+          <div class="skeleton-chip"></div>
+          <div class="skeleton-chip skeleton-chip--ghost"></div>
+        </div>
+      </div>
+    </div>
+    }
+  </div>
   } @else if (ciclosResource.value()?.length === 0) {
-  <div class="state">Nenhum ciclo cadastrado ainda.</div>
+  <div class="empty-state-wrap">
+    <div class="empty-state">
+      <div class="empty-state-icon" aria-hidden="true">
+        <svg class="empty-state-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="44" height="14" rx="5" stroke="currentColor" stroke-width="2" opacity="0.32" />
+          <rect x="6" y="26" width="52" height="14" rx="5" stroke="currentColor" stroke-width="2" opacity="0.5" />
+          <rect x="2" y="42" width="60" height="14" rx="5" stroke="currentColor" stroke-width="2" opacity="0.78" />
+        </svg>
+      </div>
+      <h2 class="empty-state-title">Nenhum ciclo cadastrado</h2>
+      <p class="empty-state-lead">Crie um ciclo para organizar o estudo por concurso e cargo.</p>
+      <app-button label="Criar primeiro ciclo" variant="primary" size="md" [routerLink]="['/ciclos/novo']">
+      </app-button>
+    </div>
+  </div>
   } @else {
-  <div class="grid">
+  <div class="cycle-list">
     @for (c of ciclosResource.value(); track c.id) {
     <div class="cycle-card" [class.active]="openMenuId() === c.id">
+      <div class="cycle-card-accent" aria-hidden="true"></div>
+      <div class="cycle-card-body">
       <div class="card-header">
-        <div class="title">{{ c.nome }}</div>
-        <button class="menu-btn" (click)="toggleMenu(c.id, $event)">⋮</button>
+        <div class="title">
+          <span class="field-prefix">Ciclo -&nbsp;</span>{{ c.nome }}
+        </div>
+        <button type="button" class="menu-btn" (click)="toggleMenu(c.id, $event)" aria-haspopup="true"
+          [attr.aria-expanded]="openMenuId() === c.id" aria-label="Menu do ciclo">
+          <svg class="menu-btn-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <circle cx="12" cy="5" r="2" />
+            <circle cx="12" cy="12" r="2" />
+            <circle cx="12" cy="19" r="2" />
+          </svg>
+        </button>
 
         @if (openMenuId() === c.id) {
         <div class="menu">
@@ -37,15 +88,14 @@
       </div>
 
       <div class="meta">
-        <span>{{ c.cargaHorariaSemanal }}h/sem</span>
-        <span class="dot"></span>
-        <span class="meta-cargo">{{ c.cargoNome }}</span>
+        <span class="meta-cargo"><span class="field-prefix">Cargo -&nbsp;</span>{{ c.cargoNome }}</span>
+        <span class="meta-carga">{{ c.cargaHorariaSemanal }}h/sem</span>
       </div>
 
       @if (progressoRodadaPct(c) !== null) {
       <div class="progress-block">
         <div class="progress-header">
-          <span class="progress-title">Progresso da rodada</span>
+          <span class="progress-title">Progresso do Ciclo</span>
           <span class="progress-value">{{ progressoRodadaPct(c) }}%</span>
         </div>
         <div
@@ -54,7 +104,7 @@
           [attr.aria-valuenow]="progressoRodadaPct(c)"
           aria-valuemin="0"
           aria-valuemax="100"
-          [attr.aria-label]="'Progresso da rodada ' + progressoRodadaPct(c) + '%'"
+          [attr.aria-label]="'Progresso do ciclo ' + progressoRodadaPct(c) + '%'"
         >
           <div class="progress-fill" [style.width.%]="progressoRodadaPct(c)!"></div>
         </div>
@@ -74,8 +124,10 @@
       </div>
       }
 
-      <div class="footer">
-        <button class="execute-link" (click)="abrirCiclo(c.id)">Executar →</button>
+      <div class="footer footer-actions">
+        <button type="button" class="btn-abrir" (click)="visualizar(c)">Abrir</button>
+        <button type="button" class="btn-estudar-agora" (click)="estudarAgora(c.id)">Estudar agora</button>
+      </div>
       </div>
     </div>
     }

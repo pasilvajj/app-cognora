@@ -81,6 +81,11 @@ export class DashboardPage implements OnInit {
   progressoItems: ProgressDisciplinaItem[] = [];
 
   private readonly LS_KEY = 'cognora:lastCicloId';
+  /** Preferência A/B: ordem dos 4 cards quando a grelha vira uma coluna (telemóvel / tablet estreito). */
+  private static readonly LS_MOBILE_CARD_ORDER = 'cognora.dashboard.mobileCardOrder';
+
+  /** `summary-first` = como no desktop (tempo → … → sessão). `session-first` = CTA “Sessão” no topo. */
+  cardsMobileOrder = signal<'summary-first' | 'session-first'>('summary-first');
 
   /** Segunda-feira (yyyy-MM-dd) da semana exibida no resumo e no gráfico. */
   private weekStartIso = '';
@@ -102,7 +107,28 @@ export class DashboardPage implements OnInit {
     }
 
     this.usuarioId = user.id;
+    this.readMobileCardOrderPref();
     this.carregarCiclos();
+  }
+
+  private readMobileCardOrderPref(): void {
+    try {
+      const v = localStorage.getItem(DashboardPage.LS_MOBILE_CARD_ORDER);
+      if (v === 'session-first' || v === 'summary-first') {
+        this.cardsMobileOrder.set(v);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  setMobileCardOrder(order: 'summary-first' | 'session-first'): void {
+    this.cardsMobileOrder.set(order);
+    try {
+      localStorage.setItem(DashboardPage.LS_MOBILE_CARD_ORDER, order);
+    } catch {
+      /* ignore */
+    }
   }
 
   onCicloChange(id: number): void {

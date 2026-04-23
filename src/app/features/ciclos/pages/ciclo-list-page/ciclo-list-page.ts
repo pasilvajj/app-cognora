@@ -16,6 +16,9 @@ import { CicloDto } from '../../data/ciclos.models';
 export class CicloListPage {
   loading = signal(true);
 
+  /** Linhas do skeleton de cards (fantasma) durante o carregamento. */
+  readonly skeletonCardIndices = [0, 1, 2] as const;
+
   api = inject(CiclosApiService);
   cdr = inject(ChangeDetectorRef);
   router = inject(Router);
@@ -39,8 +42,8 @@ export class CicloListPage {
 
   constructor() { }
 
-  abrirCiclo(id: number): void {
-    this.router.navigate(['/estudaAgora', id]);
+  estudarAgora(cicloId: number): void {
+    this.router.navigate(['/estudaAgora', cicloId]);
   }
 
   labelVoltas(n: number): string {

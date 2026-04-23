@@ -37,6 +37,8 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
 
   private chart?: Chart;
   private themeObserver?: MutationObserver;
+  /** Evita falha ao passar de semana vazia (sem canvas) para semana com dados antes do ViewChild atualizar. */
+  private canvasWaitFrames = 0;
 
   ngAfterViewInit(): void {
     this.observeTheme();
@@ -55,15 +57,36 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
     this.themeObserver?.disconnect();
   }
 
-  private render(): void {
-    // ainda não montou o canvas
-    if (!this.canvasRef?.nativeElement) return;
+  /** Semana com pelo menos um dia com tempo de estudo registado. */
+  hasStudyDataInWeek(): boolean {
+    const labels = this.getLabels();
+    const { seconds } = this.buildSeries(labels);
+    return seconds.some((s) => s > 0);
+  }
 
+  private render(): void {
     const labels = this.getLabels();
     const { minutes, seconds } = this.buildSeries(labels);
 
     // recria para evitar bugs de resize/update
     this.destroyChart();
+
+    const hasData = seconds.some((s) => s > 0);
+    if (!hasData) {
+      this.canvasWaitFrames = 0;
+      return;
+    }
+
+    if (!this.canvasRef?.nativeElement) {
+      if (typeof requestAnimationFrame !== 'undefined' && this.canvasWaitFrames < 12) {
+        this.canvasWaitFrames++;
+        requestAnimationFrame(() => this.render());
+      } else {
+        this.canvasWaitFrames = 0;
+      }
+      return;
+    }
+    this.canvasWaitFrames = 0;
 
     const ctx = this.canvasRef.nativeElement;
     const secondsPerPoint = [...seconds];
@@ -100,10 +123,10 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
         maintainAspectRatio: false,
         layout: {
           padding: {
-            top: 6,
-            right: 4,
-            bottom: 28,
-            left: 2,
+            top: 8,
+            right: 6,
+            bottom: 30,
+            left: 8,
           },
         },
         plugins: {
@@ -125,7 +148,7 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
             },
             ticks: {
               color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
-              font: { size: 11, weight: 600 },
+              font: { size: 12, weight: 600 },
               padding: 8,
             },
           },
@@ -140,7 +163,7 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
               autoSkip: false,
               color: this.isDarkTheme() ? '#9fb0c5' : '#64748b',
               callback: (value) => this.formatYAxisMinutos(Number(value)),
-              font: { size: 11, weight: 600 },
+              font: { size: 12, weight: 600 },
             },
           },
         },

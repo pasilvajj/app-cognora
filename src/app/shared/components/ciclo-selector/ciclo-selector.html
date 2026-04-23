@@ -1,19 +1,58 @@
 <div class="ciclo-select" [class.is-disabled]="disabled || loading">
-  <div class="ciclo-label">{{ label }}</div>
+  <div class="ciclo-label" [id]="labelId">{{ label }}</div>
 
-  <select
-    class="ciclo-control"
-    [disabled]="disabled || loading || ciclos.length === 0"
-    [ngModel]="selectedId ?? ''"
-    (ngModelChange)="onChange($event)"
-  >
-    <option value="" disabled>Selecione um ciclo</option>
+  <div class="ciclo-combobox">
+    <button
+      type="button"
+      class="ciclo-trigger"
+      [id]="comboboxId"
+      role="combobox"
+      [attr.aria-labelledby]="labelId"
+      [attr.aria-expanded]="listOpen()"
+      [attr.aria-controls]="listboxId"
+      [attr.aria-activedescendant]="activeDescendantId ?? undefined"
+      aria-haspopup="listbox"
+      [disabled]="disabled || loading || ciclos.length === 0"
+      (click)="toggleList()"
+      (keydown)="onTriggerKeydown($event)"
+    >
+      <span class="ciclo-trigger-text">{{ selectedLabel }}</span>
+      <span class="ciclo-trigger-chevron" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </span>
+    </button>
 
-    <option *ngFor="let c of ciclos" [value]="c.id">
-      {{ c.nome }}
-    </option>
-  </select>
+    @if (listOpen() && ciclos.length > 0) {
+    <div
+      class="ciclo-listbox"
+      role="listbox"
+      [id]="listboxId"
+      tabindex="-1"
+      (keydown)="onListboxKeydown($event)"
+    >
+      @for (c of ciclos; track c.id; let i = $index) {
+      <div
+        role="option"
+        class="ciclo-option"
+        [id]="optionDomId(c.id)"
+        [attr.aria-selected]="isSelected(c)"
+        [class.ciclo-option--highlight]="isHighlighted(i)"
+        (mousedown)="$event.preventDefault(); selectCiclo(c)"
+        (mouseenter)="highlightedIndex.set(i)"
+      >
+        {{ c.nome }}
+      </div>
+      }
+    </div>
+    }
+  </div>
 
-  <div class="ciclo-hint" *ngIf="loading">Carregando ciclos...</div>
-  <div class="ciclo-hint" *ngIf="!loading && ciclos.length === 0">Nenhum ciclo encontrado.</div>
+  @if (loading) {
+  <div class="ciclo-hint">Carregando ciclos…</div>
+  }
+  @if (!loading && ciclos.length === 0) {
+  <div class="ciclo-hint">Nenhum ciclo encontrado.</div>
+  }
 </div>

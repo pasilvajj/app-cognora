@@ -12,7 +12,17 @@
     </div>
   </header>
 
-  <section class="dashboard-cards">
+  <div class="dashboard-mobile-order-bar">
+    <span class="dashboard-mobile-order-label" id="dashboard-mobile-order-label">Ordem dos cards em coluna</span>
+    <div class="dashboard-mobile-order-toggle" role="group" aria-labelledby="dashboard-mobile-order-label">
+      <button type="button" class="order-chip" [class.order-chip--active]="cardsMobileOrder() === 'summary-first'"
+        (click)="setMobileCardOrder('summary-first')">Resumo primeiro</button>
+      <button type="button" class="order-chip" [class.order-chip--active]="cardsMobileOrder() === 'session-first'"
+        (click)="setMobileCardOrder('session-first')">Sessão primeiro</button>
+    </div>
+  </div>
+
+  <section class="dashboard-cards" [class.dashboard-cards--session-first]="cardsMobileOrder() === 'session-first'">
     <app-metric-card type="time" icon="time" title="Estudado na semana" [value]="timeValue"
       [footerText]="timeFooterText" [footerTone]="timeFooterTone">
     </app-metric-card>

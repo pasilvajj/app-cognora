@@ -46,7 +46,7 @@
 .metric-title {
   font-size: 14px;
   font-weight: 700;
-  color: #cbd5e1;
+  color: color-mix(in srgb, var(--text) 58%, var(--text-muted));
 }
 
 .metric-value-row {
@@ -59,14 +59,14 @@
 .metric-value {
   font-size: 26px;
   font-weight: 900;
-  color: #f8fafc;
+  color: var(--text);
   letter-spacing: -0.02em;
 }
 
 .metric-sub {
   font-size: 14px;
   font-weight: 600;
-  color: #e2e8f0;
+  color: var(--text-muted);
   margin-top: -2px;
 }
 
@@ -94,10 +94,28 @@
   font-weight: 900;
 }
 
-.metric-footer.muted { color: #cbd5e1; }
-.metric-footer.primary { color: #93c5fd; }
-.metric-footer.success { color: #4ade80; }
-.metric-footer.warn { color: #fbbf24; }
+.metric-footer.muted {
+  color: var(--text-muted);
+}
+
+.metric-footer.primary {
+  color: var(--primary, #2563eb);
+}
+
+.metric-footer.success {
+  color: #15803d;
+}
+
+.metric-footer.warn {
+  color: #b45309;
+}
+
+/* CTA “Retomar / …” — separação clara do bloco de contexto */
+.metric-cta {
+  margin-top: 14px;
+  width: 100%;
+  align-self: stretch;
+}
 
 /* Botão (Next) */
 .study-btn {
@@ -146,4 +164,38 @@
 .metric-card.next .metric-title {
   color: var(--primary);
   font-weight: 800;
+}
+
+/* Modo escuro: texto claro sobre cartão escuro (antes estava “fixo” e quebrava o claro) */
+:host-context([data-theme='dark']) .metric-title {
+  color: #94a3b8;
+}
+
+:host-context([data-theme='dark']) .metric-value {
+  color: #f8fafc;
+}
+
+:host-context([data-theme='dark']) .metric-sub {
+  color: #cbd5e1;
+}
+
+:host-context([data-theme='dark']) .metric-footer.muted {
+  color: #94a3b8;
+}
+
+:host-context([data-theme='dark']) .metric-footer.primary {
+  color: #93c5fd;
+}
+
+:host-context([data-theme='dark']) .metric-footer.success {
+  color: #4ade80;
+}
+
+:host-context([data-theme='dark']) .metric-footer.warn {
+  color: #fbbf24;
+}
+
+/* Cartão “Sessão”: manter título em destaque com primary no escuro */
+:host-context([data-theme='dark']) .metric-card.next .metric-title {
+  color: var(--primary);
 }

@@ -13,12 +13,10 @@
         <span class="percent">{{ formatPct(d.percent) }}</span>
       </div>
 
-      <div class="progress-bar">
+      <div class="progress-bar" [class.progress-bar--empty]="d.percent <= 0">
         <div
           class="progress-fill"
-          [class.success]="getColor(d.percent) === 'success'"
-          [class.warning]="getColor(d.percent) === 'warning'"
-          [class.danger]="getColor(d.percent) === 'danger'"
+          [ngClass]="'progress-fill--' + progressTone(d.percent)"
           [style.width.%]="d.percent">
         </div>
       </div>
