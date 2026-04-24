@@ -113,7 +113,7 @@ export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
             },
             pointHoverRadius: 6,
             pointBorderColor: this.isDarkTheme() ? '#38bdf8' : '#2ea7f0',
-            pointBackgroundColor: this.isDarkTheme() ? '#0b1220' : '#ffffff',
+            pointBackgroundColor: this.isDarkTheme() ? '#121a2a' : '#ffffff',
             pointBorderWidth: 2,
           },
         ],

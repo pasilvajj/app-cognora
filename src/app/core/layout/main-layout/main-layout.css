@@ -1,9 +1,23 @@
 :host {
-  display: block;
-  width: 100vw;
-  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--background);
 }
 
+/* Envolve sidebar + main: mesma cor de página em todo o viewport */
+.layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  background: var(--background);
+}
 
 /* =========================
    ÁREA PRINCIPAL
@@ -11,7 +25,8 @@
 .layout-main {
   position: relative;
   min-width: 0;
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column; /* ESSENCIAL */
   background: var(--background);
@@ -87,6 +102,11 @@
 
 :host-context([data-theme='dark']) .layout-content::-webkit-scrollbar-thumb:hover {
   background: rgba(159, 176, 197, 0.45);
+}
+
+/* Tema escuro: fundo sólido alinhado a var(--background) (sem gradiente no conteúdo) */
+:host-context([data-theme='dark']) .layout-content {
+  background: var(--background);
 }
 
 /* =========================
