@@ -1,140 +1,32 @@
 <div class="page">
 
-  <div class="page-header">
-    <div class="page-title-row">
-      <h1>Estudar Agora</h1>
-      @if (rodadaAtualNumero(); as nr) {
-      <span class="rodada-badge" title="Rodada atual do plano">Ciclo {{ nr }}</span>
-      }
-    </div>
-    <button class="btn-back-ciclos" type="button" (click)="voltarParaMeusCiclos()">
-      Voltar para meus ciclos
-    </button>
-  </div>
+  <app-estudar-agora-page-header
+    [rodadaAtualNumero]="rodadaAtualNumero()"
+    (backClicked)="voltarParaMeusCiclos()" />
 
   <div class="content">
 
     @if (aguardandoNovaRodada()) {
-    <section class="card ciclo-fim-banner" aria-live="polite">
-      <div class="ciclo-fim-inner">
-        <h2 class="ciclo-fim-title">Ciclo concluído</h2>
-        <p class="ciclo-fim-text">
-          Você completou todas as matérias
-          @if (ultimaRodadaConcluidaNumero(); as ur) {
-          <span>da <strong>rodada {{ ur }}</strong></span>
-          } @else {
-          <span>desta rodada</span>
-          }.
-        </p>
-        <p class="ciclo-fim-hint">
-          Para continuar com o mesmo plano, inicie uma <strong>nova rodada</strong>.
-        </p>
-        <p class="ciclo-fim-progresso-nota">
-          O progresso abaixo mostra a <strong>última rodada</strong> até você começar a próxima.
-        </p>
-        <app-button type="button" label="Iniciar novo ciclo" variant="primary" [loading]="iniciandoNovaRodada()"
-          (clicked)="iniciarNovaRodadaConfirmada()">
-        </app-button>
-      </div>
-    </section>
+    <app-estudar-agora-ciclo-fim-banner
+      [ultimaRodadaConcluidaNumero]="ultimaRodadaConcluidaNumero()"
+      [iniciandoNovaRodada]="iniciandoNovaRodada()"
+      (iniciarNovaRodadaConfirmada)="iniciarNovaRodadaConfirmada()" />
     }
 
-    <!-- CARD: Próxima Sessão -->
-    <section class="card">
-      <div class="card-header next-header">
-        <h2>Próxima Sessão</h2>
-        <button class="btn-header" type="button" (click)="abrirEscolha()" [disabled]="loading() || aguardandoNovaRodada()">
-          <span class="icon" aria-hidden="true">≡</span>
-          Escolher outra matéria
-        </button>
+    <app-estudar-agora-proxima-sessao-card
+      [proximaSessaoDto]="proximaSessaoDto"
+      [tempoPlanejadoLabel]="tempoPlanejadoLabel"
+      [loading]="loading()"
+      [aguardandoNovaRodada]="aguardandoNovaRodada()"
+      (escolherOutraMateria)="abrirEscolha()"
+      (iniciarEstudo)="iniciarEstudo()" />
 
-      </div>
+    <app-estudar-agora-progresso-ciclo-card [progress]="progress" />
 
-      <div class="card-body">
-        <div class="next-grid">
-          <div class="next-row">
-            <span class="label">Disciplina:</span>
-            <span class="value">{{ proximaSessaoDto?.disciplinaNome || '-' }}</span>
-          </div>
+    <app-estudar-agora-observacoes-card
+      [observacoesLoading]="observacoesLoading()"
+      [observacoesMateria]="observacoesMateria" />
 
-          <div class="next-row">
-            <span class="label">Ciclo:</span>
-            <span class="value">{{ proximaSessaoDto?.cicloNome || '-' }}</span>
-          </div>
-
-          <div class="next-row">
-            <span class="label">Tempo planejado:</span>
-            <span class="value">{{ tempoPlanejadoLabel }} </span>
-          </div>
-
-          <div class="next-actions">
-            <app-button type="button" label="Iniciar Estudo" variant="primary" [fullWidth]="true"
-              [disabled]="!proximaSessaoDto || aguardandoNovaRodada()" (clicked)="iniciarEstudo()">
-            </app-button>
-
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-
-    <!-- CARD: Progresso do Ciclo -->
-    <section class="card">
-      <div class="card-header">
-        <h2>Progresso do Ciclo</h2>
-      </div>
-
-      <div class="card-body">
-        <div class="progress-list">
-          <div class="progress-row" *ngFor="let p of progress; trackBy: trackByDisciplina">
-            <div class="left">
-              <span class="drag">≡</span>
-              <span class="disc">{{ p.disciplina }}</span>
-            </div>
-
-            <div class="mid">
-              <div class="bar">
-                <div class="fill" [ngClass]="getBarClass(p.percent)" [style.width.%]="p.percent"></div>
-              </div>
-            </div>
-
-            <div class="right">
-              <span class="pct">{{ formatPercent(p.percent) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CARD: Observações -->
-    <section class="card notes-card">
-      <div class="card-header">
-        <h2>Observações</h2>
-      </div>
-
-      <div class="card-body">
-        <div class="notes-loading" *ngIf="observacoesLoading()">
-          Carregando observações...
-        </div>
-
-        <div class="notes-grid" *ngIf="!observacoesLoading() && observacoesMateria.length > 0">
-          <article class="note-sticky" *ngFor="let item of observacoesMateria; trackBy: trackByObservacao">
-            <div class="note-head">
-              <strong class="note-disc">{{ item.disciplina }}</strong>
-              <span class="note-date">{{ item.dataLabel }}</span>
-            </div>
-            <p class="note-text">{{ item.observacao }}</p>
-          </article>
-        </div>
-
-        <div class="notes-empty" *ngIf="!observacoesLoading() && observacoesMateria.length === 0">
-          Ainda não existem observações salvas nas últimas sessões.
-        </div>
-      </div>
-    </section>
-
-    <!-- CARD: Últimas Sessões -->
     <app-ultimas-sessoes-card title="Últimas Sessões" [sessions]="recentSessions">
     </app-ultimas-sessoes-card>
 

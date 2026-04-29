@@ -9,7 +9,7 @@
   z-index: 1040;
 }
 
-/* MODAL */
+/* MODAL — container para o anel não “invadir” a lista em janelas estreitas */
 .modal {
   width: min(940px, 93vw);
   max-height: min(88vh, 820px);
@@ -20,6 +20,8 @@
   border: 1px solid rgba(15, 23, 42, 0.08);
   display: flex;
   flex-direction: column;
+  container-type: inline-size;
+  container-name: escolher-materia;
 }
 
 /* HEADER */
@@ -111,22 +113,49 @@
   overflow: hidden;
 }
 
-/* Área rolável: anel + lista (a dica fica fixa abaixo, sem ser cortada) */
+/* Área rolável: anel + lista (flex-wrap empilha quando não cabe em linha — evita sobreposição) */
 .modal-main {
   flex: 1 1 auto;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: start;
-  gap: 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  gap: 12px;
   -webkit-overflow-scrolling: touch;
 }
 
+/* Só anel: ocupa a largura útil */
+.modal-body:not(.with-list) .modal-main {
+  flex-direction: column;
+}
+
+.modal-body:not(.with-list) .stage {
+  flex: 1 1 auto;
+  width: 100%;
+}
+
+/* Anel + lista: lado a lado só quando há espaço; senão a lista desce por baixo */
 .modal-body.with-list .modal-main {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 44%);
-  gap: 8px;
+  gap: 12px;
+}
+
+.modal-body.with-list .stage {
+  flex: 1 1 320px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.modal-body.with-list .list {
+  flex: 1 1 260px;
+  min-width: 0;
+  max-width: 100%;
+  max-height: min(52vh, 520px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* STAGE */
@@ -141,13 +170,22 @@
 }
 
 .ring-wrap {
-  --ring-size:clamp(280px,36vw,430px);
-  --badge-radius:calc(var(--ring-size)*.48);
+  --ring-size: clamp(220px, 34vw, 430px);
+  --badge-radius: calc(var(--ring-size) * 0.48);
   position: relative;
   width: 100%;
-  height:clamp(320px,calc(var(--ring-size) + 68px),520px);
+  height: clamp(300px, calc(var(--ring-size) + 68px), 520px);
   display: grid;
   place-items: center;
+}
+
+@supports (width: 1cqw) {
+  .ring-wrap {
+    --ring-size: min(
+      clamp(220px, 34vw, 430px),
+      calc(100cqw - 48px)
+    );
+  }
 }
 
 .ring {
@@ -413,7 +451,6 @@
   background: rgba(255, 255, 255, 0.86);
   border-radius: 16px;
   padding: 8px;
-  max-height: none;
   overflow: visible;
 }
 
@@ -583,13 +620,12 @@
   .modal {
     width: min(900px, 93vw);
   }
+}
 
-  .modal-body.with-list .modal-main {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .list {
-    margin-top: 10px;
+@container escolher-materia (max-width: 640px) {
+  .ring-wrap {
+    --ring-size: min(clamp(200px, 78cqw, 320px), calc(100cqw - 32px));
+    height: clamp(280px, calc(var(--ring-size) + 58px), 400px);
   }
 }
 
@@ -604,9 +640,12 @@
   }
 
   .ring-wrap {
-    --ring-size:clamp(300px,78vw,380px);
-    --badge-radius:calc(var(--ring-size)*.485);
-    height:clamp(340px,calc(var(--ring-size) + 72px),450px);
+    --ring-size: min(
+      clamp(240px, 76vw, 380px),
+      calc(100cqw - 40px)
+    );
+    --badge-radius: calc(var(--ring-size) * 0.485);
+    height: clamp(300px, calc(var(--ring-size) + 72px), 460px);
   }
 
   .badge {
@@ -640,9 +679,12 @@
   }
 
   .ring-wrap {
-    --ring-size:clamp(260px,86vw,300px);
-    --badge-radius:calc(var(--ring-size)*.485);
-    height:clamp(300px,calc(var(--ring-size) + 62px),380px);
+    --ring-size: min(
+      clamp(220px, 86vw, 300px),
+      calc(100cqw - 24px)
+    );
+    --badge-radius: calc(var(--ring-size) * 0.485);
+    height: clamp(280px, calc(var(--ring-size) + 62px), 380px);
   }
 
   .badge {

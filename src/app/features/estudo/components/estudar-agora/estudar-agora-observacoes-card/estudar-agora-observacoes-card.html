@@ -1,0 +1,25 @@
+<section class="card notes-card">
+  <div class="card-header">
+    <h2>Observações</h2>
+  </div>
+
+  <div class="card-body">
+    <div class="notes-loading" *ngIf="observacoesLoading()">
+      Carregando observações...
+    </div>
+
+    <div class="notes-grid" *ngIf="!observacoesLoading() && observacoesMateria().length > 0">
+      <article class="note-sticky" *ngFor="let item of observacoesMateria(); trackBy: trackByObservacao">
+        <div class="note-head">
+          <strong class="note-disc">{{ item.disciplina }}</strong>
+          <span class="note-date">{{ item.dataLabel }}</span>
+        </div>
+        <p class="note-text">{{ item.observacao }}</p>
+      </article>
+    </div>
+
+    <div class="notes-empty" *ngIf="!observacoesLoading() && observacoesMateria().length === 0">
+      Ainda não existem observações salvas nas últimas sessões.
+    </div>
+  </div>
+</section>

@@ -1,0 +1,11 @@
+<div class="page-header">
+  <div class="page-title-row">
+    <h1>Estudar Agora</h1>
+    @if (rodadaAtualNumero(); as nr) {
+    <span class="rodada-badge" title="Rodada atual do plano">Ciclo {{ nr }}</span>
+    }
+  </div>
+  <button class="btn-back-ciclos" type="button" (click)="backClicked.emit()">
+    Voltar para meus ciclos
+  </button>
+</div>

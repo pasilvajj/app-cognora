@@ -1,18 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ProfileSettings } from './profile-settings';
+import { ProfileSettingsPage } from './profile-settings';
 
-describe('ProfileSettings', () => {
-  let component: ProfileSettings;
-  let fixture: ComponentFixture<ProfileSettings>;
+describe('ProfileSettingsPage', () => {
+  let component: ProfileSettingsPage;
+  let fixture: ComponentFixture<ProfileSettingsPage>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProfileSettings]
-    })
-    .compileComponents();
+      imports: [ProfileSettingsPage],
+    }).compileComponents();
 
-    fixture = TestBed.createComponent(ProfileSettings);
+    fixture = TestBed.createComponent(ProfileSettingsPage);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

@@ -1,0 +1,22 @@
+<section class="card ciclo-fim-banner" aria-live="polite">
+  <div class="ciclo-fim-inner">
+    <h2 class="ciclo-fim-title">Ciclo concluído</h2>
+    <p class="ciclo-fim-text">
+      Você completou todas as matérias
+      @if (ultimaRodadaConcluidaNumero(); as ur) {
+      <span>da <strong>rodada {{ ur }}</strong></span>
+      } @else {
+      <span>desta rodada</span>
+      }.
+    </p>
+    <p class="ciclo-fim-hint">
+      Para continuar com o mesmo plano, inicie uma <strong>nova rodada</strong>.
+    </p>
+    <p class="ciclo-fim-progresso-nota">
+      O progresso abaixo mostra a <strong>última rodada</strong> até você começar a próxima.
+    </p>
+    <app-button type="button" label="Iniciar novo ciclo" variant="primary" [loading]="iniciandoNovaRodada()"
+      (clicked)="iniciarNovaRodadaConfirmada.emit()">
+    </app-button>
+  </div>
+</section>

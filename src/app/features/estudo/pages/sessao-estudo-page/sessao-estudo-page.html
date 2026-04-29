@@ -1,74 +1,27 @@
 @if (!loading() && sessao(); as s) {
 <div class="page">
 
-  <!-- ================= HEADER ================= -->
-  <div class="header">
-    <div>
-      <h1>Sessão de Estudo</h1>
-      <div class="sub">
-        <span class="pill">{{ s.cicloNome }}</span>
-        <span class="dot">•</span>
-        <span class="muted">{{ s.disciplinaNome }}</span>
-        <span class="dot">•</span>
-        <span class="muted">Ordem #{{ s.ordem }}</span>
-      </div>
-    </div>
+  <app-sessao-estudo-page-header
+    [cicloNome]="s.cicloNome"
+    [disciplinaNome]="s.disciplinaNome"
+    [ordem]="s.ordem"
+    (backClicked)="voltar()" />
 
-    <button class="btn-back" type="button" (click)="voltar()">
-      Voltar
-    </button>
-  </div>
+  <app-sessao-estudo-session-card
+    [disciplinaNome]="s.disciplinaNome"
+    [tempoPlanejado]="tempoPlanejado()"
+    [statusLabel]="statusLabel()"
+    [pomodoroEnabled]="pomodoroEnabled()"
+    [pomodoroTemporariamenteDesativado]="pomodoroTemporariamenteDesativado()"
+    [observacoes]="observacoes()"
+    [acaoLoading]="acaoLoading()"
+    [retomarBloqueadoNaPausaCurta]="retomarBloqueadoNaPausaCurta()"
+    (mainActionClick)="onMainActionClick()"
+    (pomodoroSkipStage)="onPomodoroSkipStage()"
+    (pomodoroToggleEnabled)="onPomodoroToggleEnabled()"
+    (observacoesChange)="onObservacoesChange($event)"
+    (observacoesSaveRequest)="onObservacoesSaveRequest($event)" />
 
-  <!-- ================= CARD ================= -->
-  <section class="card">
-    <div class="card-header">
-      <div>
-        <h2>{{ s.disciplinaNome }}</h2>
-        <!-- Tempo planejado agora é um signal -->
-        <div class="meta">Planejado: {{ tempoPlanejado() }}</div>
-      </div>
-
-      <span class="status-pill" [class.is-pausada]="timer.pausada()"
-        [class.is-ready]="statusLabel() === 'Pronta para iniciar'" [class.is-running]="statusLabel() === 'Em andamento'"
-        [class.is-done]="statusLabel() === 'Concluída'" [class.is-closed]="statusLabel() === 'Encerrada'">
-        {{ statusLabel() }}
-      </span>
-    </div>
-
-    <!-- ================= POMODORO ================= -->
-    @if (pomodoroEnabled()) {
-    <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()"
-      [desativado]="pomodoroTemporariamenteDesativado()"
-      (skipStage)="onPomodoroSkipStage()"
-      (toggleEnabled)="onPomodoroToggleEnabled()">
-    </app-pomodoro-timer>
-    }
-
-    <!-- ================= TIMER PRINCIPAL ================= -->
-    <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()">
-    </app-timer-display>
-
-    <!-- ================= AÇÃO PRINCIPAL ================= -->
-    <div class="actions">
-      <button class="btn-main" type="button" (click)="onMainActionClick()"
-        [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
-        [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">
-        {{
-        statusLabel() === 'Pronta para iniciar'
-        ? 'Iniciar'
-        : timer.pausada()
-        ? 'Retomar'
-        : 'Pausar'
-        }}
-      </button>
-    </div>
-
-    <!-- ================= OBSERVAÇÕES ================= -->
-    <app-observacoes-editor [observacoes]="observacoes()" [sessaoFinalizada]="timer.finalizada()"
-      (observacoesChange)="onObservacoesChange($event)" (saveRequest)="onObservacoesSaveRequest($event)">
-    </app-observacoes-editor>
-
-  </section>
 </div>
 } @else {
 <!-- ================= STATE (Substitui o ng-template) ================= -->

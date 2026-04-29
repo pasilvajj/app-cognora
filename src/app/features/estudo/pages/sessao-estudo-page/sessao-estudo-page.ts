@@ -5,13 +5,14 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { catchError, finalize, firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
-import { ObservacoesEditor } from '../../components/observacoes-editor/observacoes-editor';
 import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
-import { PomodoroTimer } from '../../components/pomodoro-timer/pomodoro-timer';
-import { TimerDisplay } from '../../components/timer-display/timer-display';
+import { SessaoEstudoPageHeader } from '../../components/sessao-estudo/sessao-estudo-page-header/sessao-estudo-page-header';
+import { SessaoEstudoSessionCard } from '../../components/sessao-estudo/sessao-estudo-session-card/sessao-estudo-session-card';
 import { EstudoApiService } from '../../data/estudo-api.service';
 import { SessaoDetalheDto } from '../../data/estudo.models';
-import { PomodoroEngineService, PomodoroMode } from '../../services/pomodoro-engine-service';
+import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
+import { PomodoroMode } from '../../data/pomodoro.types';
+import { getPomodoroRestanteStrategy } from '../../strategies/pomodoro-restante/pomodoro-restante-strategy.factory';
 import { SessionTimerService } from '../../services/session-timer-service';
 import { StudyAlertSoundService } from '../../services/study-alert-sound.service';
 import { StudySessionClockCoordinatorService } from '../../services/study-session-clock-coordinator.service';
@@ -21,7 +22,7 @@ import { StudySessionPomodoroSnapshotService } from '../../services/study-sessio
   selector: 'app-sessao-estudo-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, PomodoroTimer, TimerDisplay, ObservacoesEditor, PomodoroOverlay],
+  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, PomodoroOverlay],
   templateUrl: './sessao-estudo-page.html',
   styleUrl: './sessao-estudo-page.css',
 })
@@ -325,30 +326,7 @@ export class SessaoEstudoPage implements OnDestroy {
     this.pomodoro.applyPendingOverlay({ texto: p.texto, focusFinished: p.focusFinished });
   }
 
-  /**
-   * Calcula os segundos restantes para a etapa atual do Pomodoro.
-   *
-   * Estratégia:
-   *
-   * FOCO — deriva de `estudadoTotalSeg`, que o servidor calcula corretamente
-   * (é também a base do cronômetro da sessão). O campo `pomodoroRestanteSeg`
-   * é ignorado para FOCO porque o servidor frequentemente retorna valores
-   * desatualizados ou inconsistentes (ex.: 900 quando só 25s foram estudados).
-   *
-   *   restante = focoSeg − (estudadoTotalSeg % focoSeg)
-   *
-   * Como breaks não contam em `estudadoTotalSeg`, o módulo isola o tempo
-   * estudado no ciclo atual, funcionando corretamente em qualquer ciclo.
-   *
-   * PAUSA (CURTA / LONGA) — servidor salva com floor(); compensamos com +1,
-   * limitado à duração máxima da etapa. Zeros são passados como-está
-   * (break encerrado).
-   */
-  /**
-   * "Pular etapa" coloca o motor em FOCO antes do backend atualizar pomodoroModo.
-   * O snapshot gravado em salvarSnapshotPomodoro reflete o modo real — senão
-   * corrigirRestantePomodoro usaria a fórmula de PAUSA e dessincronizava do estudadoTotalSeg.
-   */
+  /** Coordena API vs snapshot quando "Pular etapa" adianta FOCO face ao backend. */
   private resolveModoPomodoro(s: SessaoDetalheDto): string {
     const api = s.pomodoroModo ?? 'FOCO';
     const snap = this.pomodoroSnapshot.get(s.id);
@@ -360,47 +338,13 @@ export class SessaoEstudoPage implements OnDestroy {
   }
 
   private corrigirRestantePomodoro(s: SessaoDetalheDto, modoEfetivo?: string): number {
-    const modo = modoEfetivo ?? this.resolveModoPomodoro(s);
-    const estudadoSeg  = s.estudadoTotalSeg ?? 0;
-    const restanteServ = s.pomodoroRestanteSeg ?? 0;
-    const focoSeg      = (s.pomodoroFocoMin ?? 25) * 60;
-
-    if (modo === 'FOCO') {
-      // Segundos estudados no ciclo corrente = estudadoSeg módulo focoSeg.
-      // Ex.: 25 s estudados, ciclo 1 → 1500 − 25 = 1475 = 24:35
-      // Ex.: 600 s estudados, ciclo 1 → 1500 − 600 = 900 = 15:00
-      // Ex.: 1525 s estudados (ciclo 2) → 1500 − (1525 % 1500) = 1475 = 24:35
-      const cycleStudied = estudadoSeg % focoSeg;
-      return Math.max(0, focoSeg - cycleStudied);
-    }
-
-    // Break encerrado: retorna 0 para que a guard do ciclo o trate.
-    if (restanteServ <= 0) return 0;
-
-    // PAUSA_CURTA / PAUSA_LONGA: compensar floor() do servidor.
-    const maxSeg = modo === 'PAUSA_CURTA'
-      ? (s.pomodoroPausaCurtaMin ?? 5) * 60
-      : (s.pomodoroPausaLongaMin ?? 15) * 60;
-
-    return Math.min(restanteServ + 1, maxSeg);
+    const modo = (modoEfetivo ?? this.resolveModoPomodoro(s)) as PomodoroMode;
+    return getPomodoroRestanteStrategy(modo).correctRemainingFromServer(s);
   }
 
   private calcularRestantePorEtapaInicio(s: SessaoDetalheDto, modoEfetivo?: string): number | null {
-    const modo = modoEfetivo ?? this.resolveModoPomodoro(s);
-    if (modo === 'FOCO' || !s.pomodoroEtapaInicio) return null;
-
-    const inicioEtapaMs = Date.parse(s.pomodoroEtapaInicio);
-    if (Number.isNaN(inicioEtapaMs)) return null;
-
-    const fimRefMs = s.pausadoEm ? Date.parse(s.pausadoEm) : Date.now();
-    if (Number.isNaN(fimRefMs) || fimRefMs <= inicioEtapaMs) return null;
-
-    const duracaoSeg = modo === 'PAUSA_CURTA'
-      ? (s.pomodoroPausaCurtaMin ?? 5) * 60
-      : (s.pomodoroPausaLongaMin ?? 15) * 60;
-
-    const elapsedSeg = Math.floor((fimRefMs - inicioEtapaMs) / 1000);
-    return Math.max(0, duracaoSeg - elapsedSeg);
+    const modo = (modoEfetivo ?? this.resolveModoPomodoro(s)) as PomodoroMode;
+    return getPomodoroRestanteStrategy(modo).remainingFromEtapaInicio(s);
   }
 
   // ================= MAIN ACTION =================

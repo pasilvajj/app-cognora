@@ -1,0 +1,37 @@
+<section class="card">
+  <div class="card-header next-header">
+    <h2>Próxima Sessão</h2>
+    <button class="btn-header" type="button" (click)="escolherOutraMateria.emit()"
+      [disabled]="loading() || aguardandoNovaRodada()">
+      <span class="icon" aria-hidden="true">≡</span>
+      Escolher outra matéria
+    </button>
+
+  </div>
+
+  <div class="card-body">
+    <div class="next-grid">
+      <div class="next-row">
+        <span class="label">Disciplina:</span>
+        <span class="value">{{ proximaSessaoDto()?.disciplinaNome || '-' }}</span>
+      </div>
+
+      <div class="next-row">
+        <span class="label">Ciclo:</span>
+        <span class="value">{{ proximaSessaoDto()?.cicloNome || '-' }}</span>
+      </div>
+
+      <div class="next-row">
+        <span class="label">Tempo planejado:</span>
+        <span class="value">{{ tempoPlanejadoLabel() }} </span>
+      </div>
+
+      <div class="next-actions">
+        <app-button type="button" label="Iniciar Estudo" variant="primary" [fullWidth]="true"
+          [disabled]="!proximaSessaoDto() || aguardandoNovaRodada()" (clicked)="iniciarEstudo.emit()">
+        </app-button>
+
+      </div>
+    </div>
+  </div>
+</section>

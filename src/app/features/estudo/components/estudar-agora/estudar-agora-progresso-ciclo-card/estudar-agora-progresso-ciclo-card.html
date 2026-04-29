@@ -1,0 +1,26 @@
+<section class="card">
+  <div class="card-header">
+    <h2>Progresso do Ciclo</h2>
+  </div>
+
+  <div class="card-body">
+    <div class="progress-list">
+      <div class="progress-row" *ngFor="let p of progress(); trackBy: trackByDisciplina">
+        <div class="left">
+          <span class="drag">≡</span>
+          <span class="disc">{{ p.disciplina }}</span>
+        </div>
+
+        <div class="mid">
+          <div class="bar">
+            <div class="fill" [ngClass]="getBarClass(p.percent)" [style.width.%]="p.percent"></div>
+          </div>
+        </div>
+
+        <div class="right">
+          <span class="pct">{{ formatPercent(p.percent) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

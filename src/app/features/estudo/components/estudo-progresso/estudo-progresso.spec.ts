@@ -14,6 +14,11 @@ describe('EstudoProgresso', () => {
 
     fixture = TestBed.createComponent(EstudoProgresso);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('ciclo', {
+      nome: 'Teste',
+      itens: [],
+      tempoRestante: 0,
+    });
     await fixture.whenStable();
   });
 

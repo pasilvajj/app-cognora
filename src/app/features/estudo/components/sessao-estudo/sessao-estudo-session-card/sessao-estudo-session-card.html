@@ -1,0 +1,44 @@
+<section class="card">
+  <div class="card-header">
+    <div>
+      <h2>{{ disciplinaNome() }}</h2>
+      <div class="meta">Planejado: {{ tempoPlanejado() }}</div>
+    </div>
+
+    <span class="status-pill" [class.is-pausada]="timer.pausada()"
+      [class.is-ready]="statusLabel() === 'Pronta para iniciar'" [class.is-running]="statusLabel() === 'Em andamento'"
+      [class.is-done]="statusLabel() === 'Concluída'" [class.is-closed]="statusLabel() === 'Encerrada'">
+      {{ statusLabel() }}
+    </span>
+  </div>
+
+  @if (pomodoroEnabled()) {
+  <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()"
+    [desativado]="pomodoroTemporariamenteDesativado()"
+    (skipStage)="pomodoroSkipStage.emit()"
+    (toggleEnabled)="pomodoroToggleEnabled.emit()">
+  </app-pomodoro-timer>
+  }
+
+  <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()">
+  </app-timer-display>
+
+  <div class="actions">
+    <button class="btn-main" type="button" (click)="mainActionClick.emit()"
+      [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
+      [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">
+      {{
+      statusLabel() === 'Pronta para iniciar'
+      ? 'Iniciar'
+      : timer.pausada()
+      ? 'Retomar'
+      : 'Pausar'
+      }}
+    </button>
+  </div>
+
+  <app-observacoes-editor [observacoes]="observacoes()" [sessaoFinalizada]="timer.finalizada()"
+    (observacoesChange)="observacoesChange.emit($event)" (saveRequest)="observacoesSaveRequest.emit($event)">
+  </app-observacoes-editor>
+
+</section>

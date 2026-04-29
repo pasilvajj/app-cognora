@@ -5,11 +5,15 @@ import { ToastrService } from 'ngx-toastr';
 import { forkJoin, of } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
-import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
+import { EstudarAgoraCicloFimBanner } from '../../components/estudar-agora/estudar-agora-ciclo-fim-banner/estudar-agora-ciclo-fim-banner';
+import { EstudarAgoraObservacoesCard } from '../../components/estudar-agora/estudar-agora-observacoes-card/estudar-agora-observacoes-card';
+import { EstudarAgoraPageHeader } from '../../components/estudar-agora/estudar-agora-page-header/estudar-agora-page-header';
+import { EstudarAgoraProgressoCicloCard } from '../../components/estudar-agora/estudar-agora-progresso-ciclo-card/estudar-agora-progresso-ciclo-card';
+import { EstudarAgoraProximaSessaoCard } from '../../components/estudar-agora/estudar-agora-proxima-sessao-card/estudar-agora-proxima-sessao-card';
+import { EstudarAgoraObservacaoItem, EstudarAgoraProgressItem } from '../../components/estudar-agora/estudar-agora-view.models';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { CicloMateriaDto, CiclosApiService, CicloMateriasComEstadoDto } from '../../../ciclos/data/ciclos-api.service';
 import {
-  formatPercent as formatPercentUtil,
   normalizarNomeDisciplina,
   normalizarPercentualProgresso as normalizarPercentualProgressoUtil,
 } from '../../../../shared/utils/progresso-disciplina.util';
@@ -21,21 +25,18 @@ import { EstudoApiService, } from '../../data/estudo-api.service';
 import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../data/estudo.models';
 
 
-type ProgressItem = {
-  disciplina: string;
-  percent: number; // 0..100proxima
-};
-
-type ObservacaoMateriaItem = {
-  sessaoId: number;
-  disciplina: string;
-  observacao: string;
-  dataIso: string;
-  dataLabel: string;
-};
 @Component({
   selector: 'app-estudar-agora',
-  imports: [CommonModule, UltimasSessoesCard, EscolherMateriaModalCircular, AppButtonComponent],
+  imports: [
+    CommonModule,
+    UltimasSessoesCard,
+    EscolherMateriaModalCircular,
+    EstudarAgoraPageHeader,
+    EstudarAgoraCicloFimBanner,
+    EstudarAgoraProximaSessaoCard,
+    EstudarAgoraProgressoCicloCard,
+    EstudarAgoraObservacoesCard,
+  ],
   templateUrl: './estudar-agora.html',
   styleUrl: './estudar-agora.css',
 })
@@ -57,9 +58,9 @@ export class EstudarAgora implements OnInit {
   selecionado?: CicloItemView;
   // controla abertura do modal
   modalOpen = false;
-  progress: ProgressItem[] = [];
+  progress: EstudarAgoraProgressItem[] = [];
   recentSessions: RecentSession[] = [];
-  observacoesMateria: ObservacaoMateriaItem[] = [];
+  observacoesMateria: EstudarAgoraObservacaoItem[] = [];
   observacoesLoading = signal(false);
   /** Disciplinas que ainda têm bloco no ciclo (ordem definida); exclui só linha de config / removidas do ciclo. */
   private disciplinaIdsComExecNoCiclo = new Set<number>();
@@ -260,11 +261,6 @@ export class EstudarAgora implements OnInit {
     return Number.isFinite(meta) && meta > 0 ? meta : 0;
   }
 
-  formatPercent(value: number): string {
-    return formatPercentUtil(value);
-  }
-
-
   iniciarEstudo(): void {
     if (this.aguardandoNovaRodada()) {
       this.toastr.info('Inicie uma nova rodada para continuar estudando este ciclo.');
@@ -363,17 +359,6 @@ export class EstudarAgora implements OnInit {
     this.modalOpen = false;
   }
 
-  trackByDisciplina(_: number, item: ProgressItem): string {
-    return item.disciplina;
-  }
-
-
-  getBarClass(percent: number): 'bar-blue' | 'bar-green' | 'bar-orange' {
-    if (percent >= 60) return 'bar-green';
-    if (percent >= 35) return 'bar-blue';
-    return 'bar-orange';
-  }
-
   private formatSeconds(total: number): string {
     const sec = Math.max(0, Math.floor(total));
     const h = Math.floor(sec / 3600);
@@ -397,10 +382,6 @@ export class EstudarAgora implements OnInit {
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     return `${dd}/${mm}`;
-  }
-
-  trackByObservacao(_: number, item: ObservacaoMateriaItem): number {
-    return item.sessaoId;
   }
 
   private carregarObservacoesDasSessoes(sessoes: SessaoCardDto[]): void {
