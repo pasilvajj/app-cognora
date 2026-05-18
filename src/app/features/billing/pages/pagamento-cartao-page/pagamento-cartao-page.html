@@ -1,0 +1,49 @@
+<div class="pagamento-page">
+  <a routerLink="/planos" class="pagamento-page__back">← Voltar aos planos</a>
+
+  <header class="pagamento-page__header">
+    <h1 class="pagamento-page__title">Pagamento com cartão</h1>
+    <p class="pagamento-page__lead">
+      Informe os dados do <strong>cartão de crédito</strong>. O valor total do plano é <strong>R$ 99,00</strong> em até
+      <strong>10 parcelas</strong> de <strong>R$ 9,90</strong>. Durante os <strong>{{ trialDays }} dias</strong> de teste
+      não há cobrança no cartão; o pagamento segue as regras definidas no backend ao criar a subscrição no Mercado Pago.
+    </p>
+  </header>
+
+  @if (prepareLoading()) {
+  <p class="pagamento-page__status" role="status">A preparar o formulário seguro…</p>
+  } @else if (prepareError()) {
+  <p class="pagamento-page__error">Não foi possível carregar os dados de pagamento.</p>
+  <a routerLink="/planos" class="pagamento-page__link">Voltar</a>
+  } @else if (prepare(); as cfg) {
+
+  <section class="summary-card" aria-labelledby="summary-heading">
+    <h2 id="summary-heading" class="summary-card__title">Resumo</h2>
+    <ul class="summary-card__list">
+      <li><span>Plano</span><span>Cognora — standard</span></li>
+      <li><span>Parcelamento</span><span>até 10× R$ 9,90</span></li>
+      <li><span>Total</span><span>R$ 99,00</span></li>
+    </ul>
+    <p class="summary-card__trial">{{ trialDays }} dias grátis para experimentar</p>
+  </section>
+
+  @if (!cfg.publicKey.trim()) {
+  <div class="pagamento-page__warn" role="alert">
+    <strong>Chave pública em falta.</strong>
+    Defina <code>mercadoPagoPublicKey</code> em <code>environment.ts</code> (credencial de teste do Mercado Pago) ou
+    implemente o endpoint <code>POST /api/billing/mercadopago/card-payment/prepare</code> no backend.
+  </div>
+  } @else if (brickMountError()) {
+  <p class="pagamento-page__error">Não foi possível mostrar o formulário de cartão.</p>
+  <a routerLink="/planos" class="pagamento-page__link">Voltar aos planos</a>
+  } @else {
+  <div class="brick-wrap">
+    <div id="cardPaymentBrick_container" class="brick-wrap__host" aria-live="polite"></div>
+    <p class="brick-wrap__note">
+      🔒 Os dados do cartão são tratados pelo Mercado Pago (PCI); a Cognora não armazena o número completo do cartão.
+    </p>
+  </div>
+  }
+
+  }
+</div>

@@ -1,0 +1,76 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-page);
+  color: var(--text);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  min-height: var(--shell-header-height, 64px);
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.brand-logo {
+  display: block;
+}
+
+.brand-name {
+  letter-spacing: 0.02em;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.link {
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  color: var(--text-muted);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.link--cta {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, var(--border));
+}
+
+.link--cta:hover {
+  background: color-mix(in srgb, var(--primary) 28%, transparent);
+  color: var(--primary-hover);
+}
+
+.main {
+  flex: 1;
+}

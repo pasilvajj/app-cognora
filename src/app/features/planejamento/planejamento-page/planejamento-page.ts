@@ -32,8 +32,6 @@ type DiaView = {
 })
 export class PlanejamentoPage implements OnInit {
 
-  private usuarioId!: number;
-
   toast = inject(ToastrService);
 
   // ciclo selector
@@ -77,9 +75,6 @@ export class PlanejamentoPage implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    this.usuarioId = user.id;
-
-    // semana atual
     this.weekStartIso = this.getMondayIso(new Date());
     this.carregarCiclos();
   }
@@ -184,12 +179,10 @@ export class PlanejamentoPage implements OnInit {
 
     const req$ = forcarGeracao
       ? this.api.gerarPlanejamentoSemanal(
-        this.usuarioId,
         this.cicloIdSelecionado,
         this.weekStartIso
       )
       : this.api.getPlanejamentoSemanal(
-        this.usuarioId,
         this.cicloIdSelecionado,
         this.weekStartIso
       );

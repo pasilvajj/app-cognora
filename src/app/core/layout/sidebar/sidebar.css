@@ -188,17 +188,22 @@ a.sidebar-header.sidebar-brand:focus-visible {
   flex-shrink: 0;
 }
 
-.menu .icon-img {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 18px;
-  opacity: 0.9;
-  filter: brightness(0) invert(1);
-}
-
 /* =========================
    ITEM NO RODAPÉ (CONFIG)
 ========================= */
 .menu a.bottom {
   margin-top: auto;
+}
+
+/* Legibilidade no tema escuro: texto e ícones menos “apagados” */
+:root[data-theme='dark'] .sidebar .menu a:not(.active) {
+  color: var(--sidebar-text);
+}
+
+:root[data-theme='dark'] .sidebar .menu a:not(.active) .icon-img {
+  opacity: 1;
+}
+
+:root[data-theme='dark'] .sidebar .logo-text {
+  color: #f8fafc;
 }

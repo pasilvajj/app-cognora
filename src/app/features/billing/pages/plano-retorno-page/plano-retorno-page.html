@@ -1,0 +1,21 @@
+<div class="retorno-page">
+  @if (query().status === 'success') {
+  <h1>Pagamento iniciado com sucesso</h1>
+  <p>O seu período de teste será ativado após confirmação no processador de pagamentos. Pode demorar alguns instantes.</p>
+  } @else if (query().status === 'canceled') {
+  <h1>Checkout cancelado</h1>
+  <p>Não foi efetuada qualquer cobrança. Pode voltar a tentar quando quiser.</p>
+  } @else if (query().mock === '1') {
+  <h1>Checkout de demonstração</h1>
+  <p>Modo mock ativo (<code>useBillingMock</code>). Plano escolhido: <strong>{{ query().plan ?? '—' }}</strong>.</p>
+  } @else {
+  <h1>Retorno do checkout</h1>
+  <p>Estado desconhecido ou parâmetros em falta. Confirme o link enviado pelo email ou tente novamente a partir dos planos.</p>
+  }
+
+  <nav class="next">
+    <a routerLink="/dashboard" class="btn-primary">Ir para o painel</a>
+    <a routerLink="/assinatura" class="btn-ghost">Ver assinatura</a>
+    <a routerLink="/planos" class="btn-ghost">Voltar aos planos</a>
+  </nav>
+</div>

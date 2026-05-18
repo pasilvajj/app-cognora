@@ -20,6 +20,34 @@ export const routes: Routes = [
   },
 
   {
+    path: 'planos',
+    loadComponent: () =>
+      import('./features/billing/layout/public-billing-shell/public-billing-shell')
+        .then(m => m.PublicBillingShell),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/billing/pages/planos-page/planos-page')
+            .then(m => m.PlanosPage),
+      },
+      {
+        path: 'retorno',
+        loadComponent: () =>
+          import('./features/billing/pages/plano-retorno-page/plano-retorno-page')
+            .then(m => m.PlanoRetornoPage),
+      },
+      {
+        path: 'pagar',
+        loadComponent: () =>
+          import('./features/billing/pages/pagamento-cartao-page/pagamento-cartao-page').then(
+            m => m.PagamentoCartaoPage,
+          ),
+      },
+    ],
+  },
+
+  {
     path: '',
     component: MainLayout,
     canActivate: [AuthGuard], // 🔐 BLOQUEIA TUDO SEM LOGIN
@@ -72,6 +100,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/ciclos/pages/ciclo-detail-page/ciclo-detail-page')
             .then(m => m.CicloDetailPage),
+      },
+
+      {
+        path: 'assinatura',
+        loadComponent: () =>
+          import('./features/billing/pages/assinatura-page/assinatura-page')
+            .then(m => m.AssinaturaPage),
       },
 
       // =========================

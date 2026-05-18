@@ -12,10 +12,10 @@ export class PlanejamentoApiService {
   constructor(private http: HttpClient) {}
 
   /**
-   * GET /api/planejamento/ciclos/{cicloId}/semanal?usuarioId=1&weekStart=YYYY-MM-DD
+   * GET /api/planejamento/ciclos/{cicloId}/semanal?weekStart=YYYY-MM-DD
    */
-  getPlanejamentoSemanal(usuarioId: number, cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
-    let params = new HttpParams().set('usuarioId', usuarioId);
+  getPlanejamentoSemanal(cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
+    let params = new HttpParams();
 
     if (weekStartIso) {
       params = params.set('weekStart', weekStartIso);
@@ -31,9 +31,9 @@ export class PlanejamentoApiService {
    * Se você decidir criar POST /api/planejamento/ciclos/{cicloId}/semanal/gerar...
    * Por enquanto, pode só chamar o GET (idempotente).
    */
-  gerarPlanejamentoSemanal(usuarioId: number, cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
+  gerarPlanejamentoSemanal(cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
     // Opção A (recomendado): GET idempotente
-    return this.getPlanejamentoSemanal(usuarioId, cicloId, weekStartIso);
+    return this.getPlanejamentoSemanal(cicloId, weekStartIso);
 
     // Opção B (se você criar um POST real):
     // let params = new HttpParams().set('usuarioId', usuarioId);

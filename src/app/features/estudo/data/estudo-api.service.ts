@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -61,8 +61,12 @@ export class EstudoApiService {
   getProximaSessao(cicloId: number): Observable<ProximaSessaoDto> {
     return this.http.get<ProximaSessaoDto>(`${this.base}/estudo/sessoes/ciclos/${cicloId}/proxima`);
   }
-  iniciarSessao(payload: IniciarSessaoRequest): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/iniciar`, payload);
+
+  iniciarSessao(cicloId: number, payload?: IniciarSessaoRequest | null): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(
+      `${this.base}/estudo/sessoes/ciclos/${cicloId}/sessoes/iniciar`,
+      payload ?? {},
+    );
   }
 
   comecarSessao(id: number, pomodoroAtivo: boolean): Observable<SessaoDetalheDto> {
@@ -112,14 +116,15 @@ export class EstudoApiService {
   finalizarSessao(payload: FinalizarSessaoRequest): Observable<SessaoDetalheDto> {
     return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${payload.id}/finalizar`, payload);
   }
-  getProgressoCiclo(cicloId: number, usuarioId: number): Observable<ProgressoDisciplinaDto[]> {
+  getProgressoCiclo(cicloId: number): Observable<ProgressoDisciplinaDto[]> {
     return this.http.get<ProgressoDisciplinaDto[]>(
-      `${this.base}/estudo/ciclos/${cicloId}/progresso?usuarioId=${usuarioId}`
+      `${this.base}/estudo/ciclos/${cicloId}/progresso`,
     );
   }
-  getSessoesRecentes(usuarioId: number, cicloId: number, limit = 10): Observable<SessaoCardDto[]> {
+  getSessoesRecentes(cicloId: number, limit = 10): Observable<SessaoCardDto[]> {
     return this.http.get<SessaoCardDto[]>(
-      `${this.base}/estudo/sessoes/recentes?usuarioId=${usuarioId}&cicloId=${cicloId}&limit=${limit}`
+      `${this.base}/estudo/sessoes/recentes`,
+      { params: { cicloId: String(cicloId), limit: String(limit) } },
     );
   }
 

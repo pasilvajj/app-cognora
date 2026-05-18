@@ -36,8 +36,6 @@ type FooterTone = 'success' | 'warn' | 'muted' | 'primary';
 })
 export class DashboardPage implements OnInit {
 
-  private usuarioId!: number;
-
   toast = inject(ToastrService);
 
   ciclos: CicloOption[] = [];
@@ -106,7 +104,6 @@ export class DashboardPage implements OnInit {
       return;
     }
 
-    this.usuarioId = user.id;
     this.readMobileCardOrderPref();
     this.carregarCiclos();
   }
@@ -215,7 +212,6 @@ export class DashboardPage implements OnInit {
     if (!this.cicloId) return;
 
     const cicloId = this.cicloId;
-    const usuarioId = this.usuarioId;
 
     if (!this.weekStartIso) {
       this.weekStartIso = this.getMondayIso(new Date());
@@ -224,8 +220,8 @@ export class DashboardPage implements OnInit {
     this.loading = true;
 
     forkJoin({
-      resumo: this.dashboardApi.getResumo(usuarioId, cicloId, this.weekStartIso),
-      estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
+      resumo: this.dashboardApi.getResumo(cicloId, this.weekStartIso),
+      estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId).pipe(
         catchError(() => of(null)),
       ),
     }).subscribe({
@@ -276,20 +272,24 @@ export class DashboardPage implements OnInit {
     }
 
     const cicloId = this.cicloId;
-    const usuarioId = this.usuarioId;
 
     const materias$ =
       materiasPrefetched !== undefined
         ? of(materiasPrefetched)
-        : this.ciclosApi.getMateriasCiclo(cicloId, usuarioId).pipe(
+        : this.ciclosApi.getMateriasCiclo(cicloId).pipe(
             map((resp) => resp?.materias ?? []),
             catchError(() => of([] as CicloMateriaDto[])),
           );
 
+    const progresso$ =
+      fallbackResumo.length > 0
+        ? of(fallbackResumo as unknown as ProgressoEstudoDto[])
+        : this.estudoApi.getProgressoCiclo(cicloId).pipe(
+            catchError(() => of([] as ProgressoEstudoDto[])),
+          );
+
     forkJoin({
-      progresso: this.estudoApi.getProgressoCiclo(cicloId, usuarioId).pipe(
-        catchError(() => of([] as ProgressoEstudoDto[])),
-      ),
+      progresso: progresso$,
       materias: materias$,
     }).subscribe(({ progresso, materias }) => {
       const materiasList = materias ?? [];
@@ -410,11 +410,7 @@ export class DashboardPage implements OnInit {
     if (this.cicloId && cicloItemId) {
       this.acaoCardLoading.set(true);
       this.estudoApi
-        .iniciarSessao({
-          usuarioId: this.usuarioId,
-          cicloId: this.cicloId,
-          cicloItemId,
-        })
+        .iniciarSessao(this.cicloId, { cicloItemId })
         .pipe(
           finalize(() => {
             this.acaoCardLoading.set(false);

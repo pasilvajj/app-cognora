@@ -71,10 +71,8 @@ export class DashboardApiService {
   /**
    * @param weekStartIso segunda-feira da semana (yyyy-MM-dd); omitido = semana atual no servidor
    */
-  getResumo(usuarioId: number, cicloId: number, weekStartIso?: string | null): Observable<DashboardResumoDto> {
-    let params = new HttpParams()
-      .set('usuarioId', String(usuarioId))
-      .set('cicloId', String(cicloId));
+  getResumo(cicloId: number, weekStartIso?: string | null): Observable<DashboardResumoDto> {
+    let params = new HttpParams().set('cicloId', String(cicloId));
     if (weekStartIso) {
       params = params.set('weekStart', weekStartIso);
     }

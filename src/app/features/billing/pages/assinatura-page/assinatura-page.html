@@ -1,0 +1,50 @@
+<div class="assinatura-page">
+  <header class="page-head">
+    <h1>Assinatura</h1>
+    <p class="lead">Estado do seu plano e período de teste.</p>
+    <a routerLink="/planos" class="link-planos">Ver planos e começar teste grátis</a>
+  </header>
+
+  @if (loading()) {
+  <p class="muted">A carregar…</p>
+  } @else if (subscription(); as sub) {
+  <section class="card">
+    <div class="row">
+      <span class="label">Estado</span>
+      <strong>{{ statusLabel(sub) }}</strong>
+    </div>
+    @if (sub.trialEndsAt) {
+    <div class="row">
+      <span class="label">Fim do teste grátis</span>
+      <span>{{ sub.trialEndsAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+    }
+    @if (sub.currentPeriodEnd) {
+    <div class="row">
+      <span class="label">Fim do período atual</span>
+      <span>{{ sub.currentPeriodEnd | date: 'dd/MM/yyyy HH:mm' }}</span>
+    </div>
+    }
+    <div class="row">
+      <span class="label">Renovação</span>
+      <span>{{ sub.cancelAtPeriodEnd ? 'Cancelada ao fim do período' : 'Renova automaticamente' }}</span>
+    </div>
+    @if (sub.planId) {
+    <div class="row">
+      <span class="label">Plano (PSP)</span>
+      <code>{{ sub.planId }}</code>
+    </div>
+    }
+
+    @if (sub.billingPortalUrl) {
+    <div class="actions">
+      <app-button type="button" label="Gerir pagamento no portal" variant="primary"
+        (clicked)="openPortal(sub.billingPortalUrl)">
+      </app-button>
+    </div>
+    }
+  </section>
+  } @else {
+  <p>Não foi possível obter dados.</p>
+  }
+</div>

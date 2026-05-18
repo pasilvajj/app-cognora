@@ -94,10 +94,8 @@ export class CiclosApiService {
     return this.http.get<CicloDto>(`${this.base}/ciclo/${id}`);
   }
 
-  getMateriasCiclo(cicloId: number, usuarioId: number) {
-    return this.http.get<CicloMateriasComEstadoDto>(`${this.base}/ciclo/materias/${cicloId}`, {
-      params: { usuarioId: String(usuarioId) },
-    });
+  getMateriasCiclo(cicloId: number) {
+    return this.http.get<CicloMateriasComEstadoDto>(`${this.base}/ciclo/materias/${cicloId}`);
   }
 
   /** Confirma início da próxima rodada após concluir o ciclo (requer JWT). */

@@ -43,7 +43,6 @@ import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../d
 export class EstudarAgora implements OnInit {
 
   cicloId = 1;
-  private usuarioId!: number;
   loading = signal(true);
   isProcessando = signal(false);
   // recomendado pelo backend (ordem do ciclo)
@@ -86,8 +85,10 @@ export class EstudarAgora implements OnInit {
 
   ngOnInit(): void {
 
-    const user = this.auth.getUser()!;
-    this.usuarioId = user.id;
+    if (!this.auth.getUser()) {
+      void this.router.navigate(['/login']);
+      return;
+    }
 
     const idRaw = this.route.snapshot.paramMap.get('cicloId');
     this.cicloId = Number(idRaw);
@@ -104,13 +105,13 @@ export class EstudarAgora implements OnInit {
     this.loading.set(true);
     forkJoin({
       proxima: this.estudoApi.getProximaSessao(this.cicloId).pipe(catchError(() => of(undefined))),
-      estadoMaterias: this.ciclosApi.getMateriasCiclo(this.cicloId, this.usuarioId).pipe(
+      estadoMaterias: this.ciclosApi.getMateriasCiclo(this.cicloId).pipe(
         catchError(() => of(undefined as CicloMateriasComEstadoDto | undefined)),
       ),
-      progresso: this.estudoApi.getProgressoCiclo(this.cicloId, this.usuarioId).pipe(
+      progresso: this.estudoApi.getProgressoCiclo(this.cicloId).pipe(
         catchError(() => of([] as ProgressoDisciplinaDto[])),
       ),
-      sessoes: this.estudoApi.getSessoesRecentes(this.usuarioId, this.cicloId, 10).pipe(
+      sessoes: this.estudoApi.getSessoesRecentes(this.cicloId, 10).pipe(
         catchError(() => of([] as SessaoCardDto[])),
       ),
     })
@@ -328,11 +329,7 @@ export class EstudarAgora implements OnInit {
       return;
     }
 
-    this.estudoApi.iniciarSessao({
-      usuarioId: this.usuarioId,
-      cicloId: this.cicloId,
-      cicloItemId
-    }).pipe(
+    this.estudoApi.iniciarSessao(this.cicloId, { cicloItemId }).pipe(
       finalize(() => this.isProcessando.set(false))
     ).subscribe({
       next: (s) => {

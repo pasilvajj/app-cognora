@@ -23,9 +23,8 @@ export interface ProgressoDisciplinaDto {
  * Objetos de Requisição (Payloads)
  */
 export interface IniciarSessaoRequest {
-  usuarioId: number;
-  cicloId: number;
-  cicloItemId: number;
+  /** Opcional; se omitido, o servidor escolhe a próxima matéria do ciclo. */
+  cicloItemId?: number;
 }
 
 export interface FinalizarSessaoRequest {
