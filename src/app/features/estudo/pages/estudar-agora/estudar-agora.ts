@@ -22,6 +22,7 @@ import { alinharProximaSessaoAoItensDoCiclo } from '../../../../shared/utils/pro
 import { CicloItemView, EscolherMateriaModalCircular } from '../../components/escolher-materia-modal-circular/escolher-materia-modal-circular';
 import { RecentSession, UltimasSessoesCard } from '../../components/ultimas-sessoes-card/ultimas-sessoes-card';
 import { EstudoApiService, } from '../../data/estudo-api.service';
+import { persistirCicloContextoEstudo } from '../../utils/estudo-contexto-ciclo.storage';
 import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../data/estudo.models';
 
 
@@ -53,6 +54,8 @@ export class EstudarAgora implements OnInit {
   selecionadoCicloItemId?: number;
   // itens para o modal (shape simples)
   itens: CicloItemView[] = [];
+  /** Sessões concluídas na rodada atual (GET materias); opcional até API antiga. */
+  sessoesConcluidasNaRodada: number | null = null;
   // item selecionado (override). Por padrão = recomendado
   selecionado?: CicloItemView;
   // controla abertura do modal
@@ -92,6 +95,7 @@ export class EstudarAgora implements OnInit {
 
     const idRaw = this.route.snapshot.paramMap.get('cicloId');
     this.cicloId = Number(idRaw);
+    persistirCicloContextoEstudo(this.cicloId);
 
     this.carregarEstudarAgora();
   }
@@ -137,6 +141,10 @@ export class EstudarAgora implements OnInit {
             cronometroIniciado: m.cronometroIniciado ?? false,
             concluida: m.concluida,
           }));
+
+          const sc = estadoMaterias.sessoesConcluidasNaRodada;
+          this.sessoesConcluidasNaRodada =
+            typeof sc === 'number' && Number.isFinite(sc) ? sc : null;
 
           this.disciplinaIdsComExecNoCiclo = new Set(
             estadoMaterias.materias
@@ -334,7 +342,7 @@ export class EstudarAgora implements OnInit {
     ).subscribe({
       next: (s) => {
         if (s?.id) {
-          this.router.navigate(['/estudo/sessao', s.id]);
+          this.router.navigate(['/estudo/sessao', s.id], { state: { cicloId: this.cicloId } });
         } else {
           this.toastr.error('Erro de ID');
         }

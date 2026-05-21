@@ -27,10 +27,15 @@
       [observacoesLoading]="observacoesLoading()"
       [observacoesMateria]="observacoesMateria" />
 
-    <app-ultimas-sessoes-card title="Últimas Sessões" [sessions]="recentSessions">
+    <app-ultimas-sessoes-card
+      title="Últimas Sessões"
+      [sessions]="recentSessions"
+      [cicloIdParaNavegacaoSessao]="cicloId"
+    >
     </app-ultimas-sessoes-card>
 
     <app-escolher-materia-modal-circular [open]="modalOpen" [items]="itens"
+      [sessoesConcluidasNaRodada]="sessoesConcluidasNaRodada"
       [defaultSelectedItemId]="selecionadoCicloItemId" [recommendedItemId]="selecionadoCicloItemId"
       (close)="modalOpen = false" (startSession)="onStartSession($event)">
     </app-escolher-materia-modal-circular>

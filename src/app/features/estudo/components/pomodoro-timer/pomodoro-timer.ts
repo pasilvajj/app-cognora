@@ -23,9 +23,10 @@ export class PomodoroTimer {
   toggleEnabled = output<void>();
 
   // 4. Computed local para UI (Otimiza re-render do HTML)
-  // Exemplo: se precisar de uma lógica específica apenas para o botão de pular
-  /** Pular etapa deve funcionar mesmo com Pomodoro “Desativar agora” (senão o usuário fica preso na PAUSA_CURTA). */
-  readonly canSkip = computed(() => !this.sessaoFinalizada() && !this.engine.finished());
+  /** Com “Desativar agora”, o motor Pomodoro está pausado — não permitir “Pular etapa”. */
+  readonly canSkip = computed(
+    () => !this.sessaoFinalizada() && !this.engine.finished() && !this.desativado(),
+  );
 
   // ===============================
   // AÇÕES DO TEMPLATE

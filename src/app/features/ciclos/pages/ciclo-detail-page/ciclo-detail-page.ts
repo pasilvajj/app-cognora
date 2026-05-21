@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
+import { extrairMensagemErroHttp } from '../../../../shared/utils/http-error-message.util';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
 import {
@@ -32,6 +33,18 @@ export class CicloDetailPage implements OnInit {
   nomeEdit = '';
   cargaEdit = 30;
   pomodoroAtivo = true;
+
+  readonly pomodoroDefaults = {
+    focoMin: 25,
+    pausaCurtaMin: 5,
+    pausaLongaMin: 15,
+    longaACada: 4,
+  };
+  pomodoroFocoMin = this.pomodoroDefaults.focoMin;
+  pomodoroPausaCurtaMin = this.pomodoroDefaults.pausaCurtaMin;
+  pomodoroPausaLongaMin = this.pomodoroDefaults.pausaLongaMin;
+  pomodoroLongaACada = this.pomodoroDefaults.longaACada;
+
   salvando = false;
 
   constructor(
@@ -67,6 +80,10 @@ export class CicloDetailPage implements OnInit {
         this.nomeEdit = data.nome;
         this.cargaEdit = data.cargaHorariaSemanal;
         this.pomodoroAtivo = data.pomodoroAtivo ?? true;
+        this.pomodoroFocoMin = data.pomodoroFocoMin ?? this.pomodoroDefaults.focoMin;
+        this.pomodoroPausaCurtaMin = data.pomodoroPausaCurtaMin ?? this.pomodoroDefaults.pausaCurtaMin;
+        this.pomodoroPausaLongaMin = data.pomodoroPausaLongaMin ?? this.pomodoroDefaults.pausaLongaMin;
+        this.pomodoroLongaACada = data.pomodoroLongaACada ?? this.pomodoroDefaults.longaACada;
 
         this.disciplinas = this.mapEditDtoToCicloItems(data.disciplinas);
         this.aplicarHorasPorMateria();
@@ -118,6 +135,23 @@ export class CicloDetailPage implements OnInit {
       cargaHorariaSemanal: this.cargaEdit,
       ativo: this.ciclo.ativo,
       pomodoroAtivo: this.pomodoroAtivo,
+      ...(this.pomodoroAtivo
+        ? {
+            pomodoroFocoMin: this.normPomodoroInt(this.pomodoroFocoMin, this.pomodoroDefaults.focoMin),
+            pomodoroPausaCurtaMin: this.normPomodoroInt(
+              this.pomodoroPausaCurtaMin,
+              this.pomodoroDefaults.pausaCurtaMin,
+            ),
+            pomodoroPausaLongaMin: this.normPomodoroInt(
+              this.pomodoroPausaLongaMin,
+              this.pomodoroDefaults.pausaLongaMin,
+            ),
+            pomodoroLongaACada: this.normPomodoroInt(
+              this.pomodoroLongaACada,
+              this.pomodoroDefaults.longaACada,
+            ),
+          }
+        : {}),
       itens: this.disciplinas.map(d => ({
         idDisciplina: d.id,
         checked: d.checked,
@@ -141,7 +175,11 @@ export class CicloDetailPage implements OnInit {
           this.toastr.success('Alterações salvas.');
           this.router.navigate(['/ciclos']);
         },
-        error: err => console.error(err),
+        error: (err) => {
+          console.error(err);
+          const msg = extrairMensagemErroHttp(err);
+          this.toastr.error(msg ?? 'Não foi possível salvar o ciclo. Verifique a consola (rede) para detalhes.');
+        },
       });
   }
 
@@ -182,5 +220,13 @@ export class CicloDetailPage implements OnInit {
       nivel: d.nivel,
       horasLabel: '0:00h',
     }));
+  }
+
+  private normPomodoroInt(value: unknown, fallback: number): number {
+    const n = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(n) || n < 1) {
+      return fallback;
+    }
+    return Math.floor(n);
   }
 }

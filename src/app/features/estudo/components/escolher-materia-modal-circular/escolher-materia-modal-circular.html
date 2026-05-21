@@ -4,9 +4,13 @@
       <div class="header-left">
         <h2>Escolher matéria</h2>
         <div class="header-sub">
-          <span><b>{{ materiasConcluidas }}</b> concluídas</span>
+          <span><b>{{ materiasConcluidas }}</b> posições do ciclo concluídas</span>
           <span class="dot">•</span>
           <span><b>{{ materiasPendentes }}</b> pendentes</span>
+        </div>
+        <div class="header-sessoes" *ngIf="mostrarContagemSessoes">
+          {{ sessoesConcluidasNaRodada }}
+          {{ sessoesConcluidasNaRodada === 1 ? 'sessão' : 'sessões' }} finalizadas no total nesta rodada.
         </div>
       </div>
 
@@ -138,7 +142,7 @@
       </div>
 
       <div class="hint">
-        Dica: ative “Mostrar lista” para ver os nomes completos. Estados: <strong>Não inicializada</strong>, <strong>Em andamento</strong> (após iniciar uma sessão nesta matéria) e <strong>Concluído</strong>. Matérias concluídas não podem ser escolhidas de novo.
+        Dica: ative “Mostrar lista” para ver os nomes completos. Estados: <strong>Não inicializada</strong>, <strong>Em andamento</strong> (após iniciar uma sessão nesta matéria) e <strong>Concluído</strong> (meta cumprida naquele #). Matérias concluídas não podem ser escolhidas de novo.
       </div>
     </div>
   </div>

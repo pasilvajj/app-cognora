@@ -17,6 +17,7 @@ import { alinharProximaSessaoAoItensDoCiclo } from '../../../../shared/utils/pro
 import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
 import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
 import { EstudoApiService } from '../../../estudo/data/estudo-api.service';
+import { persistirCicloContextoEstudo } from '../../../estudo/utils/estudo-contexto-ciclo.storage';
 import { ProgressoDisciplinaDto as ProgressoEstudoDto } from '../../../estudo/data/estudo.models';
 
 import {
@@ -402,7 +403,10 @@ export class DashboardPage implements OnInit {
     }
 
     if (this.actionIsRetomar() && this.actionSessaoId) {
-      this.router.navigate(['/estudo/sessao', this.actionSessaoId]);
+      persistirCicloContextoEstudo(this.cicloId);
+      this.router.navigate(['/estudo/sessao', this.actionSessaoId], {
+        state: this.cicloId != null ? { cicloId: this.cicloId } : undefined,
+      });
       return;
     }
 
@@ -420,7 +424,10 @@ export class DashboardPage implements OnInit {
         .subscribe({
           next: (s) => {
             if (s?.id) {
-              this.router.navigate(['/estudo/sessao', s.id]);
+              persistirCicloContextoEstudo(this.cicloId);
+              this.router.navigate(['/estudo/sessao', s.id], {
+                state: this.cicloId != null ? { cicloId: this.cicloId } : undefined,
+              });
             } else {
               this.toast.error('Resposta da sessão inválida.');
             }

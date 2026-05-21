@@ -1,8 +1,9 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
+import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../../shared/erro/http-suprimir-toast.context';
 import {
   AtualizarObservacoesRequest,
   FinalizarSessaoRequest,
@@ -78,7 +79,10 @@ export class EstudoApiService {
   }
 
   getSessao1(id: number): Promise<SessaoDetalheDto> {
-    return firstValueFrom(this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`));
+    const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+    return firstValueFrom(
+      this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`, { context }),
+    );
   }
 
   pausarSessao(

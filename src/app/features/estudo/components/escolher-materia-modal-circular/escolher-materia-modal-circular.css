@@ -60,6 +60,15 @@
   opacity: 0.45;
 }
 
+.header-sessoes {
+  margin-top: 4px;
+  max-width: min(520px, 85vw);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: rgba(15, 23, 42, 0.55);
+}
+
 .header-actions {
   display: inline-flex;
   align-items: center;

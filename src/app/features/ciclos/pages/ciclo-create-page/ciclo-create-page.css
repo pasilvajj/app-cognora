@@ -226,7 +226,8 @@ input:focus, select:focus {
 
 .pomodoro-title{
   font-weight: 800;
-  color: #0f172a;
+  /* Mesma família de cor que .field label (legível em fundo claro e escuro) */
+  color: #64748b;
   font-size: 13px;
 }
 
@@ -285,6 +286,7 @@ input:focus, select:focus {
 :host-context([data-theme='dark']) .card{border-color:color-mix(in srgb,var(--text) 12%,transparent);box-shadow:0 10px 24px rgba(2,6,23,.3);}
 :host-context([data-theme='dark']) .card-header{background:color-mix(in srgb,var(--surface) 86%,#0b1220);border-bottom-color:color-mix(in srgb,var(--text) 10%,transparent);}
 :host-context([data-theme='dark']) .card-header h2{color:var(--text);}
+:host-context([data-theme='dark']) .pomodoro-title{color:var(--text-muted);}
 :host-context([data-theme='dark']) .field label{color:var(--text-muted);}
 :host-context([data-theme='dark']) input[type="text"],:host-context([data-theme='dark']) input[type="number"],:host-context([data-theme='dark']) select{background:var(--bg-input);border-color:color-mix(in srgb,var(--text) 14%,transparent);color:var(--text);}
 :host-context([data-theme='dark']) .slider{background:color-mix(in srgb,var(--text) 20%,transparent);border-color:color-mix(in srgb,var(--text) 22%,transparent);}

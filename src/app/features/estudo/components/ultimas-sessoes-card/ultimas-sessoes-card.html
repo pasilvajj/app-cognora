@@ -12,9 +12,10 @@
           class="session-row clickable"
           *ngIf="canResume(s); else rowStatic"
           [routerLink]="['/estudo/sessao', s.sessaoId]"
+          [state]="cicloIdParaNavegacaoSessao != null && cicloIdParaNavegacaoSessao > 0 ? { cicloId: cicloIdParaNavegacaoSessao } : undefined"
         >
           <div class="session-left">
-            <span class="sess-num" *ngIf="s.numero != null">{{ s.numero }}</span>
+            <span class="sess-num" *ngIf="s.numero != null" [attr.title]="'Posição no ciclo (nº ' + s.numero + ')'">{{ s.numero }}</span>
             <!-- STATUS ICON -->
             <span
               class="status"
@@ -88,7 +89,7 @@
         <ng-template #rowStatic>
           <div class="session-row">
             <div class="session-left">
-              <span class="sess-num" *ngIf="s.numero != null">{{ s.numero }}</span>
+              <span class="sess-num" *ngIf="s.numero != null" [attr.title]="'Posição no ciclo (nº ' + s.numero + ')'">{{ s.numero }}</span>
               <span
                 class="status"
                 [class.done]="s.status === 'CONCLUIDA'"

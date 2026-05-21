@@ -37,6 +37,8 @@ type RecentSessionVm = RecentSession & { dateView: DateView };
 export class UltimasSessoesCard implements OnChanges {
   @Input({ required: true }) sessions: RecentSession[] = [];
   @Input() title: string = 'Últimas Sessões';
+  /** Incluído em `RouterLink.state` ao abrir `/estudo/sessao/:id` (redirect 404 → estudaAgora). */
+  @Input() cicloIdParaNavegacaoSessao: number | null = null;
 
   vm: RecentSessionVm[] = [];
 

@@ -36,6 +36,10 @@ export interface CicloEditResponseDto {
   cargoId: number;
   cargoNome: string;
   pomodoroAtivo?: boolean;
+  pomodoroFocoMin?: number;
+  pomodoroPausaCurtaMin?: number;
+  pomodoroPausaLongaMin?: number;
+  pomodoroLongaACada?: number;
   disciplinas: DisciplinaEditDto[];
 }
 

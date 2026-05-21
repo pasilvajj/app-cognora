@@ -61,6 +61,12 @@ export class AuthService {
   logout(): void {
     sessionStorage.removeItem(this.TOKEN_KEY);
     sessionStorage.removeItem(this.USER_KEY);
+    try {
+      localStorage.removeItem('cognora:lastCicloId');
+      sessionStorage.removeItem('cognora:estudo-contexto-ciclo-id');
+    } catch {
+      /* ignore */
+    }
   }
 
   isAuthenticated(): boolean {

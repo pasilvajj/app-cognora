@@ -92,6 +92,10 @@ export interface CicloEditResponseDto {
   cargoId: number;
   cargoNome: string;
   pomodoroAtivo?: boolean;
+  pomodoroFocoMin?: number;
+  pomodoroPausaCurtaMin?: number;
+  pomodoroPausaLongaMin?: number;
+  pomodoroLongaACada?: number;
   disciplinas: DisciplinaEditDto[];
 }
 
@@ -109,5 +113,9 @@ export type CicloUpdateRequest = {
   cargaHorariaSemanal?: number;
   ativo?: boolean;
   pomodoroAtivo?: boolean;
+  pomodoroFocoMin?: number;
+  pomodoroPausaCurtaMin?: number;
+  pomodoroPausaLongaMin?: number;
+  pomodoroLongaACada?: number;
   itens: CicloItemUpdateRequest[];
 };

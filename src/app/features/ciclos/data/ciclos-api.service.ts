@@ -32,6 +32,11 @@ export type CicloMateriasComEstadoDto = {
   aguardandoNovaRodada: boolean;
   ultimaRodadaConcluidaNumero: number | null;
   rodadaAtualNumero: number | null;
+  /**
+   * Sessões finalizadas com meta cumprida na rodada considerada (pode ser maior que
+   * o número de posições verdes quando há várias sessões para a mesma posição).
+   */
+  sessoesConcluidasNaRodada?: number | null;
 };
 
 export type NovaRodadaDto = {

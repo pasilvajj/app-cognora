@@ -1,7 +1,9 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, OnDestroy, resource, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { catchError, finalize, firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
@@ -17,6 +19,10 @@ import { SessionTimerService } from '../../services/session-timer-service';
 import { StudyAlertSoundService } from '../../services/study-alert-sound.service';
 import { StudySessionClockCoordinatorService } from '../../services/study-session-clock-coordinator.service';
 import { StudySessionPomodoroSnapshotService } from '../../services/study-session-pomodoro-snapshot.service';
+import {
+  obterCicloContextoEstudoGuardado,
+  persistirCicloContextoEstudo,
+} from '../../utils/estudo-contexto-ciclo.storage';
 
 @Component({
   selector: 'app-sessao-estudo-page',
@@ -29,7 +35,9 @@ import { StudySessionPomodoroSnapshotService } from '../../services/study-sessio
 export class SessaoEstudoPage implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly api = inject(EstudoApiService);
+  private readonly toastr = inject(ToastrService);
 
   readonly pomodoro = inject(PomodoroEngineService);
   readonly timer = inject(SessionTimerService);
@@ -66,9 +74,32 @@ export class SessaoEstudoPage implements OnDestroy {
     params: () => this.sessaoId(),
     loader: async ({ params: id }) => {
       if (!id || isNaN(id) || id <= 0) return null;
-      const dados = await this.api.getSessao1(id);
-      untracked(() => this.initSessao(dados, false));
-      return dados;
+      try {
+        const dados = await this.api.getSessao1(id);
+        untracked(() => this.initSessao(dados, false));
+        return dados;
+      } catch (err: unknown) {
+        const status = err instanceof HttpErrorResponse ? err.status : 0;
+        if (status === 404 || status === 403) {
+          untracked(() => {
+            this._sessao.set(null);
+            const cicloId = this.cicloIdParaRedirectAposErroSessao();
+            if (cicloId != null) {
+              this.toastr.warning(
+                'Esta sessão não existe ou você não tem permissão para abri-la. Redirecionando para o estudo deste ciclo.',
+              );
+              void this.router.navigate(['/estudaAgora', cicloId]);
+            } else {
+              this.toastr.warning(
+                'Esta sessão não existe ou você não tem permissão para abri-la. Redirecionando para seus ciclos.',
+              );
+              void this.router.navigate(['/ciclos']);
+            }
+          });
+          return null;
+        }
+        throw err;
+      }
     },
   });
 
@@ -161,6 +192,19 @@ export class SessaoEstudoPage implements OnDestroy {
 
   // ================= INIT =================
 
+  /** Navegação com `Router.navigate(..., { state: { cicloId } })` ou último ciclo em `sessionStorage`. */
+  private cicloIdParaRedirectAposErroSessao(): number | null {
+    const st = this.location.getState();
+    if (st && typeof st === 'object' && 'cicloId' in st) {
+      const raw = (st as { cicloId?: unknown }).cicloId;
+      const n = typeof raw === 'number' ? raw : Number(raw);
+      if (Number.isFinite(n) && n > 0) {
+        return Math.floor(n);
+      }
+    }
+    return obterCicloContextoEstudoGuardado();
+  }
+
   /**
    * Inicializa o estado local a partir do DTO da API.
    * @param defer  Quando true, o tick dos relógios NÃO é iniciado aqui;
@@ -170,12 +214,18 @@ export class SessaoEstudoPage implements OnDestroy {
     if (!s) return;
 
     const sessaoAnteriorId = this._sessao()?.id ?? null;
-    if (sessaoAnteriorId !== s.id) {
+    if (sessaoAnteriorId != null && sessaoAnteriorId !== s.id) {
       this.pomodoroTemporariamenteDesativado.set(false);
     }
 
     // Mantém o sinal local sempre atualizado com o último DTO da API.
     this._sessao.set(s);
+    persistirCicloContextoEstudo(s.cicloId);
+
+    // “Desativar agora” é só no cliente — reaplica após F5 (mesma sessão).
+    if (s.pomodoroAtivo !== false && this.pomodoroSnapshot.getTemporariamenteDesativado(s.id)) {
+      this.pomodoroTemporariamenteDesativado.set(true);
+    }
 
     const metaMs = TempoFormatUtil.minutosParaMs(s.tempoMinutos);
     const baseMsRaw = Number(s.estudadoTotalSeg ?? 0) * 1000;
@@ -473,8 +523,6 @@ export class SessaoEstudoPage implements OnDestroy {
 
   onPomodoroSkipStage(): void {
     this.pomodoro.skip();
-    // Com Pomodoro em “Ativar agora”, volta o rótulo para “Desativar agora” após pular etapa.
-    this.pomodoroTemporariamenteDesativado.set(false);
     const id = this.sessao()?.id;
     if (id && !this.pomodoro.overlayVisible()) {
       this.pomodoroSnapshot.clearOverlayPending(id);
@@ -527,10 +575,12 @@ export class SessaoEstudoPage implements OnDestroy {
       this.pomodoro.dismissOverlay();
       this.pomodoroSnapshot.clearOverlayPending(s.id);
       this.pomodoroTemporariamenteDesativado.set(true);
+      this.pomodoroSnapshot.setTemporariamenteDesativado(s.id, true);
       return;
     }
 
     this.pomodoroTemporariamenteDesativado.set(false);
+    this.pomodoroSnapshot.setTemporariamenteDesativado(s.id, false);
     // PAUSA_CURTA/LONGA: sessão pausada, mas o descanso do Pomodoro segue no cliente ao reativar.
     // FOCO + sessão pausada: não iniciar o Pomodoro aqui — só após Retomar (coordenador.ativarRelógios).
     const adiarPomodoroAteRetomar =
@@ -601,7 +651,11 @@ export class SessaoEstudoPage implements OnDestroy {
 
   voltar(): void {
     const s = this.sessao();
-    this.router.navigate(['/estudaAgora', (s as any)?.cicloId]);
+    if (!s?.cicloId) {
+      void this.router.navigate(['/ciclos']);
+      return;
+    }
+    void this.router.navigate(['/estudaAgora', s.cicloId]);
   }
 
   @HostListener('window:beforeunload')

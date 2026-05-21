@@ -44,6 +44,9 @@ export class EscolherMateriaModalCircular implements OnChanges {
   @Input({ required: true }) open = false;
   @Input({ required: true }) items: CicloItemView[] = [];
 
+  /** Sessões finalizadas na rodada; quando maior que {@link materiasConcluidas}, explica-se no cabeçalho. */
+  @Input() sessoesConcluidasNaRodada: number | null = null;
+
   @Input() defaultSelectedItemId?: number;
   @Input() recommendedItemId?: number;
 
@@ -97,6 +100,15 @@ export class EscolherMateriaModalCircular implements OnChanges {
   /** Ainda não concluídos (inclui “Não inicializada” e “Em andamento”). */
   get materiasPendentes(): number {
     return (this.items ?? []).filter((i) => !i.concluida).length;
+  }
+
+  /** Mostra linha extra quando há mais sessões concluídas do que posições distintas “verdes”. */
+  get mostrarContagemSessoes(): boolean {
+    const n = this.sessoesConcluidasNaRodada;
+    if (n == null || n <= 0) {
+      return false;
+    }
+    return n > this.materiasConcluidas;
   }
 
   onClose(): void {

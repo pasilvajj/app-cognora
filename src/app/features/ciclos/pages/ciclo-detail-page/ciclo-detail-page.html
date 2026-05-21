@@ -11,12 +11,78 @@
         [modo]="modo">
       </app-ciclo-header>
 
-      <div class="edit-extras" *ngIf="modo === 'edit'">
-        <label class="pomodoro-row">
-          <input type="checkbox" [(ngModel)]="pomodoroAtivo" />
-          <span>Usar técnica Pomodoro neste ciclo</span>
-        </label>
-      </div>
+      <section class="card pomodoro-card" *ngIf="modo === 'edit'">
+        <div class="card-header">
+          <h2>Pomodoro</h2>
+        </div>
+
+        <div class="card-body form">
+          <div class="pomodoro-row">
+            <div class="pomodoro-left">
+              <div class="pomodoro-title">Usar técnica Pomodoro no Foco?</div>
+
+              <label class="switch pomodoro-switch">
+                <input type="checkbox" [(ngModel)]="pomodoroAtivo" />
+                <span class="slider"></span>
+              </label>
+
+              <span class="pomodoro-badge" [class.on]="pomodoroAtivo">
+                {{ pomodoroAtivo ? 'Ativado' : 'Desativado' }}
+              </span>
+            </div>
+
+            <div class="pomodoro-right">
+              <div class="pomodoro-help" *ngIf="pomodoroAtivo">
+                Ativo: na Sessão de Estudo, o modo Foco/Descanso aparecerá e o sistema poderá pausar
+                automaticamente nos intervalos.
+              </div>
+
+              <div class="pomodoro-help" *ngIf="!pomodoroAtivo">
+                Desativado: a Sessão de Estudo funciona no modo padrão, sem pausas automáticas.
+              </div>
+            </div>
+          </div>
+
+          <div class="row pomodoro-fields" *ngIf="pomodoroAtivo">
+            <div class="field small">
+              <label>Foco (min)</label>
+              <input
+                type="number"
+                min="1"
+                name="pomodoroFocoMin"
+                [(ngModel)]="pomodoroFocoMin"
+              />
+            </div>
+            <div class="field small">
+              <label>Pausa curta (min)</label>
+              <input
+                type="number"
+                min="1"
+                name="pomodoroPausaCurtaMin"
+                [(ngModel)]="pomodoroPausaCurtaMin"
+              />
+            </div>
+            <div class="field small">
+              <label>Pausa longa (min)</label>
+              <input
+                type="number"
+                min="1"
+                name="pomodoroPausaLongaMin"
+                [(ngModel)]="pomodoroPausaLongaMin"
+              />
+            </div>
+            <div class="field small">
+              <label>Longa a cada</label>
+              <input
+                type="number"
+                min="1"
+                name="pomodoroLongaACada"
+                [(ngModel)]="pomodoroLongaACada"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
     </ng-container>
 
     <!-- Estado -->
