@@ -21,7 +21,10 @@
       (escolherOutraMateria)="abrirEscolha()"
       (iniciarEstudo)="iniciarEstudo()" />
 
-    <app-estudar-agora-progresso-ciclo-card [progress]="progress" />
+    <app-estudar-agora-progresso-ciclo-card
+      [progress]="progress"
+      (disciplinaNavigate)="irHistoricoDisciplina($event)"
+    />
 
     <app-estudar-agora-observacoes-card
       [observacoesLoading]="observacoesLoading()"

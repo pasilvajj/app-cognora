@@ -162,6 +162,15 @@
   align-items: start;
 }
 
+/* Empilha os dois gráficos na mesma coluna à esquerda; progresso mantém-se à direita no desktop */
+.dashboard-charts-column {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+  min-height: 0;
+}
+
 /* BLOCOS */
 .dashboard-block {
   background: var(--bg-card);
@@ -254,6 +263,17 @@
   flex: 0 1 auto;
   min-height: 0;
   display: block;
+}
+
+.dashboard-chart-so-diario-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--muted-foreground, #64748b);
+}
+
+.dashboard-chart-so-diario-hint code {
+  font-size: 0.85em;
 }
 .dashboard-actions {
   display: flex;

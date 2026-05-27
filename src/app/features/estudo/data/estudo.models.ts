@@ -19,6 +19,12 @@ export interface ProgressoDisciplinaDto {
   percentual: number;
 }
 
+/** Resposta agregada: mesmo critério que progresso + recentes, uma carga no servidor. */
+export interface ProgressoRecentesRodadaDto {
+  progresso: ProgressoDisciplinaDto[];
+  recentes: SessaoCardDto[];
+}
+
 /**
  * Objetos de Requisição (Payloads)
  */
@@ -71,6 +77,30 @@ export interface SessaoDetalheDto {
   pomodoroCicloIndex: number;
   pomodoroEtapaInicio: string | null;
   pomodoroRestanteSeg: number;
+
+  /** Tópico do edital em estudo (quando definido). */
+  topicoId?: number | null;
+  topicoTitulo?: string | null;
+
+  /** Código da categoria (ex.: TEORIA); opcional. */
+  categoriaEstudo?: string | null;
+  /** Rótulo amigável (ex.: Teoria). */
+  categoriaEstudoLabel?: string | null;
+}
+
+/** Opções fixas de categoria de estudo na sessão (alinhadas ao enum Java). */
+export const SESSAO_CATEGORIAS_ESTUDO: ReadonlyArray<{ codigo: string; label: string }> = [
+  { codigo: 'TEORIA', label: 'Teoria' },
+  { codigo: 'REVISAO', label: 'Revisão' },
+  { codigo: 'QUESTOES', label: 'Questões' },
+  { codigo: 'LEITURA_LEI', label: 'Leitura de Lei' },
+  { codigo: 'JURISPRUDENCIA', label: 'Jurisprudência' },
+];
+
+/** Opção de tópico do edital na disciplina da sessão (título pode incluir indentação). */
+export interface SessaoTopicoOpcaoDto {
+  id: number;
+  titulo: string;
 }
 
 export interface SessaoCardDto {
@@ -98,4 +128,53 @@ export interface SessaoResumoDto {
   fim: string;
   concluido: boolean;
   minutosEfetivos: number;
+}
+
+/** Resumo global da disciplina no cargo do ciclo. `totalSessoes` = número de segmentos (linhas com tópico no histórico). */
+export interface DisciplinaHistoricoResumoDto {
+  disciplinaId: number;
+  disciplinaNome: string;
+  totalSessoes: number;
+  totalEstudadoSeg: number;
+}
+
+/** Linha de segmento no histórico (intervalo tópico+categoria). `id` = evento SESSAO, não a sessão. */
+export interface DisciplinaHistoricoSessaoDto {
+  id: number;
+  /** Id da sessão de estudo (para API de tópico/categoria/observações). */
+  sessaoEstudoId?: number | null;
+  topicoId?: number | null;
+  categoriaEstudoCodigo?: string | null;
+  cicloId: number | null;
+  cicloNome: string;
+  inicio: string | null;
+  fim: string | null;
+  /** Duração deste segmento (segundos), não o total da sessão inteira. */
+  estudadoTotalSeg: number;
+  status: string;
+  temObservacoes: boolean;
+  metaMinutosPlanejados: number | null;
+  /** Título do tópico do edital registado na sessão, quando existir. */
+  topicoTitulo?: string | null;
+  /** Tipo de estudo (Teoria, Revisão, …), quando definido. */
+  categoriaEstudoLabel?: string | null;
+}
+
+/** Dados de um segmento (evento) para o modal de registo — alinhado ao histórico por disciplina. */
+export interface SegmentoEstudoRegistroDto {
+  id: number;
+  sessaoEstudoId: number;
+  topicoId: number | null;
+  categoriaEstudoCodigo: string | null;
+  duracaoSegundos: number;
+  observacoes: string | null;
+}
+
+/** Página Spring Data (serialização JSON padrão). */
+export interface SpringDataPageDto<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
 }

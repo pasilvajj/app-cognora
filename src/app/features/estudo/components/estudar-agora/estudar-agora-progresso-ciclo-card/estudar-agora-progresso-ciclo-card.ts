@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import {
   formatPercent as formatPercentUtil,
 } from '../../../../../shared/utils/progresso-disciplina.util';
@@ -15,6 +15,7 @@ import { EstudarAgoraProgressItem } from '../estudar-agora-view.models';
 })
 export class EstudarAgoraProgressoCicloCard {
   progress = input<EstudarAgoraProgressItem[]>([]);
+  disciplinaNavigate = output<number>();
 
   formatPercent(value: number): string {
     return formatPercentUtil(value);
@@ -27,6 +28,16 @@ export class EstudarAgoraProgressoCicloCard {
   }
 
   trackByDisciplina(_: number, item: EstudarAgoraProgressItem): string {
-    return item.disciplina;
+    return `${item.disciplinaId ?? '—'}-${item.disciplina}`;
+  }
+
+  onRowClick(item: EstudarAgoraProgressItem): void {
+    if (item.disciplinaId != null && Number.isFinite(item.disciplinaId)) {
+      this.disciplinaNavigate.emit(item.disciplinaId);
+    }
+  }
+
+  rowClickable(item: EstudarAgoraProgressItem): boolean {
+    return item.disciplinaId != null && Number.isFinite(item.disciplinaId);
   }
 }

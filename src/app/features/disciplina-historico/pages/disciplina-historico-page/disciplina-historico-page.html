@@ -1,0 +1,186 @@
+<div class="dh-page">
+  <header class="dh-header">
+    <button type="button" class="dh-back" (click)="voltar()">← Voltar</button>
+    <div class="dh-title-row">
+      <span class="dh-accent" aria-hidden="true"></span>
+      <div class="dh-titles">
+        <h1 class="dh-title">{{ disciplinaNome() || 'Disciplina' }}</h1>
+        <p class="dh-sub">{{ cicloNome() }} · {{ cargoNome() }}</p>
+      </div>
+    </div>
+    <div class="dh-actions">
+      <button type="button" class="dh-btn-primary" (click)="adicionarEstudo()">Adicionar estudo</button>
+      <span class="dh-plan-pill" title="Em breve">Meu plano</span>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <p class="dh-muted">A carregar…</p>
+  } @else {
+    <section class="dh-metrics" aria-label="Resumo da disciplina">
+      <article class="dh-metric">
+        <span class="dh-metric-label">Tempo de estudo</span>
+        <span class="dh-metric-value">{{ tempoEstudoLabel }}</span>
+        <span class="dh-metric-foot muted">Total em todos os ciclos deste edital</span>
+      </article>
+      <article class="dh-metric">
+        <span class="dh-metric-label">Desempenho</span>
+        <span class="dh-metric-value">{{ desempenhoLabel }}</span>
+        <span class="dh-metric-foot muted">Execução atual do ciclo (tempo vs meta)</span>
+      </article>
+      <article class="dh-metric">
+        <span class="dh-metric-label">Progresso no edital</span>
+        @let pe = progressoEdital();
+        <span class="dh-metric-value">{{ pe.pct }}%</span>
+        <span class="dh-metric-foot"
+          ><span class="ok">{{ pe.done }} concluídos</span> ·
+          <span class="bad">{{ pe.total - pe.done }} pendentes</span></span
+        >
+      </article>
+      <article class="dh-metric">
+        <span class="dh-metric-label">Páginas lidas</span>
+        <span class="dh-metric-value">{{ paginasLabel }}</span>
+        <span class="dh-metric-foot muted">Em breve</span>
+      </article>
+    </section>
+
+    <section class="dh-section" aria-labelledby="dh-hist-heading">
+      <h2 id="dh-hist-heading" class="dh-section-title">Histórico de registros</h2>
+      <div class="dh-table-wrap">
+        <table class="dh-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Ciclo</th>
+              <th>Tópico</th>
+              <th>Categoria</th>
+              <th>Tempo estudado</th>
+              <th>Estado</th>
+              <th>Notas</th>
+              <th class="dh-th-acao">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of historicoSessoes(); track s.id) {
+              <tr>
+                <td>{{ formatarDataSessao(s) }}</td>
+                <td>{{ s.cicloNome }}</td>
+                <td>{{ s.topicoTitulo || '—' }}</td>
+                <td>{{ s.categoriaEstudoLabel || '—' }}</td>
+                <td>{{ formatarDuracaoSessao(s.estudadoTotalSeg) }}</td>
+                <td><span [class]="estadoSessaoClass(s.status)">{{ estadoSessaoLabel(s.status) }}</span></td>
+                <td class="dh-td-center">{{ s.temObservacoes ? '✎' : '—' }}</td>
+                <td class="dh-td-acao">
+                  @if (s.sessaoEstudoId != null && s.sessaoEstudoId > 0) {
+                    <button
+                      type="button"
+                      class="dh-btn-pencil"
+                      (click)="abrirRegistroHistorico(s)"
+                      title="Registar ou alterar"
+                      aria-label="Registar ou alterar registo de estudo"
+                    >
+                      ✎
+                    </button>
+                  } @else {
+                    <span class="dh-muted">—</span>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="dh-empty-cell">Sem segmentos de estudo com tópico registados para esta disciplina neste edital.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (historicoTemMais()) {
+        <div class="dh-load-more">
+          <button
+            type="button"
+            class="dh-btn-secondary"
+            [disabled]="historicoCarregandoMais()"
+            (click)="carregarMaisHistorico()"
+          >
+            {{ historicoCarregandoMais() ? 'A carregar…' : 'Carregar mais' }}
+          </button>
+        </div>
+      }
+    </section>
+
+    <section class="dh-section" aria-labelledby="dh-edital-heading">
+      <div class="dh-section-head">
+        <h2 id="dh-edital-heading" class="dh-section-title">Edital verticalizado</h2>
+        @let pd = progressoDisciplinaLinhas();
+        <span class="dh-edital-meta">{{ pd.done }}/{{ pd.total }} · {{ pd.pct }}%</span>
+      </div>
+      <div class="dh-table-wrap">
+        <table class="dh-table">
+          <thead>
+            <tr>
+              <th class="dh-th-expand"><span class="sr-only">Expandir</span></th>
+              <th class="dh-th-check"><span class="sr-only">Concluído</span></th>
+              <th>Tópicos</th>
+              <th class="dh-th-num">✓</th>
+              <th class="dh-th-num">✗</th>
+              <th class="dh-th-num">∑</th>
+              <th class="dh-th-num">%</th>
+              <th class="dh-th-date">Último estudo</th>
+              <th class="dh-th-action"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (linha of linhasTopicosVisiveis(); track linha.id) {
+              <tr [class.dh-tr-done]="isTopicoMarcado(linha.id)">
+                <td class="dh-td-expand">
+                  @if (linha.hasChildren) {
+                    <button
+                      type="button"
+                      class="dh-expand"
+                      [attr.aria-expanded]="isTopicoExpandido(linha.id)"
+                      (click)="alternarExpansaoTopico(linha.id, $event)"
+                    >
+                      ▾
+                    </button>
+                  }
+                </td>
+                <td class="dh-td-check">
+                  <input
+                    type="checkbox"
+                    [checked]="isTopicoMarcado(linha.id)"
+                    (change)="cicloId() != null && alternarTopico(linha.id)"
+                    [attr.aria-label]="'Marcar concluído: ' + linha.titulo"
+                  />
+                </td>
+                <td class="dh-td-topic" [style.paddingLeft.rem]="0.35 + linha.profundidade * 0.85">
+                  {{ linha.titulo }}
+                </td>
+                <td class="dh-td-num muted">—</td>
+                <td class="dh-td-num muted">—</td>
+                <td class="dh-td-num muted">—</td>
+                <td class="dh-td-num muted">—</td>
+                <td class="dh-td-date muted">{{ ultimoEstudoTexto(linha.id) }}</td>
+                <td class="dh-td-action">
+                  <button type="button" class="dh-link" (click)="adicionarEstudo()">Adicionar</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="9" class="dh-empty-cell">Sem tópicos cadastrados para esta disciplina.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>
+
+<app-registro-estudo-modal
+  [open]="registroModalAberto()"
+  [sessaoId]="registroSessaoEstudoId()"
+  [segmentoId]="registroSegmentoId()"
+  titulo="Registo de estudo"
+  (openChange)="onRegistroModalOpenChange($event)"
+  (gravado)="onRegistroHistoricoGravado()"
+/>

@@ -1,0 +1,72 @@
+@if (open) {
+<div class="rem-backdrop" (click)="fechar()" role="presentation"></div>
+<div class="rem-dialog" role="dialog" aria-modal="true" [attr.aria-labelledby]="'rem-titulo'">
+  <header class="rem-header">
+    <h2 id="rem-titulo" class="rem-title">{{ titulo }}</h2>
+    <button type="button" class="rem-close" (click)="fechar()" aria-label="Fechar">×</button>
+  </header>
+
+  <div class="rem-body">
+    @if (carregando) {
+    <p class="rem-muted">A carregar…</p>
+    } @else {
+    <label class="rem-field">
+      <span class="rem-label">Categoria</span>
+      <select class="rem-input rem-select" [(ngModel)]="categoriaCodigo" name="categoria">
+        <option value="">—</option>
+        @for (c of categorias; track c.codigo) {
+        <option [value]="c.codigo">{{ c.label }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="rem-field">
+      <span class="rem-label">Tópico</span>
+      <select class="rem-input rem-select rem-select-wide" [(ngModel)]="topicoId" name="topico">
+        <option [ngValue]="null">—</option>
+        @for (t of topicosOpcoes; track t.id) {
+        <option [ngValue]="t.id">{{ t.titulo }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="rem-field">
+      <span class="rem-label">Tempo de estudo</span>
+      <input
+        type="text"
+        class="rem-input rem-text"
+        [(ngModel)]="tempoTexto"
+        name="tempo"
+        placeholder="00:45:00"
+        autocomplete="off"
+      />
+      <span class="rem-hint">
+        @if (edicaoSegmentoHistorico) {
+          Tempo desta linha do histórico (segmento), não o total acumulado da sessão. Formato HH:MM:SS.
+        } @else {
+          Formato HH:MM:SS. Com a sessão em pausa, o tempo sincroniza ao guardar.
+        }
+      </span>
+    </label>
+
+    <label class="rem-field">
+      <span class="rem-label">Comentários</span>
+      <textarea
+        class="rem-input rem-textarea"
+        [(ngModel)]="comentarios"
+        name="comentarios"
+        rows="4"
+        placeholder="Notas sobre este estudo…"
+      ></textarea>
+    </label>
+    }
+  </div>
+
+  <footer class="rem-footer">
+    <button type="button" class="rem-btn rem-btn-outline" (click)="fechar()" [disabled]="gravando">Cancelar</button>
+    <button type="button" class="rem-btn rem-btn-primary" (click)="salvar()" [disabled]="gravando || carregando">
+      {{ gravando ? 'A guardar…' : 'Salvar' }}
+    </button>
+  </footer>
+</div>
+}

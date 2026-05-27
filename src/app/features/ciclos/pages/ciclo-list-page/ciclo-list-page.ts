@@ -28,17 +28,13 @@ export class CicloListPage {
   excluindo = signal(false);
 
   ciclosResource = resource({
-    loader: () => this.api.listCiclos()
+    loader: () => this.api.listCiclos(),
   });
 
   toggleMenu(id: number, event: MouseEvent): void {
     event.stopPropagation();
     this.openMenuId.update(prev => prev === id ? null : id);
   }
-
-  ciclos = resource({
-    loader: () => this.api.listCiclos()
-  })
 
   constructor() { }
 

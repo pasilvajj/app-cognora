@@ -9,6 +9,21 @@
   grid-template-columns: 1fr 240px 56px;
   align-items: center;
   gap: 12px;
+  border-radius: 12px;
+  outline: none;
+  transition: background 0.18s ease;
+}
+
+.progress-row--clickable {
+  cursor: pointer;
+}
+
+.progress-row--clickable:hover {
+  background: color-mix(in srgb, var(--primary, #3b82f6) 10%, transparent);
+}
+
+.progress-row--clickable:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 45%, transparent);
 }
 
 .left {

@@ -7,6 +7,12 @@
     [ordem]="s.ordem"
     (backClicked)="voltar()" />
 
+  <div class="sessao-registro-teste-wrap">
+    <button type="button" class="sessao-registro-teste-btn" (click)="abrirRegistroEstudoTeste()">
+      Registo de estudo (teste)
+    </button>
+  </div>
+
   <app-sessao-estudo-session-card
     [disciplinaNome]="s.disciplinaNome"
     [tempoPlanejado]="tempoPlanejado()"
@@ -16,11 +22,19 @@
     [observacoes]="observacoes()"
     [acaoLoading]="acaoLoading()"
     [retomarBloqueadoNaPausaCurta]="retomarBloqueadoNaPausaCurta()"
+    [topicosOpcoes]="topicosOpcoes()"
+    [topicoId]="s.topicoId ?? null"
+    [topicoSelectDisabled]="!!s.fim"
+    [metaSaving]="metaSelectsSaving()"
+    [categoriaEstudo]="s.categoriaEstudo ?? null"
+    [categoriaSelectDisabled]="!!s.fim"
     (mainActionClick)="onMainActionClick()"
     (pomodoroSkipStage)="onPomodoroSkipStage()"
     (pomodoroToggleEnabled)="onPomodoroToggleEnabled()"
     (observacoesChange)="onObservacoesChange($event)"
-    (observacoesSaveRequest)="onObservacoesSaveRequest($event)" />
+    (observacoesSaveRequest)="onObservacoesSaveRequest($event)"
+    (topicoChange)="onTopicoSelecionado($event)"
+    (categoriaChange)="onCategoriaSelecionada($event)" />
 
 </div>
 } @else {
@@ -29,6 +43,14 @@
   {{ loading() ? 'Carregando sessão...' : 'Não foi possível carregar a sessão.' }}
 </div>
 }
+
+<app-registro-estudo-modal
+  [open]="registroModalAberto()"
+  [sessaoId]="sessaoId()"
+  titulo="Registo de estudo"
+  (openChange)="onRegistroModalOpenChange($event)"
+  (gravado)="onRegistroEstudoGravado()"
+/>
 
 <!-- Overlay fica fora do fluxo principal para evitar problemas de Z-Index -->
 <app-pomodoro-overlay [visible]="pomodoroVisible()" [mode]="pomodoroMode()" [texto]="pomodoroTexto()"

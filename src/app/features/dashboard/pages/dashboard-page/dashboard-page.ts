@@ -21,7 +21,10 @@ import { persistirCicloContextoEstudo } from '../../../estudo/utils/estudo-conte
 import { ProgressoDisciplinaDto as ProgressoEstudoDto } from '../../../estudo/data/estudo.models';
 
 import {
-  DashboardApiService, DashboardResumoDto, ProgressoDisciplinaDto,
+  DashboardApiService,
+  DashboardResumoDto,
+  DashboardSemanaSoDiarioDto,
+  ProgressoDisciplinaDto,
   SessaoCardDto,
   WeekDayDto,
 } from '../../data/dashboard-api.service';
@@ -76,6 +79,8 @@ export class DashboardPage implements OnInit {
   private actionIsRetomar = signal(false);
 
   semana: WeekDayDto[] = [];
+  /** Gráfico paralelo (teste): só `estudo_diario_ciclo`; mesmos 7 dias que `semana`. */
+  semanaSoDiario: WeekDayDto[] = [];
   /** Mesma fonte/normalização que Estudar Agora (`getProgressoCiclo` + meta das matérias). */
   progressoItems: ProgressDisciplinaItem[] = [];
 
@@ -88,6 +93,12 @@ export class DashboardPage implements OnInit {
 
   /** Segunda-feira (yyyy-MM-dd) da semana exibida no resumo e no gráfico. */
   private weekStartIso = '';
+
+  /** Segunda-feira da semana consultada no gráfico “só diário” (pode diferir do resumo). */
+  private weekStartIsoDiario = '';
+
+  /** Pedido em curso só para `getSemanaSoDiario` (navegação do 2.º gráfico). */
+  soDiarioLoading = signal(false);
 
   dashboardApi = inject(DashboardApiService);
   ciclosApi = inject(CiclosApiService);
@@ -133,7 +144,9 @@ export class DashboardPage implements OnInit {
     if (!id || id <= 0 || this.cicloId === id) return;
     this.cicloId = id;
     this.salvarCicloPreferido(id);
-    this.weekStartIso = this.getMondayIso(new Date());
+    const hojeSeg = this.getMondayIso(new Date());
+    this.weekStartIso = hojeSeg;
+    this.weekStartIsoDiario = hojeSeg;
     this.carregarResumo();
   }
 
@@ -172,6 +185,52 @@ export class DashboardPage implements OnInit {
     this.carregarResumo();
   }
 
+  get intervaloSemanaSoDiarioLabel(): string {
+    const start =
+      this.weekStartIsoDiario || this.weekStartIso || this.getMondayIso(new Date());
+    const end = this.addDaysIso(start, 6);
+    return this.formatarIntervaloSemana(start, end);
+  }
+
+  get semanaPosteriorDesabilitadaSoDiario(): boolean {
+    const cur = this.getMondayIso(new Date());
+    const start =
+      this.weekStartIsoDiario || this.weekStartIso || this.getMondayIso(new Date());
+    return start >= cur;
+  }
+
+  semanaAnteriorSoDiario(): void {
+    if (!this.cicloId || this.loading || this.soDiarioLoading()) {
+      return;
+    }
+    if (!this.weekStartIsoDiario) {
+      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+    }
+    this.weekStartIsoDiario = this.addDaysIso(this.weekStartIsoDiario, -7);
+    this.carregarSoDiarioSolo();
+  }
+
+  proximaSemanaSoDiario(): void {
+    if (
+      !this.cicloId ||
+      this.loading ||
+      this.soDiarioLoading() ||
+      this.semanaPosteriorDesabilitadaSoDiario
+    ) {
+      return;
+    }
+    if (!this.weekStartIsoDiario) {
+      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+    }
+    const cur = this.getMondayIso(new Date());
+    const next = this.addDaysIso(this.weekStartIsoDiario, 7);
+    if (next > cur) {
+      return;
+    }
+    this.weekStartIsoDiario = next;
+    this.carregarSoDiarioSolo();
+  }
+
   private async carregarCiclos(): Promise<void> {
     this.ciclosLoading.set(true);
 
@@ -193,6 +252,9 @@ export class DashboardPage implements OnInit {
 
       if (!this.weekStartIso) {
         this.weekStartIso = this.getMondayIso(new Date());
+      }
+      if (!this.weekStartIsoDiario) {
+        this.weekStartIsoDiario = this.weekStartIso;
       }
 
       // Como é uma sequência lógica, o resumo só carrega após o sucesso dos ciclos
@@ -217,16 +279,29 @@ export class DashboardPage implements OnInit {
     if (!this.weekStartIso) {
       this.weekStartIso = this.getMondayIso(new Date());
     }
+    if (!this.weekStartIsoDiario) {
+      this.weekStartIsoDiario = this.weekStartIso;
+    }
 
     this.loading = true;
 
     forkJoin({
       resumo: this.dashboardApi.getResumo(cicloId, this.weekStartIso),
+      soDiario: this.dashboardApi.getSemanaSoDiario(cicloId, this.weekStartIsoDiario).pipe(
+        catchError(() =>
+          of<DashboardSemanaSoDiarioDto>({
+            cicloId,
+            segundaFeiraSemana: this.weekStartIsoDiario,
+            estudadoSemanaSeg: 0,
+            semana: [],
+          }),
+        ),
+      ),
       estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId).pipe(
         catchError(() => of(null)),
       ),
     }).subscribe({
-      next: ({ resumo: r, estadoMaterias }) => {
+      next: ({ resumo: r, soDiario, estadoMaterias }) => {
         this.resumo = r;
         this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
         this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
@@ -247,6 +322,7 @@ export class DashboardPage implements OnInit {
 
         // ===== CHART / PROGRESSO =====
         this.semana = r.semana ?? [];
+        this.semanaSoDiario = soDiario.semana ?? [];
         this.carregarProgressoPorDisciplina(r.progresso ?? [], materiasList);
 
         this.loading = false;
@@ -257,6 +333,38 @@ export class DashboardPage implements OnInit {
         this.cdr.detectChanges();
       },
     });
+  }
+
+  /** Atualiza só o gráfico “só diário” (navegação independente da semana do resumo). */
+  private carregarSoDiarioSolo(): void {
+    if (!this.cicloId) {
+      return;
+    }
+    const cicloId = this.cicloId;
+    if (!this.weekStartIsoDiario) {
+      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+    }
+    this.soDiarioLoading.set(true);
+    this.dashboardApi
+      .getSemanaSoDiario(cicloId, this.weekStartIsoDiario)
+      .pipe(
+        catchError(() =>
+          of<DashboardSemanaSoDiarioDto>({
+            cicloId,
+            segundaFeiraSemana: this.weekStartIsoDiario,
+            estudadoSemanaSeg: 0,
+            semana: [],
+          }),
+        ),
+        finalize(() => {
+          this.soDiarioLoading.set(false);
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe((soDiario) => {
+        this.semanaSoDiario = soDiario.semana ?? [];
+        this.cdr.detectChanges();
+      });
   }
 
   /**
@@ -311,6 +419,7 @@ export class DashboardPage implements OnInit {
       this.progressoItems = lista.map((p) => ({
         name: p.disciplinaNome,
         percent: normalizarPercentualProgresso(p, getMeta),
+        disciplinaId: Number.isFinite(Number(p.disciplinaId)) ? Number(p.disciplinaId) : undefined,
       }));
       this.cdr.detectChanges();
     });
@@ -395,6 +504,13 @@ export class DashboardPage implements OnInit {
     this.actionText = '';
     this.actionCicloItemId = null;
     this.actionDisabled.set(true);
+  }
+
+  onDisciplinaHistorico(item: ProgressDisciplinaItem): void {
+    if (this.cicloId == null || item.disciplinaId == null) {
+      return;
+    }
+    void this.router.navigate(['/ciclos', this.cicloId, 'disciplina', item.disciplinaId, 'historico']);
   }
 
   onActionClick(): void {

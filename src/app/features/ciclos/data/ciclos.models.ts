@@ -58,6 +58,8 @@ export type CicloDto = {
   ativo: boolean;
   cargoId: number;
   cargoNome: string;
+  /** Presente quando a API devolve o ciclo completo (lista/detalhe). */
+  concursoId?: number;
   /** Execuções já encerradas (voltas completas anteriores). */
   voltasCompletas?: number;
   /** 0–100: blocos da rodada com sessão / total de blocos; ausente sem execução aplicável. */

@@ -12,6 +12,40 @@
     </span>
   </div>
 
+  <div class="campos-meta-sessao">
+    @if (topicosOpcoes().length > 0) {
+    <div class="campo-topico">
+      <span class="campo-rotulo">Tópico do edital</span>
+      <select
+        class="select-meta"
+        [ngModel]="topicoSelectModel()"
+        (ngModelChange)="onTopicoNgModel($event)"
+        [disabled]="topicoSelectDisabled() || metaSaving()"
+      >
+        <option value="">— Opcional —</option>
+        @for (o of topicosOpcoes(); track o.id) {
+          <option [value]="'' + o.id">{{ o.titulo }}</option>
+        }
+      </select>
+    </div>
+    }
+
+    <div class="campo-categoria">
+      <span class="campo-rotulo">Categoria</span>
+      <select
+        class="select-meta"
+        [ngModel]="categoriaSelectModel()"
+        (ngModelChange)="onCategoriaNgModel($event)"
+        [disabled]="categoriaSelectDisabled() || metaSaving()"
+      >
+        <option value="">Selecione…</option>
+        @for (c of categoriasEstudo; track c.codigo) {
+          <option [value]="c.codigo">{{ c.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
   @if (pomodoroEnabled()) {
   <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()"
     [desativado]="pomodoroTemporariamenteDesativado()"

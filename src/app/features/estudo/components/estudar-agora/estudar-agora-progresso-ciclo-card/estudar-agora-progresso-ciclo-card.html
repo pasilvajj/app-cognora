@@ -5,7 +5,16 @@
 
   <div class="card-body">
     <div class="progress-list">
-      <div class="progress-row" *ngFor="let p of progress(); trackBy: trackByDisciplina">
+      <div
+        class="progress-row"
+        *ngFor="let p of progress(); trackBy: trackByDisciplina"
+        [class.progress-row--clickable]="rowClickable(p)"
+        (click)="onRowClick(p)"
+        (keydown.enter)="onRowClick(p)"
+        (keydown.space)="$event.preventDefault(); onRowClick(p)"
+        [tabindex]="rowClickable(p) ? 0 : -1"
+        [attr.role]="rowClickable(p) ? 'button' : null"
+      >
         <div class="left">
           <span class="drag">≡</span>
           <span class="disc">{{ p.disciplina }}</span>

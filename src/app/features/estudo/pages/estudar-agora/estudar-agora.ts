@@ -43,7 +43,7 @@ import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../d
 })
 export class EstudarAgora implements OnInit {
 
-  cicloId = 1;
+  cicloId!: number;
   loading = signal(true);
   isProcessando = signal(false);
   // recomendado pelo backend (ordem do ciclo)
@@ -94,7 +94,13 @@ export class EstudarAgora implements OnInit {
     }
 
     const idRaw = this.route.snapshot.paramMap.get('cicloId');
-    this.cicloId = Number(idRaw);
+    const parsed = Number(idRaw);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      this.toastr.error('Ciclo inválido ou não informado na rota.');
+      void this.router.navigate(['/ciclos']);
+      return;
+    }
+    this.cicloId = parsed;
     persistirCicloContextoEstudo(this.cicloId);
 
     this.carregarEstudarAgora();
@@ -112,16 +118,15 @@ export class EstudarAgora implements OnInit {
       estadoMaterias: this.ciclosApi.getMateriasCiclo(this.cicloId).pipe(
         catchError(() => of(undefined as CicloMateriasComEstadoDto | undefined)),
       ),
-      progresso: this.estudoApi.getProgressoCiclo(this.cicloId).pipe(
-        catchError(() => of([] as ProgressoDisciplinaDto[])),
-      ),
-      sessoes: this.estudoApi.getSessoesRecentes(this.cicloId, 10).pipe(
-        catchError(() => of([] as SessaoCardDto[])),
+      progressoRecentes: this.estudoApi.getProgressoERecentesRodada(this.cicloId, 10).pipe(
+        catchError(() =>
+          of({ progresso: [] as ProgressoDisciplinaDto[], recentes: [] as SessaoCardDto[] }),
+        ),
       ),
     })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
-        next: ({ proxima, estadoMaterias, progresso, sessoes }) => {
+        next: ({ proxima, estadoMaterias, progressoRecentes }) => {
           if (!estadoMaterias) {
             this.toastr.error('Não foi possível carregar as matérias do ciclo.');
             return;
@@ -167,10 +172,10 @@ export class EstudarAgora implements OnInit {
             this.alinharProximaSessaoAoCiclo();
           }
 
-          this.progressoBruto = progresso ?? [];
+          this.progressoBruto = progressoRecentes?.progresso ?? [];
           this.recalcularProgresso();
 
-          const lista = sessoes ?? [];
+          const lista = progressoRecentes?.recentes ?? [];
           const inicializadas = lista
             .filter((s) => this.sessaoCronometroJaIniciou(s))
             .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome));
@@ -257,9 +262,20 @@ export class EstudarAgora implements OnInit {
   private recalcularProgresso(): void {
     this.progress = this.progressoBruto.map((p) => ({
       disciplina: p.disciplinaNome,
+      disciplinaId:
+        p.disciplinaId != null && Number.isFinite(Number(p.disciplinaId))
+          ? Number(p.disciplinaId)
+          : undefined,
       percent: normalizarPercentualProgressoUtil(p, (nome) => this.obterMetaDaDisciplina(nome)),
     }));
     this.cdr.detectChanges();
+  }
+
+  irHistoricoDisciplina(disciplinaId: number): void {
+    if (!Number.isFinite(this.cicloId) || this.cicloId <= 0 || !Number.isFinite(disciplinaId)) {
+      return;
+    }
+    void this.router.navigate(['/ciclos', this.cicloId, 'disciplina', disciplinaId, 'historico']);
   }
 
   private obterMetaDaDisciplina(disciplinaNome: string): number {

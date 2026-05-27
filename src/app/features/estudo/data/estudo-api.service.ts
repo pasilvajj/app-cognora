@@ -1,17 +1,23 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable } from 'rxjs';
+import { firstValueFrom, Observable, throwError } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
 import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../../shared/erro/http-suprimir-toast.context';
 import {
   AtualizarObservacoesRequest,
+  DisciplinaHistoricoResumoDto,
+  DisciplinaHistoricoSessaoDto,
   FinalizarSessaoRequest,
   IniciarSessaoRequest,
   ProgressoDisciplinaDto,
+  ProgressoRecentesRodadaDto,
   ProximaSessaoDto,
+  SegmentoEstudoRegistroDto,
   SessaoCardDto,
-  SessaoDetalheDto
+  SessaoDetalheDto,
+  SessaoTopicoOpcaoDto,
+  SpringDataPageDto,
 } from './estudo.models';
 
 @Injectable({ providedIn: 'root' })
@@ -85,6 +91,43 @@ export class EstudoApiService {
     );
   }
 
+  getTopicosSessao1(id: number): Promise<SessaoTopicoOpcaoDto[]> {
+    const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+    return firstValueFrom(
+      this.http.get<SessaoTopicoOpcaoDto[]>(`${this.base}/estudo/sessoes/${id}/topicos`, { context }),
+    );
+  }
+
+  getSegmentoEstudo1(eventoId: number): Promise<SegmentoEstudoRegistroDto> {
+    const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+    return firstValueFrom(
+      this.http.get<SegmentoEstudoRegistroDto>(`${this.base}/estudo/segmentos/${eventoId}`, { context }),
+    );
+  }
+
+  atualizarSegmentoEstudo1(
+    eventoId: number,
+    body: {
+      topicoId: number;
+      categoriaEstudo: string | null;
+      duracaoSegundos: number;
+      observacoes: string;
+    },
+  ): Promise<void> {
+    const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+    return firstValueFrom(
+      this.http.patch<void>(`${this.base}/estudo/segmentos/${eventoId}`, body, { context }),
+    );
+  }
+
+  definirTopicoSessao(id: number, topicoId: number | null): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/topico`, { topicoId });
+  }
+
+  definirCategoriaSessao(id: number, categoriaEstudo: string | null): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/categoria`, { categoriaEstudo });
+  }
+
   pausarSessao(
     id: number,
     estudadoTotalSeg: number,
@@ -125,10 +168,54 @@ export class EstudoApiService {
       `${this.base}/estudo/ciclos/${cicloId}/progresso`,
     );
   }
+
+  /**
+   * Mesmo critério que {@link getProgressoCiclo} + {@link getSessoesRecentes}, num único pedido
+   * (evita duplicar cabeça da execução no servidor).
+   * Usa {@code GET .../ciclos-rodada?cicloId=&limit=} para o {@code cicloId} ir sempre na query
+   * (menos erros de path do que interpolar segmentos no URL).
+   */
+  getProgressoERecentesRodada(cicloId: number, limit = 10): Observable<ProgressoRecentesRodadaDto> {
+    const id = Number(cicloId);
+    if (!Number.isFinite(id) || id <= 0) {
+      return throwError(() => new Error('cicloId inválido para progresso e recentes da rodada'));
+    }
+    const params = new HttpParams().set('cicloId', String(id)).set('limit', String(limit));
+    return this.http.get<ProgressoRecentesRodadaDto>(
+      `${this.base}/estudo/ciclos-rodada`,
+      { params },
+    );
+  }
+
   getSessoesRecentes(cicloId: number, limit = 10): Observable<SessaoCardDto[]> {
     return this.http.get<SessaoCardDto[]>(
       `${this.base}/estudo/sessoes/recentes`,
       { params: { cicloId: String(cicloId), limit: String(limit) } },
+    );
+  }
+
+  /** Tempo total e n.º de sessões da disciplina em todos os ciclos do mesmo cargo que o `cicloId`. */
+  getDisciplinaHistoricoResumo(disciplinaId: number, cicloId: number): Observable<DisciplinaHistoricoResumoDto> {
+    const params = new HttpParams().set('cicloId', String(cicloId));
+    return this.http.get<DisciplinaHistoricoResumoDto>(
+      `${this.base}/me/estudo/disciplinas/${disciplinaId}/resumo`,
+      { params },
+    );
+  }
+
+  getDisciplinaHistoricoSessoes(
+    disciplinaId: number,
+    cicloId: number,
+    page = 0,
+    size = 25,
+  ): Observable<SpringDataPageDto<DisciplinaHistoricoSessaoDto>> {
+    const params = new HttpParams()
+      .set('cicloId', String(cicloId))
+      .set('page', String(page))
+      .set('size', String(size));
+    return this.http.get<SpringDataPageDto<DisciplinaHistoricoSessaoDto>>(
+      `${this.base}/me/estudo/disciplinas/${disciplinaId}/sessoes`,
+      { params },
     );
   }
 

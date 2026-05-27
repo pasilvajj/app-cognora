@@ -6,7 +6,16 @@
 
   <div class="discipline-list" *ngIf="items().length > 0">
 
-    <div class="discipline-item" *ngFor="let d of items(); trackBy: trackByName">
+    <div
+      class="discipline-item"
+      *ngFor="let d of items(); trackBy: trackByName"
+      [class.discipline-item--clickable]="isClickable(d)"
+      (click)="onItemClick(d)"
+      (keydown.enter)="onItemClick(d)"
+      (keydown.space)="$event.preventDefault(); onItemClick(d)"
+      [tabindex]="isClickable(d) ? 0 : -1"
+      [attr.role]="isClickable(d) ? 'button' : null"
+    >
 
       <div class="discipline-info">
         <span class="name">{{ d.name }}</span>

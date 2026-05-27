@@ -32,6 +32,23 @@
   gap: 8px;
 }
 
+.discipline-item--clickable {
+  cursor: pointer;
+  border-radius: 12px;
+  padding: 6px 8px;
+  margin: -6px -8px;
+  outline: none;
+  transition: background 0.18s ease;
+}
+
+.discipline-item--clickable:hover {
+  background: color-mix(in srgb, var(--primary, #3b82f6) 10%, transparent);
+}
+
+.discipline-item--clickable:focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary, #3b82f6) 45%, transparent);
+}
+
 .discipline-info {
   display: flex;
   justify-content: space-between;

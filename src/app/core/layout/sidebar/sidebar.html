@@ -30,8 +30,13 @@
       <span class="nav-label">Meu planejamento</span>
     </a>
 
+    <a routerLink="/edital-vertical" routerLinkActive="active" title="Edital verticalizado" (click)="onNavigate()">
+      <img src="assets/icons/clipboard.svg" class="icon-img" alt="">
+      <span class="nav-label">Edital vertical</span>
+    </a>
+
     <a routerLink="/configuracoes" routerLinkActive="active" class="bottom" title="Configurações" (click)="onNavigate()">
-      <i class="icon" aria-hidden="true">⚙</i>
+      <img src="assets/icons/gear.svg" class="icon-img" alt="">
       <span class="nav-label">Configurações</span>
     </a>
   </nav>

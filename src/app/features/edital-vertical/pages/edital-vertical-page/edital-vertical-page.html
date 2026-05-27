@@ -1,0 +1,183 @@
+<div class="ev-page">
+  <header class="ev-header">
+    <div class="ev-header-row">
+      <div>
+        <h1>Edital verticalizado</h1>
+        <p class="ev-lead">
+          Escolhe o teu ciclo (como no dashboard). Só são listadas as disciplinas e tópicos do cargo desse ciclo.
+          Subtópicos ficam ocultos até expandires o tópico-pai (seta na primeira coluna). O progresso dos checks e a
+          data do último estudo ficam guardados na tua conta, por ciclo.
+        </p>
+      </div>
+      <div class="ev-header-actions">
+        <button type="button" class="ev-btn-primary" (click)="adicionarEstudo()">Adicionar estudo</button>
+        <app-ciclo-selector
+          [ciclos]="ciclosOpcoes()"
+          [selectedId]="cicloSelecionadoId()"
+          (selectedIdChange)="onCicloChange($event)"
+          [loading]="loadingCiclos()"
+          [disabled]="loadingCiclos() || loadingArvore()"
+          label="Ciclo"
+        />
+      </div>
+    </div>
+  </header>
+
+  @if (loadingCiclos()) {
+    <p class="ev-muted" aria-live="polite">A carregar ciclos…</p>
+  } @else if (ciclosOpcoes().length === 0) {
+    <p class="ev-muted">Nenhum ciclo encontrado. Cria um ciclo para ver o edital.</p>
+  } @else if (cicloSelecionadoId() == null) {
+    <p class="ev-muted">Selecciona um ciclo.</p>
+  } @else if (loadingArvore()) {
+    <p class="ev-muted" aria-live="polite">A carregar edital…</p>
+  } @else if (arvore(); as a) {
+    @if (cargoDoCiclo(a); as cargo) {
+      @let pg = progressoGlobal();
+      @let cid = cicloSelecionadoId();
+      <section class="ev-progress-global" aria-label="Progresso no edital">
+        <div class="ev-progress-global-head">
+          <span class="ev-progress-label">Progresso no edital</span>
+          <span class="ev-progress-count">{{ pg.done }} de {{ pg.total }} tópicos concluídos</span>
+          <span class="ev-progress-pct">{{ pg.pct }}%</span>
+        </div>
+        <div
+          class="ev-progress-track"
+          role="progressbar"
+          [attr.aria-valuenow]="pg.pct"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+          <div class="ev-progress-fill" [style.width.%]="pg.pct"></div>
+        </div>
+      </section>
+
+      <div class="ev-body">
+        <section class="ev-cargo">
+          <h2 class="ev-cargo-title">{{ cargo.nome }}</h2>
+          @for (d of cargo.disciplinas; track d.id) {
+            @let linhas = linhasTopicos(d.topicos);
+            @let vis = linhasTopicosVisiveis(d.topicos);
+            @let pd = progressoDisciplina(linhas);
+            <article class="ev-disciplina-card">
+              <button
+                type="button"
+                class="ev-acc-trigger"
+                [attr.aria-expanded]="isDisciplinaAberta(d.id)"
+                [attr.aria-controls]="'disc-panel-' + d.id"
+                [id]="'disc-head-' + d.id"
+                (click)="alternarDisciplina(d.id)"
+              >
+                <span class="ev-acc-accent" aria-hidden="true"></span>
+                <span class="ev-acc-title">{{ d.nome }}</span>
+                <span class="ev-acc-meta">{{ pd.done }}/{{ pd.total }}</span>
+                <svg class="ev-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
+                </svg>
+              </button>
+
+              @if (isDisciplinaAberta(d.id)) {
+                <div
+                  class="ev-acc-panel"
+                  role="region"
+                  [attr.id]="'disc-panel-' + d.id"
+                  [attr.aria-labelledby]="'disc-head-' + d.id"
+                >
+                  @if (linhas.length === 0) {
+                    <p class="ev-muted ev-no-topicos">Sem tópicos cadastrados.</p>
+                  } @else {
+                    <div class="ev-table-wrap">
+                      <table class="ev-table">
+                        <thead>
+                          <tr>
+                            <th class="ev-th-expand" scope="col"><span class="ev-sr-only">Subitens</span></th>
+                            <th class="ev-th-check" scope="col"><span class="ev-sr-only">Concluído</span></th>
+                            <th scope="col">Tópico</th>
+                            <th class="ev-th-num" scope="col" title="Acertos">✓</th>
+                            <th class="ev-th-num" scope="col" title="Erros">✗</th>
+                            <th class="ev-th-num" scope="col" title="Total">∑</th>
+                            <th class="ev-th-num" scope="col">%</th>
+                            <th class="ev-th-date" scope="col">Último estudo</th>
+                            <th class="ev-th-action" scope="col"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (linha of vis; track linha.id) {
+                            <tr class="ev-tr" [class.ev-tr--done]="isTopicoMarcado(linha.id)">
+                              <td class="ev-td-expand">
+                                @if (linha.hasChildren) {
+                                  <button
+                                    type="button"
+                                    class="ev-topic-expand"
+                                    [attr.aria-expanded]="isTopicoExpandido(linha.id)"
+                                    [attr.aria-label]="
+                                      (isTopicoExpandido(linha.id) ? 'Ocultar subtópicos: ' : 'Mostrar subtópicos: ') +
+                                      linha.titulo
+                                    "
+                                    (click)="alternarExpansaoTopico(linha.id, $event)"
+                                  >
+                                    <svg class="ev-topic-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                                      <path
+                                        fill="currentColor"
+                                        d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
+                                      />
+                                    </svg>
+                                  </button>
+                                }
+                              </td>
+                              <td class="ev-td-check">
+                                <input
+                                  type="checkbox"
+                                  class="ev-check"
+                                  [checked]="isTopicoMarcado(linha.id)"
+                                  (change)="cid != null && alternarTopico(cid, d.topicos, linha.id)"
+                                  [attr.aria-label]="'Marcar concluído: ' + linha.titulo"
+                                />
+                              </td>
+                              <td class="ev-td-topic" [style.paddingLeft.rem]="0.35 + linha.profundidade * 0.85">
+                                {{ linha.titulo }}
+                              </td>
+                              <td class="ev-td-num ev-td-muted">—</td>
+                              <td class="ev-td-num ev-td-muted">—</td>
+                              <td class="ev-td-num ev-td-muted">—</td>
+                              <td class="ev-td-num ev-td-muted">—</td>
+                              <td class="ev-td-date ev-td-muted">{{ ultimoEstudoTexto(linha.id) }}</td>
+                              <td class="ev-td-action">
+                                <button type="button" class="ev-link" (click)="adicionarEstudo()">Adicionar</button>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                        <tfoot>
+                          <tr class="ev-tfoot-row">
+                            <td class="ev-td-expand"></td>
+                            <td class="ev-td-check"></td>
+                            <td class="ev-td-topic ev-tfoot-label">Total</td>
+                            <td class="ev-td-num"><span class="ev-pill ev-pill--muted">—</span></td>
+                            <td class="ev-td-num"><span class="ev-pill ev-pill--muted">—</span></td>
+                            <td class="ev-td-num"><span class="ev-pill ev-pill--muted">—</span></td>
+                            <td class="ev-td-num"><span class="ev-pill ev-pill--accent">{{ pd.pct }}%</span></td>
+                            <td class="ev-td-date"></td>
+                            <td class="ev-td-action ev-tfoot-progress">
+                              <span class="ev-mini-label">Progresso</span>
+                              <div class="ev-mini-track">
+                                <div class="ev-mini-fill" [style.width.%]="pd.pct"></div>
+                              </div>
+                              <span class="ev-mini-pct">{{ pd.pct }}%</span>
+                            </td>
+                          </tr>
+                        </tfoot>
+                      </table>
+                    </div>
+                  }
+                </div>
+              }
+            </article>
+          }
+        </section>
+      </div>
+    } @else {
+      <p class="ev-muted">O cargo deste ciclo não está no edital devolvido para o concurso. Verifica dados no backend.</p>
+    }
+  }
+</div>

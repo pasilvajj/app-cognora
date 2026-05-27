@@ -62,6 +62,14 @@ export type DashboardResumoDto = {
   recentes: SessaoCardDto[];
 };
 
+/** Resposta de `GET /dashboard/semana-so-diario` (gráfico de teste só com `estudo_diario_ciclo`). */
+export type DashboardSemanaSoDiarioDto = {
+  cicloId: number;
+  segundaFeiraSemana: string;
+  estudadoSemanaSeg: number;
+  semana: WeekDayDto[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
   private readonly baseUrl = environment.apiBaseUrl;
@@ -76,6 +84,19 @@ export class DashboardApiService {
     if (weekStartIso) {
       params = params.set('weekStart', weekStartIso);
     }
+    
     return this.http.get<DashboardResumoDto>(`${this.baseUrl}/dashboard/resumo`, { params });
+  }
+
+  /**
+   * Semana civil: 7 pontos só a partir de `estudo_diario_ciclo` (sem trechos / legado).
+   * @param weekStartIso segunda-feira (yyyy-MM-dd), igual ao parâmetro de `getResumo`
+   */
+  getSemanaSoDiario(cicloId: number, weekStartIso?: string | null): Observable<DashboardSemanaSoDiarioDto> {
+    let params = new HttpParams().set('cicloId', String(cicloId));
+    if (weekStartIso) {
+      params = params.set('weekStart', weekStartIso);
+    }
+    return this.http.get<DashboardSemanaSoDiarioDto>(`${this.baseUrl}/dashboard/semana-so-diario`, { params });
   }
 }

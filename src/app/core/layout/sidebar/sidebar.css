@@ -178,14 +178,25 @@ a.sidebar-header.sidebar-brand:focus-visible {
 }
 
 /* =========================
-   ÍCONES
+   ÍCONES (SVG via <img>: currentColor não aplica — uniformizar em branco)
 ========================= */
-.menu .icon {
+.menu .icon-img {
   width: 20px;
-  text-align: center;
-  opacity: 0.9;
-  font-size: 18px;
+  height: 20px;
   flex-shrink: 0;
+  object-fit: contain;
+  display: block;
+  /* Ícones fill preto no ficheiro → branco sobre fundo azul */
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+.menu a:hover .icon-img {
+  opacity: 1;
+}
+
+.menu a.active .icon-img {
+  opacity: 1;
 }
 
 /* =========================

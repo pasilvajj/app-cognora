@@ -52,23 +52,47 @@
   </section>
 
   <section class="dashboard-main">
-    <div class="dashboard-block chart">
+    <div class="dashboard-charts-column">
+      <div class="dashboard-block chart">
+        @if (cicloId) {
+        <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico">
+          <button type="button" class="dashboard-nav-btn" (click)="semanaAnterior()" [disabled]="loading"
+            title="Semana anterior" aria-label="Semana anterior">‹</button>
+          <div class="dashboard-week-range">{{ intervaloSemanaLabel }}</div>
+          <button type="button" class="dashboard-nav-btn" (click)="proximaSemana()"
+            [disabled]="loading || semanaPosteriorDesabilitada" title="Semana seguinte"
+            aria-label="Semana seguinte">›</button>
+        </div>
+        }
+        <app-week-chart [days]="semana"></app-week-chart>
+      </div>
+
       @if (cicloId) {
-      <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico">
-        <button type="button" class="dashboard-nav-btn" (click)="semanaAnterior()" [disabled]="loading"
-          title="Semana anterior" aria-label="Semana anterior">‹</button>
-        <div class="dashboard-week-range">{{ intervaloSemanaLabel }}</div>
-        <button type="button" class="dashboard-nav-btn" (click)="proximaSemana()"
-          [disabled]="loading || semanaPosteriorDesabilitada" title="Semana seguinte"
-          aria-label="Semana seguinte">›</button>
+      <div class="dashboard-block chart dashboard-chart--so-diario">
+        <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico só diário">
+          <button type="button" class="dashboard-nav-btn" (click)="semanaAnteriorSoDiario()"
+            [disabled]="loading || soDiarioLoading()" title="Semana anterior (só diário)"
+            aria-label="Semana anterior (só diário)">‹</button>
+          <div class="dashboard-week-range">{{ intervaloSemanaSoDiarioLabel }}</div>
+          <button type="button" class="dashboard-nav-btn" (click)="proximaSemanaSoDiario()"
+            [disabled]="loading || soDiarioLoading() || semanaPosteriorDesabilitadaSoDiario"
+            title="Semana seguinte (só diário)" aria-label="Semana seguinte (só diário)">›</button>
+        </div>
+        <p class="dashboard-chart-so-diario-hint">
+          Comparação (teste): apenas acúmulo em <code>estudo_diario_ciclo</code> — sem trechos nem legado.
+        </p>
+        <app-week-chart [days]="semanaSoDiario" chartTitle="Semana (só diário — teste)"></app-week-chart>
       </div>
       }
-      <app-week-chart [days]="semana"></app-week-chart>
     </div>
 
     <article class="block block-progress">
       <div class="block-body">
-        <app-progress-bar [items]="progressoItems"></app-progress-bar>
+        <app-progress-bar
+          [items]="progressoItems"
+          [cicloId]="cicloId"
+          (disciplinaClick)="onDisciplinaHistorico($event)"
+        ></app-progress-bar>
       </div>
     </article>
   </section>

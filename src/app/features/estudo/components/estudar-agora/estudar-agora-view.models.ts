@@ -1,5 +1,6 @@
 export type EstudarAgoraProgressItem = {
   disciplina: string;
+  disciplinaId?: number;
   percent: number;
 };
 

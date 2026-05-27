@@ -33,6 +33,9 @@ type CanonDay = (typeof CANONICAL_WEEK)[number];
 export class WeekChart implements AfterViewInit, OnChanges, OnDestroy {
   @Input() days: WeekDayView[] = [];
 
+  /** Título do cartão (ex.: gráfico de teste “só diário”). */
+  @Input() chartTitle = 'Estudos da semana';
+
   @ViewChild('weekCanvas') canvasRef?: ElementRef<HTMLCanvasElement>;
 
   private chart?: Chart;

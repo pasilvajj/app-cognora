@@ -10,8 +10,9 @@ import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
 import { SessaoEstudoPageHeader } from '../../components/sessao-estudo/sessao-estudo-page-header/sessao-estudo-page-header';
 import { SessaoEstudoSessionCard } from '../../components/sessao-estudo/sessao-estudo-session-card/sessao-estudo-session-card';
+import { RegistroEstudoModalComponent } from '../../components/registro-estudo-modal/registro-estudo-modal';
 import { EstudoApiService } from '../../data/estudo-api.service';
-import { SessaoDetalheDto } from '../../data/estudo.models';
+import { SessaoDetalheDto, SessaoTopicoOpcaoDto } from '../../data/estudo.models';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
 import { PomodoroMode } from '../../data/pomodoro.types';
 import { getPomodoroRestanteStrategy } from '../../strategies/pomodoro-restante/pomodoro-restante-strategy.factory';
@@ -28,7 +29,7 @@ import {
   selector: 'app-sessao-estudo-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, PomodoroOverlay],
+  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, PomodoroOverlay, RegistroEstudoModalComponent],
   templateUrl: './sessao-estudo-page.html',
   styleUrl: './sessao-estudo-page.css',
 })
@@ -61,10 +62,16 @@ export class SessaoEstudoPage implements OnDestroy {
    * usem sempre os dados mais atuais, mesmo sem recarregar o resource.
    */
   private readonly _sessao = signal<SessaoDetalheDto | null>(null);
+  private readonly _topicosOpcoes = signal<SessaoTopicoOpcaoDto[]>([]);
+  readonly topicosOpcoes = computed(() => this._topicosOpcoes());
+  readonly topicoSaving = signal(false);
+  readonly categoriaSaving = signal(false);
+  readonly metaSelectsSaving = computed(() => this.topicoSaving() || this.categoriaSaving());
+  readonly registroModalAberto = signal(false);
 
   private readonly params = toSignal(this.route.paramMap);
 
-  private readonly sessaoId = computed(() => {
+  readonly sessaoId = computed(() => {
     const id = this.params()?.get('id') ?? this.route.parent?.snapshot.paramMap.get('id');
     return Number(id);
   });
@@ -77,12 +84,19 @@ export class SessaoEstudoPage implements OnDestroy {
       try {
         const dados = await this.api.getSessao1(id);
         untracked(() => this.initSessao(dados, false));
+        try {
+          const topicos = await this.api.getTopicosSessao1(id);
+          untracked(() => this._topicosOpcoes.set(topicos ?? []));
+        } catch {
+          untracked(() => this._topicosOpcoes.set([]));
+        }
         return dados;
       } catch (err: unknown) {
         const status = err instanceof HttpErrorResponse ? err.status : 0;
         if (status === 404 || status === 403) {
           untracked(() => {
             this._sessao.set(null);
+            this._topicosOpcoes.set([]);
             const cicloId = this.cicloIdParaRedirectAposErroSessao();
             if (cicloId != null) {
               this.toastr.warning(
@@ -647,6 +661,62 @@ export class SessaoEstudoPage implements OnDestroy {
     this.api.atualizarObservacoes(s.id, text ?? '').subscribe((novo) => {
       this.observacoes.set(novo.observacoes ?? '');
     });
+  }
+
+  onTopicoSelecionado(topicoId: number | null): void {
+    const s = this.sessao();
+    if (!s || s.fim) return;
+
+    this.topicoSaving.set(true);
+    this.api
+      .definirTopicoSessao(s.id, topicoId)
+      .pipe(finalize(() => this.topicoSaving.set(false)))
+      .subscribe({
+        next: (dto) => this.initSessao(dto, true),
+        error: () => this.toastr.error('Não foi possível atualizar o tópico.'),
+      });
+  }
+
+  onCategoriaSelecionada(categoria: string | null): void {
+    const s = this.sessao();
+    if (!s || s.fim) return;
+
+    this.categoriaSaving.set(true);
+    this.api
+      .definirCategoriaSessao(s.id, categoria)
+      .pipe(finalize(() => this.categoriaSaving.set(false)))
+      .subscribe({
+        next: (dto) => this.initSessao(dto, true),
+        error: () => this.toastr.error('Não foi possível atualizar a categoria.'),
+      });
+  }
+
+  abrirRegistroEstudoTeste(): void {
+    const id = this.sessaoId();
+    if (!id || !Number.isFinite(id) || id <= 0) {
+      this.toastr.warning('Sessão inválida.');
+      return;
+    }
+    this.registroModalAberto.set(true);
+  }
+
+  onRegistroModalOpenChange(aberto: boolean): void {
+    this.registroModalAberto.set(aberto);
+  }
+
+  async onRegistroEstudoGravado(): Promise<void> {
+    const id = this.sessaoId();
+    if (!id || !Number.isFinite(id) || id <= 0) {
+      return;
+    }
+    try {
+      const dados = await this.api.getSessao1(id);
+      this.initSessao(dados, true);
+      const topicos = await this.api.getTopicosSessao1(id);
+      this._topicosOpcoes.set(topicos ?? []);
+    } catch {
+      this.toastr.error('Não foi possível actualizar a sessão.');
+    }
   }
 
   voltar(): void {

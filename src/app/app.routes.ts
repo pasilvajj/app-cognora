@@ -69,6 +69,14 @@ export const routes: Routes = [
       },
 
       {
+        path: 'ciclos/:cicloId/disciplina/:disciplinaId/historico',
+        loadComponent: () =>
+          import(
+            './features/disciplina-historico/pages/disciplina-historico-page/disciplina-historico-page'
+          ).then((m) => m.DisciplinaHistoricoPage),
+      },
+
+      {
         path: 'estudo/sessao/:id',
         loadComponent: () =>
           import('./features/estudo/pages/sessao-estudo-page/sessao-estudo-page')
@@ -117,6 +125,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/planejamento/planejamento-page/planejamento-page')
             .then(m => m.PlanejamentoPage),
+      },
+
+      {
+        path: 'edital-vertical',
+        loadComponent: () =>
+          import('./features/edital-vertical/pages/edital-vertical-page/edital-vertical-page')
+            .then(m => m.EditalVerticalPage),
       },
 
       {
