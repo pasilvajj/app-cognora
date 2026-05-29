@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, MIN_HORAS_POR_MATERIA, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { BR_UFS } from '../../constants/br-ufs';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -212,7 +212,7 @@ export class CicloCreatePage implements OnInit {
 
     this.api.listDisciplinasByConcurso(cargoId).subscribe({
       next: (data) => {
-        this.disciplinas = (data ?? []).filter(d => !isDisciplinaEstudoLivre(d.nome));
+        this.disciplinas = this.mapDisciplinasFromApi(data ?? []);
         this.aplicarHorasPorMateria();
         this.cdr.detectChanges();
       },
@@ -270,7 +270,7 @@ export class CicloCreatePage implements OnInit {
       ativo: this.ativo,
       concursoId: this.concursoId,
       cargoId: this.cargoId,
-      tempoBlocoMin: 120, // se você usa isso no backend, ajuste aqui conforme sua UI
+      tempoBlocoMin: BLOCO_SESSAO_MINUTOS,
       itens: (this.disciplinas ?? []).map((d: any) => ({
         idDisciplina: d.id,          // 👈 nome correto
         checked: !!d.checked,
@@ -317,6 +317,21 @@ export class CicloCreatePage implements OnInit {
     this.aplicarHorasPorMateria();
   }
 
+  private mapDisciplinasFromApi(data: Array<{ id: number; nome: string; peso?: number | null }>): DisciplinaCicloItem[] {
+    return data
+      .filter(d => !isDisciplinaEstudoLivre(d.nome))
+      .map(d => ({
+        id: d.id,
+        nome: d.nome,
+        tempoMinutos: BLOCO_SESSAO_MINUTOS,
+        checked: true,
+        completouEdital: false,
+        peso: d.peso ?? null,
+        nivel: 0,
+        horasLabel: '0:00h',
+      }));
+  }
+
   aplicarHorasPorMateria(): void {
     if (!this.disciplinas) return;
 
@@ -326,10 +341,10 @@ export class CicloCreatePage implements OnInit {
       cargaHorariaSemanal: cargaParaMaterias,
       materias: this.disciplinas.map(m => ({
         id: m.id,
-        checked: m.checked,
+        checked: !!m.checked,
         peso: m.peso ?? null,
       })),
-      minHorasPorMateria: 2,
+      minHorasPorMateria: MIN_HORAS_POR_MATERIA,
     });
 
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
@@ -345,7 +360,9 @@ export class CicloCreatePage implements OnInit {
     const nAtivas = this.disciplinas.filter(m => m.checked).length;
     const cargaTotal = Number(this.cargaHorariaSemanal) || 0;
     this.minimoHorasViolado =
-      cargaTotal <= ESTUDO_LIVRE_HORAS || cargaParaMaterias <= 0 || nAtivas === 0;
+      cargaTotal <= ESTUDO_LIVRE_HORAS ||
+      cargaParaMaterias < nAtivas * MIN_HORAS_POR_MATERIA ||
+      nAtivas === 0;
   }
 
   /** Garante inteiro ≥ 1 para a API; campo vazio/ inválido volta ao default (igual ao backend). */

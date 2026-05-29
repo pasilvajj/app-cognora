@@ -11,13 +11,18 @@
   <div class="mat-row" *ngFor="let it of items; trackBy: trackById"
     [class.is-checked]="it.checked">
     <div class="c-check">
-      <input *ngIf="!readonly" type="checkbox" [checked]="it.checked" (change)="onToggleChecked(it)" />
+      <input
+        *ngIf="!readonly"
+        type="checkbox"
+        [(ngModel)]="it.checked"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onCheckedChange($event, it)"
+      />
       <span *ngIf="readonly" class="readonly-check"></span>
     </div>
 
     <div class="c-materia">
       <div class="materia-name">{{ it.nome }}</div>
-      <div class="materia-meta">Tempo padrão: {{ it.tempoMinutos }} min</div>
     </div>
 
     <div class="c-edital">

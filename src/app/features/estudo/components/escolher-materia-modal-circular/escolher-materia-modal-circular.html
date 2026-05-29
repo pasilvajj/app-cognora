@@ -125,7 +125,7 @@
           </div>
 
           <div class="li-right">
-            <span class="li-time">{{ it.tempoMinutos }} min</span>
+            <span class="li-time">{{ tempoSessaoLabel(it) }}</span>
 
             <span class="li-status" [attr.data-status]="statusKey(it)">
               <ng-container [ngSwitch]="statusKey(it)">

@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
 
 export type CicloItemView = {
   cicloItemId: number;
@@ -190,6 +191,10 @@ export class EscolherMateriaModalCircular implements OnChanges {
 
   trackById(_: number, it: CicloItemView): number {
     return it.cicloItemId;
+  }
+
+  tempoSessaoLabel(it: CicloItemView): string {
+    return TempoFormatUtil.minutosParaHorasLabel(it.tempoMinutos);
   }
 
   private recalc(): void {

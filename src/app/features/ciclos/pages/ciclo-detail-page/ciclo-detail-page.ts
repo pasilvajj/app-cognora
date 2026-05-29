@@ -8,7 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, MIN_HORAS_POR_MATERIA, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { extrairMensagemErroHttp } from '../../../../shared/utils/http-error-message.util';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
@@ -134,7 +134,7 @@ export class CicloDetailPage implements OnInit {
 
     if (this.minimoHorasViolado) {
       this.toastr.warning(
-        'A carga semanal deve ser maior que 4h (Estudo Livre) e haver pelo menos uma matéria ativa.',
+        'A carga semanal deve ser maior que 4h (Estudo Livre) e permitir pelo menos 1:30h por matéria ativa.',
       );
       return;
     }
@@ -202,10 +202,10 @@ export class CicloDetailPage implements OnInit {
       cargaHorariaSemanal: cargaParaMaterias,
       materias: this.disciplinas.map(m => ({
         id: m.id,
-        checked: m.checked,
+        checked: !!m.checked,
         peso: m.peso ?? null,
       })),
-      minHorasPorMateria: 2,
+      minHorasPorMateria: MIN_HORAS_POR_MATERIA,
     });
 
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
@@ -221,7 +221,9 @@ export class CicloDetailPage implements OnInit {
     const nAtivas = this.disciplinas.filter(m => m.checked).length;
     const cargaTotal = Number(cargaHorariaSemanal) || 0;
     this.minimoHorasViolado =
-      cargaTotal <= ESTUDO_LIVRE_HORAS || cargaParaMaterias <= 0 || nAtivas === 0;
+      cargaTotal <= ESTUDO_LIVRE_HORAS ||
+      cargaParaMaterias < nAtivas * MIN_HORAS_POR_MATERIA ||
+      nAtivas === 0;
   }
 
   private mapEditDtoToCicloItems(disciplinas: DisciplinaEditDto[]): DisciplinaCicloItem[] {
@@ -230,7 +232,7 @@ export class CicloDetailPage implements OnInit {
       .map(d => ({
       id: d.id,
       nome: d.nome,
-      tempoMinutos: 0,
+      tempoMinutos: BLOCO_SESSAO_MINUTOS,
       checked: d.checked,
       completouEdital: d.completouEdital,
       peso: d.peso,

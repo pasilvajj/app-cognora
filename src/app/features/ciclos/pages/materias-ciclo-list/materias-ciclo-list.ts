@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -50,39 +50,21 @@ export interface CicloEditResponseDto {
   templateUrl: './materias-ciclo-list.html',
   styleUrl: './materias-ciclo-list.css',
 })
-export class MateriasCicloList implements OnChanges{
+export class MateriasCicloList {
   @Input({ required: true }) items: DisciplinaCicloItem[] = [];
   @Input() readonly = false; 
   @Output() itemsChange = new EventEmitter<DisciplinaCicloItem[]>();
 
     stars = [1, 2, 3, 4, 5];
 
-    ngOnChanges(): void {
-    // normaliza defaults para não quebrar o template
-    this.items = (this.items ?? []).map((it) => ({
-      ...it,
-      checked: it.checked ?? true,
-      completouEdital: it.completouEdital ?? false,
-      peso: it.peso ?? null,
-      nivel: it.nivel ?? 0,
-      horasLabel: it.horasLabel ?? '0:00h',
-    }));
-
-    this.emit();
-  }
-
   trackById(_: number, it: DisciplinaCicloItem): number {
     return it.id;
   }
 
-  onToggleChecked(it: DisciplinaCicloItem): void {
-    it.checked = !it.checked;
-
-    if (!it.checked) {
-      // opcional: zera campos quando desmarca
+  onCheckedChange(checked: boolean, it: DisciplinaCicloItem): void {
+    if (!checked) {
       it.completouEdital = false;
     }
-
     this.emit();
   }
 

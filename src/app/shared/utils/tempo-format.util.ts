@@ -32,6 +32,14 @@ export class TempoFormatUtil {
     return `${h}h ${r}min`;
   }
 
+  /** Formato alinhado à coluna "Horas p/ matéria" (ex.: 90 → "1:30h"). */
+  static minutosParaHorasLabel(min?: number | null): string {
+    const m = Math.max(0, Math.round(Number(min ?? 0)));
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    return `${h}:${String(r).padStart(2, '0')}h`;
+  }
+
   /**
    * Duração em formato amigável:
    * - < 1h: mm:ss

@@ -91,10 +91,10 @@
     <!-- Lista -->
     <section class="card" *ngIf="!loading">
       <p class="field-hint estudo-livre-info" *ngIf="modo === 'edit'">
-        4 sessões de 1h de <strong>Estudo Livre</strong> já estão incluídas na carga semanal (4h).
+        4h de Estudo Livre incluídas. Mínimo 1:30h por matéria; restante distribuído pelo peso.
       </p>
       <small class="field-hint error" *ngIf="modo === 'edit' && minimoHorasViolado">
-        A carga semanal deve ser maior que 4h (Estudo Livre incluído) e haver pelo menos uma matéria ativa.
+        A carga semanal deve ser maior que 4h (Estudo Livre) e permitir pelo menos 1:30h por matéria ativa.
       </small>
       <app-materias-ciclo-list
         [items]="disciplinas"
