@@ -24,6 +24,7 @@ export type CicloMateriaDto = {
   concluida: boolean;
   /** true após comecar() na sessão (cronómetro); só iniciar() reserva sessão sem isto. */
   cronometroIniciado: boolean;
+  estudoLivre?: boolean;
 };
 
 /** Resposta de GET /ciclo/materias/:id */

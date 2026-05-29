@@ -12,6 +12,13 @@
     </span>
   </div>
 
+  @if (estudoLivre()) {
+  <div class="estudo-livre-callout" role="note">
+    <p class="estudo-livre-callout-titulo">Sessão livre</p>
+    <p class="estudo-livre-callout-texto">{{ estudoLivreMensagem }}</p>
+  </div>
+  }
+
   <div class="campos-meta-sessao">
     @if (topicosOpcoes().length > 0) {
     <div class="campo-topico">

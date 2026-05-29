@@ -8,6 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
+import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { extrairMensagemErroHttp } from '../../../../shared/utils/http-error-message.util';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
@@ -46,6 +47,7 @@ export class CicloDetailPage implements OnInit {
   pomodoroLongaACada = this.pomodoroDefaults.longaACada;
 
   salvando = false;
+  minimoHorasViolado = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -130,6 +132,13 @@ export class CicloDetailPage implements OnInit {
       return;
     }
 
+    if (this.minimoHorasViolado) {
+      this.toastr.warning(
+        'A carga semanal deve ser maior que 4h (Estudo Livre) e haver pelo menos uma matéria ativa.',
+      );
+      return;
+    }
+
     const payload: CicloUpdateRequest = {
       nome,
       cargaHorariaSemanal: this.cargaEdit,
@@ -187,9 +196,10 @@ export class CicloDetailPage implements OnInit {
     if (!this.ciclo) return;
 
     const cargaHorariaSemanal = this.cargaEdit ?? this.ciclo.cargaHorariaSemanal;
+    const cargaParaMaterias = Math.max(0, (Number(cargaHorariaSemanal) || 0) - ESTUDO_LIVRE_HORAS);
 
     const result = calcularHorasPorMateria({
-      cargaHorariaSemanal,
+      cargaHorariaSemanal: cargaParaMaterias,
       materias: this.disciplinas.map(m => ({
         id: m.id,
         checked: m.checked,
@@ -207,10 +217,17 @@ export class CicloDetailPage implements OnInit {
         horasLabel: calc?.horasLabel ?? '0:00h',
       };
     });
+
+    const nAtivas = this.disciplinas.filter(m => m.checked).length;
+    const cargaTotal = Number(cargaHorariaSemanal) || 0;
+    this.minimoHorasViolado =
+      cargaTotal <= ESTUDO_LIVRE_HORAS || cargaParaMaterias <= 0 || nAtivas === 0;
   }
 
   private mapEditDtoToCicloItems(disciplinas: DisciplinaEditDto[]): DisciplinaCicloItem[] {
-    return disciplinas.map(d => ({
+    return disciplinas
+      .filter(d => !isDisciplinaEstudoLivre(d.nome))
+      .map(d => ({
       id: d.id,
       nome: d.nome,
       tempoMinutos: 0,

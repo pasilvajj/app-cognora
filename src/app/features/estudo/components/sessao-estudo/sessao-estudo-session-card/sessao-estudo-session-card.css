@@ -30,6 +30,28 @@
   margin-top: 2px;
 }
 
+.estudo-livre-callout {
+  margin: 0 18px 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+}
+
+.estudo-livre-callout-titulo {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e40af;
+}
+
+.estudo-livre-callout-texto {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #334155;
+}
+
 .status-pill{
   display:inline-flex;
   align-items:center;

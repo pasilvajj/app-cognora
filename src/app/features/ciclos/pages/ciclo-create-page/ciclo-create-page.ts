@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
+import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { BR_UFS } from '../../constants/br-ufs';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -211,8 +212,7 @@ export class CicloCreatePage implements OnInit {
 
     this.api.listDisciplinasByConcurso(cargoId).subscribe({
       next: (data) => {
-        this.disciplinas = data ?? [];
-        console.log('Disciplina: ',this.disciplinas);
+        this.disciplinas = (data ?? []).filter(d => !isDisciplinaEstudoLivre(d.nome));
         this.aplicarHorasPorMateria();
         this.cdr.detectChanges();
       },
@@ -235,6 +235,11 @@ export class CicloCreatePage implements OnInit {
 
     if (!this.cargaHorariaSemanal || this.cargaHorariaSemanal <= 0) {
       console.error('Carga horária semanal é obrigatória.');
+      return;
+    }
+
+    if (this.minimoHorasViolado) {
+      console.error('Carga semanal insuficiente para Estudo Livre e matérias ativas.');
       return;
     }
 
@@ -315,8 +320,10 @@ export class CicloCreatePage implements OnInit {
   aplicarHorasPorMateria(): void {
     if (!this.disciplinas) return;
 
+    const cargaParaMaterias = Math.max(0, (Number(this.cargaHorariaSemanal) || 0) - ESTUDO_LIVRE_HORAS);
+
     const result = calcularHorasPorMateria({
-      cargaHorariaSemanal: this.cargaHorariaSemanal,
+      cargaHorariaSemanal: cargaParaMaterias,
       materias: this.disciplinas.map(m => ({
         id: m.id,
         checked: m.checked,
@@ -324,9 +331,7 @@ export class CicloCreatePage implements OnInit {
       })),
       minHorasPorMateria: 2,
     });
-    console.log('Disciplina result: ',this.disciplinas);
-    console.log(result);  
-  
+
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
 
     this.disciplinas = this.disciplinas.map(m => {
@@ -336,6 +341,11 @@ export class CicloCreatePage implements OnInit {
         horasLabel: calc?.horasLabel ?? '0:00h',
       };
     });
+
+    const nAtivas = this.disciplinas.filter(m => m.checked).length;
+    const cargaTotal = Number(this.cargaHorariaSemanal) || 0;
+    this.minimoHorasViolado =
+      cargaTotal <= ESTUDO_LIVRE_HORAS || cargaParaMaterias <= 0 || nAtivas === 0;
   }
 
   /** Garante inteiro ≥ 1 para a API; campo vazio/ inválido volta ao default (igual ao backend). */

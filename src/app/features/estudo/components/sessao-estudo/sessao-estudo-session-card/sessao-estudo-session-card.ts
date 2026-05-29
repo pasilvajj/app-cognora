@@ -6,6 +6,7 @@ import { PomodoroTimer } from '../../pomodoro-timer/pomodoro-timer';
 import { TimerDisplay } from '../../timer-display/timer-display';
 import { SessionTimerService } from '../../../services/session-timer-service';
 import { SESSAO_CATEGORIAS_ESTUDO, type SessaoTopicoOpcaoDto } from '../../../data/estudo.models';
+import { ESTUDO_LIVRE_MENSAGEM } from '../../../../ciclos/constants/estudo-livre.constants';
 
 @Component({
   selector: 'app-sessao-estudo-session-card',
@@ -19,6 +20,7 @@ export class SessaoEstudoSessionCard {
   readonly timer = inject(SessionTimerService);
 
   disciplinaNome = input.required<string>();
+  estudoLivre = input(false);
   tempoPlanejado = input.required<string>();
   statusLabel = input.required<string>();
   pomodoroEnabled = input(false);
@@ -48,6 +50,8 @@ export class SessaoEstudoSessionCard {
 
   /** Opções fixas (Teoria, Revisão, …). */
   readonly categoriasEstudo = SESSAO_CATEGORIAS_ESTUDO;
+
+  readonly estudoLivreMensagem = ESTUDO_LIVRE_MENSAGEM;
 
   /** Valor ligado ao select (string) — evita desincronização com [value] e opções assíncronas. */
   readonly topicoSelectModel = computed(() => {

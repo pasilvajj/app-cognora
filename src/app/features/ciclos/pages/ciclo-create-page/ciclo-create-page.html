@@ -35,6 +35,13 @@
             <small class="field-hint error" *ngIf="cargaHorariaSemanal <= 0">
               Informe a carga horária semanal.
             </small>
+            <small class="field-hint error" *ngIf="cargaHorariaSemanal > 0 && minimoHorasViolado">
+              A carga semanal deve ser maior que 4h (Estudo Livre incluído) e haver pelo menos uma matéria ativa.
+            </small>
+            <p class="field-hint estudo-livre-info">
+              4 sessões de 1h de <strong>Estudo Livre</strong> já estão incluídas na carga semanal (4h).
+              Utilize este horário para estudar da forma que desejar — revisão, redação, questões ou caderno.
+            </p>
           </div>
 
           <div class="field toggle">

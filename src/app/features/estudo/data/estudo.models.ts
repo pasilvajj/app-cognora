@@ -9,6 +9,7 @@ export interface ProximaSessaoDto {
   disciplinaId: number;
   disciplinaNome: string;
   tempoMinutos: number;
+  estudoLivre?: boolean;
 }
 
 export interface ProgressoDisciplinaDto {
@@ -86,6 +87,9 @@ export interface SessaoDetalheDto {
   categoriaEstudo?: string | null;
   /** Rótulo amigável (ex.: Teoria). */
   categoriaEstudoLabel?: string | null;
+
+  /** Sessão de Estudo Livre (bloco reservado no ciclo). */
+  estudoLivre?: boolean;
 }
 
 /** Opções fixas de categoria de estudo na sessão (alinhadas ao enum Java). */

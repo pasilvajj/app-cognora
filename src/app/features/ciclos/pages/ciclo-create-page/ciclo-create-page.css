@@ -291,3 +291,19 @@ input:focus, select:focus {
 :host-context([data-theme='dark']) input[type="text"],:host-context([data-theme='dark']) input[type="number"],:host-context([data-theme='dark']) select{background:var(--bg-input);border-color:color-mix(in srgb,var(--text) 14%,transparent);color:var(--text);}
 :host-context([data-theme='dark']) .slider{background:color-mix(in srgb,var(--text) 20%,transparent);border-color:color-mix(in srgb,var(--text) 22%,transparent);}
 :host-context([data-theme='dark']) .pomodoro-badge{background:color-mix(in srgb,var(--surface) 88%,#0b1220);border-color:color-mix(in srgb,var(--text) 14%,transparent);color:var(--text-muted);}
+
+.field-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.field-hint.error {
+  color: #b91c1c;
+}
+
+.estudo-livre-info {
+  margin-top: 8px;
+}
