@@ -13,7 +13,7 @@ export class PausaPomodoroRestanteStrategy implements PomodoroRestanteStrategy {
     const restanteServ = s.pomodoroRestanteSeg ?? 0;
     if (restanteServ <= 0) return 0;
     const maxSeg = this.duracaoEtapaSegundos(s);
-    return Math.min(restanteServ + 1, maxSeg);
+    return Math.min(Math.max(0, restanteServ), maxSeg);
   }
 
   remainingFromEtapaInicio(s: SessaoDetalheDto): number | null {

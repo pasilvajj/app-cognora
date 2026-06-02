@@ -13,55 +13,57 @@ export class StudyAlertSoundService {
 
   playBreakEnded(): void {
     if (this.profile === 'SUAVE') {
-      this.playSequence([
+      void this.playSequenceAsync([
         { freq: 880, durationMs: 140, delayMs: 0, type: 'sine', gain: 0.12 },
         { freq: 1046, durationMs: 170, delayMs: 180, type: 'sine', gain: 0.12 },
       ]);
       return;
     }
 
-    // CAMPAINHA: mais perceptível (duplo ding com ataque curto).
-    this.playSequence([
-      { freq: 1046, durationMs: 190, delayMs: 0,   type: 'triangle', gain: 0.18 },
+    void this.playSequenceAsync([
+      { freq: 1046, durationMs: 190, delayMs: 0, type: 'triangle', gain: 0.18 },
       { freq: 1318, durationMs: 230, delayMs: 210, type: 'triangle', gain: 0.2 },
       { freq: 1046, durationMs: 150, delayMs: 520, type: 'triangle', gain: 0.16 },
     ]);
   }
 
   playBreakStarted(): void {
+    void this.playFocusEnded();
+  }
+
+  /** Alerta sonoro ao encerrar o tempo de foco (início da pausa). */
+  playFocusEnded(): void {
     if (this.profile === 'SUAVE') {
-      this.playSequence([
+      void this.playSequenceAsync([
         { freq: 784, durationMs: 130, delayMs: 0, type: 'sine', gain: 0.14 },
         { freq: 988, durationMs: 170, delayMs: 150, type: 'sine', gain: 0.15 },
       ]);
       return;
     }
 
-    // CAMPAINHA curta para sinalizar início da pausa.
-    this.playSequence([
-      { freq: 880, durationMs: 140, delayMs: 0,   type: 'triangle', gain: 0.21 },
+    void this.playSequenceAsync([
+      { freq: 880, durationMs: 140, delayMs: 0, type: 'triangle', gain: 0.21 },
       { freq: 1174, durationMs: 180, delayMs: 160, type: 'triangle', gain: 0.23 },
     ]);
   }
 
   playBackToStudy(): void {
     if (this.profile === 'SUAVE') {
-      this.playSequence([
+      void this.playSequenceAsync([
         { freq: 740, durationMs: 110, delayMs: 0, type: 'sine', gain: 0.1 },
       ]);
       return;
     }
 
-    // CAMPAINHA curta para "voltar ao foco".
-    this.playSequence([
-      { freq: 988, durationMs: 130, delayMs: 0,   type: 'triangle', gain: 0.16 },
+    void this.playSequenceAsync([
+      { freq: 988, durationMs: 130, delayMs: 0, type: 'triangle', gain: 0.16 },
       { freq: 1174, durationMs: 140, delayMs: 140, type: 'triangle', gain: 0.16 },
     ]);
   }
 
   playSessionFinished(): void {
     if (this.profile === 'SUAVE') {
-      this.playSequence([
+      void this.playSequenceAsync([
         { freq: 988, durationMs: 140, delayMs: 0, type: 'sine', gain: 0.11 },
         { freq: 1174, durationMs: 170, delayMs: 170, type: 'sine', gain: 0.12 },
         { freq: 1318, durationMs: 220, delayMs: 380, type: 'sine', gain: 0.12 },
@@ -69,22 +71,32 @@ export class StudyAlertSoundService {
       return;
     }
 
-    // CAMPAINHA de conclusão (mais destacada).
-    this.playSequence([
+    void this.playSequenceAsync([
       { freq: 1046, durationMs: 170, delayMs: 0, type: 'triangle', gain: 0.2 },
       { freq: 1318, durationMs: 200, delayMs: 190, type: 'triangle', gain: 0.22 },
       { freq: 1568, durationMs: 260, delayMs: 420, type: 'triangle', gain: 0.24 },
     ]);
   }
 
-  private playSequence(notes: Array<{
+  /**
+   * Desbloqueia o áudio após gesto do utilizador (iniciar/retomar sessão).
+   * Sem isto, alertas automáticos (fim de foco) ficam mudos por política de autoplay.
+   */
+  primeAudioContext(): void {
+    void this.ensureContextReady().then((ctx) => {
+      if (!ctx) return;
+      this.playTone(ctx, 440, 1, ctx.currentTime, 'sine', 0.0001);
+    });
+  }
+
+  private async playSequenceAsync(notes: Array<{
     freq: number;
     durationMs: number;
     delayMs: number;
     type: OscillatorType;
     gain: number;
-  }>): void {
-    const ctx = this.ensureContext();
+  }>): Promise<void> {
+    const ctx = await this.ensureContextReady();
     if (!ctx) return;
 
     const now = ctx.currentTime;
@@ -122,7 +134,7 @@ export class StudyAlertSoundService {
     }
   }
 
-  private ensureContext(): AudioContext | null {
+  private async ensureContextReady(): Promise<AudioContext | null> {
     if (typeof window === 'undefined') return null;
 
     if (!this.audioCtx) {
@@ -132,7 +144,23 @@ export class StudyAlertSoundService {
     }
 
     if (this.audioCtx.state === 'suspended') {
-      this.audioCtx.resume().catch(() => void 0);
+      try {
+        await this.audioCtx.resume();
+      } catch {
+        return null;
+      }
+    }
+
+    return this.audioCtx;
+  }
+
+  private ensureContext(): AudioContext | null {
+    if (typeof window === 'undefined') return null;
+
+    if (!this.audioCtx) {
+      const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext | undefined;
+      if (!Ctx) return null;
+      this.audioCtx = new Ctx();
     }
 
     return this.audioCtx;

@@ -65,6 +65,16 @@
   </app-timer-display>
 
   <div class="actions">
+    <button
+      type="button"
+      class="btn-modo-foco"
+      [disabled]="timer.finalizada()"
+      (click)="modoFocoOpen.emit()"
+      title="Estudar em ecrã limpo, sem distrações"
+    >
+      Modo Foco
+    </button>
+
     <button class="btn-main" type="button" (click)="mainActionClick.emit()"
       [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
       [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">

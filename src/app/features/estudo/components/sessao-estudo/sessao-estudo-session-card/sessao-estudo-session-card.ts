@@ -41,6 +41,7 @@ export class SessaoEstudoSessionCard {
   categoriaSelectDisabled = input(false);
 
   mainActionClick = output<void>();
+  modoFocoOpen = output<void>();
   pomodoroSkipStage = output<void>();
   pomodoroToggleEnabled = output<void>();
   observacoesChange = output<string>();

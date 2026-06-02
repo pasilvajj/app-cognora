@@ -1,11 +1,13 @@
 import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { finalize } from 'rxjs/operators';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
 import { FormInputComponent } from '../../../../shared/components/form-input/form-input';
+import { mensagemErroLogin } from '../../../../shared/erro/mensagem-erro-login';
 
 @Component({
   selector: 'app-login',
@@ -23,6 +25,8 @@ import { FormInputComponent } from '../../../../shared/components/form-input/for
 export class Login {
   loading = false;
   error = '';
+  /** Código HTTP ou detalhe técnico (ex.: erro 500), para o usuário distinguir de credencial errada. */
+  errorDetalhe = '';
 
   loginForm = new FormGroup({
     email: new FormControl('', [Validators.required, Validators.email]),
@@ -38,6 +42,7 @@ export class Login {
 
   submit(): void {
     this.error = '';
+    this.errorDetalhe = '';
     this.loginForm.markAllAsTouched();
 
     if (this.loginForm.invalid) {
@@ -54,8 +59,17 @@ export class Login {
         next: () => {
           this.router.navigate(['/dashboard']);
         },
-        error: () => {
-          this.error = 'Email ou senha inválidos';
+        error: (err: unknown) => {
+          if (err instanceof HttpErrorResponse) {
+            this.error = mensagemErroLogin(err);
+            if (err.status === 0 || err.status >= 500) {
+              this.errorDetalhe = `Código HTTP: ${err.status || 'sem resposta'}`;
+            } else if (err.status && err.status !== 401 && err.status !== 400) {
+              this.errorDetalhe = `Código HTTP: ${err.status}`;
+            }
+          } else {
+            this.error = 'Erro inesperado ao tentar entrar. Tente novamente.';
+          }
           this.cdr.markForCheck();
         },
       });

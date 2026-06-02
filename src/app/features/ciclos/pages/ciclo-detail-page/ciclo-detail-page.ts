@@ -8,7 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, MIN_HORAS_POR_MATERIA, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { extrairMensagemErroHttp } from '../../../../shared/utils/http-error-message.util';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
@@ -134,7 +134,7 @@ export class CicloDetailPage implements OnInit {
 
     if (this.minimoHorasViolado) {
       this.toastr.warning(
-        'A carga semanal deve ser maior que 4h (Estudo Livre) e permitir pelo menos 1:30h por matéria ativa.',
+        'A carga semanal deve ser maior que 4h (Estudo Livre) e permitir o mínimo dinâmico por matéria activa.',
       );
       return;
     }
@@ -205,7 +205,6 @@ export class CicloDetailPage implements OnInit {
         checked: !!m.checked,
         peso: m.peso ?? null,
       })),
-      minHorasPorMateria: MIN_HORAS_POR_MATERIA,
     });
 
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
@@ -222,7 +221,7 @@ export class CicloDetailPage implements OnInit {
     const cargaTotal = Number(cargaHorariaSemanal) || 0;
     this.minimoHorasViolado =
       cargaTotal <= ESTUDO_LIVRE_HORAS ||
-      cargaParaMaterias < nAtivas * MIN_HORAS_POR_MATERIA ||
+      result.warningMinimoNaoAtendido ||
       nAtivas === 0;
   }
 

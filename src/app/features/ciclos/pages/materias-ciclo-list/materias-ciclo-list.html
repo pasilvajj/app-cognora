@@ -8,6 +8,19 @@
     <div class="c-horas">Horas p/ matéria</div>
   </div>
 
+  <div class="mat-row mat-row--estudo-livre" aria-label="Estudo Livre reservado">
+    <div class="c-check"></div>
+    <div class="c-materia">
+      <div class="materia-name materia-name--estudo-livre">{{ estudoLivreNome }}</div>
+    </div>
+    <div class="c-edital"></div>
+    <div class="c-peso"></div>
+    <div class="c-nivel"></div>
+    <div class="c-horas">
+      <span class="horas">{{ estudoLivreHorasLabel }}</span>
+    </div>
+  </div>
+
   <div class="mat-row" *ngFor="let it of items; trackBy: trackById"
     [class.is-checked]="it.checked">
     <div class="c-check">

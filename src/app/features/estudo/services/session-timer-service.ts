@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { StudyAlignedSecondTickService } from './study-aligned-second-tick.service';
+import { StudyAlignedSecondTickService, alinharEpochAoSegundo } from './study-aligned-second-tick.service';
 
 interface TimerState {
   readonly metaMs: number;
@@ -86,39 +86,47 @@ export class SessionTimerService {
     if (this.state().finalizada) return;
 
     const s = this.state();
-
-    // Usa o valor exato presente no estado (definido por init() via valor do servidor).
-    // NÃO usar calcularDecorridoAgora() aqui: o delta entre init() e anchor (~ms)
-    // faz o relógio cruzar segundos ligeiramente antes do Pomodoro, causando 1s de
-    // divergência nos ticks próximos a um limite de segundo.
     const decorridoBase = s.decorridoMs;
-
     const decorridoClampado = s.metaMs > 0
       ? Math.min(decorridoBase, s.metaMs)
       : Math.max(0, decorridoBase);
+
+    const alignedAnchor = alinharEpochAoSegundo(anchorEpochMs);
 
     this.state.update(st => ({
       ...st,
       pausada: false,
       decorridoMs:     decorridoClampado,
       baseDecorridoMs: decorridoClampado,
-      baseAgoraMs:     anchorEpochMs,
+      baseAgoraMs:     alignedAnchor,
     }));
 
     this.startTicker();
+    this.onTick(alignedAnchor);
   }
 
   pause(): number {
     this.stopTicker();
-    const decorrido = this.calcularDecorridoAgora();
+    const s = this.state();
 
-    this.state.update(s => ({
-      ...s,
-      decorridoMs: decorrido,
+    if (s.pausada || s.finalizada) {
+      return Math.floor(s.decorridoMs / 1000);
+    }
+
+    const decorrido = this.calcularDecorridoAgora();
+    const clamped = s.metaMs > 0
+      ? Math.min(decorrido, s.metaMs)
+      : Math.max(0, decorrido);
+
+    this.state.update(st => ({
+      ...st,
+      decorridoMs: clamped,
+      baseDecorridoMs: clamped,
+      baseAgoraMs: Date.now(),
       pausada: true,
     }));
 
-    return Math.floor(decorrido / 1000);
+    return Math.floor(clamped / 1000);
   }
 
   finish(): void {
@@ -177,6 +185,10 @@ export class SessionTimerService {
    */
   private calcularDecorridoAgora(nowMs = Date.now()): number {
     const s = this.state();
+    if (s.pausada || s.finalizada) {
+      return s.decorridoMs;
+    }
+
     const delta = nowMs - s.baseAgoraMs;
     const total = s.baseDecorridoMs + delta;
     return s.metaMs > 0 ? Math.min(total, s.metaMs) : Math.max(0, total);

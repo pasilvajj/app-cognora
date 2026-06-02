@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { StudyAlignedSecondTickService } from './study-aligned-second-tick.service';
+import { StudyAlignedSecondTickService, alinharEpochAoSegundo } from './study-aligned-second-tick.service';
 import { StudyAlertSoundService } from './study-alert-sound.service';
 
 // ── Tipos públicos ─────────────────────────────────────────────────────────────
@@ -202,14 +202,17 @@ export class PomodoroEngineService {
     const s = this.state();
     if (s.finished || s.running) return;
 
+    const alignedAnchor = alinharEpochAoSegundo(anchorMs);
+
     this.state.update(curr => ({
       ...curr,
       running:   true,
       focusFinished: false,
-      anchorMs,
+      anchorMs:  alignedAnchor,
     }));
 
     this.startTicker();
+    this.onTick(alignedAnchor);
   }
 
   /**
@@ -224,8 +227,11 @@ export class PomodoroEngineService {
     const s = this.state();
     if (!s.running || s.finished) return;
 
-    this.state.update(curr => ({ ...curr, anchorMs }));
+    const alignedAnchor = alinharEpochAoSegundo(anchorMs);
+
+    this.state.update(curr => ({ ...curr, anchorMs: alignedAnchor }));
     this.startTicker();
+    this.onTick(alignedAnchor);
   }
 
   pause(): void {
@@ -249,6 +255,11 @@ export class PomodoroEngineService {
   stop(): void {
     this.stopTicker();
     this.state.update(s => ({ ...s, running: false, anchorMs: 0 }));
+  }
+
+  /** Congela o restante actual (preferir a {@link stop} ao sair da página). */
+  freeze(): void {
+    this.pause();
   }
 
   skip(): void {
@@ -288,7 +299,7 @@ export class PomodoroEngineService {
 
     if (isTransicaoParaPausa) {
       const duracaoSeg = this.duracaoEtapaSeg(s.mode);
-      const anchorMs   = Date.now();
+      const anchorMs   = alinharEpochAoSegundo();
 
       this.state.update(curr => ({
         ...curr,
@@ -301,6 +312,7 @@ export class PomodoroEngineService {
       }));
 
       this.startTicker();
+      this.onTick(anchorMs);
     } else {
       // Fechando overlay de retorno ao foco.
       if (s.mode === 'FOCO' && !s.finished) {
@@ -364,7 +376,7 @@ export class PomodoroEngineService {
         ? 'PAUSA_LONGA'
         : 'PAUSA_CURTA';
       const duracaoSeg = this.duracaoEtapaSeg(proxMode);
-      this.sounds.playBreakStarted();
+      this.sounds.playFocusEnded();
 
       this.state.update(curr => ({
         ...curr,

@@ -120,6 +120,15 @@ body {
   color: #0f172a;
 }
 
+.form-error {
+  font-size: 13px;
+  color: #dc2626;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.08);
+}
+
 .subtitle {
   font-size: 14px;
   color: #64748b;

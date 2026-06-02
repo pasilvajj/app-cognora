@@ -1,0 +1,79 @@
+@if (visible()) {
+  <div
+    class="mf-backdrop"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="titulo()"
+  >
+    <div class="mf-panel">
+      <button
+        type="button"
+        class="mf-close"
+        (click)="close.emit()"
+        aria-label="Sair do modo foco"
+        title="Sair do modo foco"
+      >
+        ✕
+      </button>
+
+      <h2 class="mf-title">{{ titulo() }}</h2>
+
+      <div class="mf-illustration-wrap" aria-hidden="true">
+        <div class="mf-illustration-glow"></div>
+        <img
+          class="mf-illustration"
+          src="assets/modo-foco-illustration.svg"
+          alt=""
+          width="320"
+          height="220"
+          decoding="async"
+        />
+      </div>
+
+      <p class="mf-timer" aria-live="polite">{{ cronometroPrincipal() }}</p>
+
+      <div class="mf-badges">
+        <span class="mf-badge mf-badge--meta">
+          Meta <strong>{{ metaLabel() }}</strong>
+        </span>
+        <span class="mf-badge mf-badge--studied">
+          Estudado <strong>{{ estudadoLabel() }}</strong>
+        </span>
+      </div>
+
+      <div class="mf-actions">
+        @if (pomodoroEnabled()) {
+          <button
+            type="button"
+            class="mf-btn mf-btn--warn"
+            [disabled]="sessaoFinalizada()"
+            (click)="togglePomodoro.emit()"
+          >
+            {{ pomodoroToggleLabel() }}
+          </button>
+        }
+
+        <button
+          type="button"
+          class="mf-btn mf-btn--primary"
+          [disabled]="mainActionDisabled()"
+          [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''"
+          (click)="mainAction.emit()"
+        >
+          {{ mainActionLabel() }}
+        </button>
+
+        @if (pomodoroEnabled()) {
+          <button
+            type="button"
+            class="mf-btn mf-btn--ghost"
+            [disabled]="!podePularEtapa()"
+            (click)="skipStage.emit()"
+          >
+            Pular etapa
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

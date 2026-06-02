@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, MIN_HORAS_POR_MATERIA, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { BR_UFS } from '../../constants/br-ufs';
 import { AuthService } from '../../../../core/auth/auth.service';
@@ -329,7 +329,13 @@ export class CicloCreatePage implements OnInit {
         peso: d.peso ?? null,
         nivel: 0,
         horasLabel: '0:00h',
-      }));
+      }))
+      .sort((a, b) => {
+        const pa = a.peso ?? 0;
+        const pb = b.peso ?? 0;
+        if (pb !== pa) return pb - pa;
+        return a.nome.localeCompare(b.nome, 'pt-BR');
+      });
   }
 
   aplicarHorasPorMateria(): void {
@@ -344,7 +350,6 @@ export class CicloCreatePage implements OnInit {
         checked: !!m.checked,
         peso: m.peso ?? null,
       })),
-      minHorasPorMateria: MIN_HORAS_POR_MATERIA,
     });
 
     const byId = new Map(result.perMateria.map(x => [x.id, x]));
@@ -361,7 +366,7 @@ export class CicloCreatePage implements OnInit {
     const cargaTotal = Number(this.cargaHorariaSemanal) || 0;
     this.minimoHorasViolado =
       cargaTotal <= ESTUDO_LIVRE_HORAS ||
-      cargaParaMaterias < nAtivas * MIN_HORAS_POR_MATERIA ||
+      result.warningMinimoNaoAtendido ||
       nAtivas === 0;
   }
 

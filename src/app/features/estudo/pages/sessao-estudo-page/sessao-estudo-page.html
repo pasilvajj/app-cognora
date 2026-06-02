@@ -30,6 +30,7 @@
     [categoriaEstudo]="s.categoriaEstudo ?? null"
     [categoriaSelectDisabled]="!!s.fim"
     (mainActionClick)="onMainActionClick()"
+    (modoFocoOpen)="abrirModoFoco()"
     (pomodoroSkipStage)="onPomodoroSkipStage()"
     (pomodoroToggleEnabled)="onPomodoroToggleEnabled()"
     (observacoesChange)="onObservacoesChange($event)"
@@ -51,6 +52,20 @@
   titulo="Registo de estudo"
   (openChange)="onRegistroModalOpenChange($event)"
   (gravado)="onRegistroEstudoGravado()"
+/>
+
+<app-modo-foco-overlay
+  [visible]="modoFocoAberto()"
+  [pomodoroEnabled]="pomodoroEnabled()"
+  [pomodoroDesativado]="pomodoroTemporariamenteDesativado()"
+  [acaoLoading]="acaoLoading()"
+  [retomarBloqueadoNaPausaCurta]="retomarBloqueadoNaPausaCurta()"
+  [sessaoFinalizada]="!!sessao()?.fim || timer.finalizada()"
+  [prontaParaIniciar]="statusLabel() === 'Pronta para iniciar'"
+  (close)="fecharModoFoco()"
+  (mainAction)="onMainActionClick()"
+  (skipStage)="onPomodoroSkipStage()"
+  (togglePomodoro)="onPomodoroToggleEnabled()"
 />
 
 <!-- Overlay fica fora do fluxo principal para evitar problemas de Z-Index -->

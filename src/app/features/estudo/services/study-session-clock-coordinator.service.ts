@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 
 import { PomodoroEngineService } from './pomodoro-engine-service';
 import { SessionTimerService } from './session-timer-service';
+import { alinharEpochAoSegundo } from './study-aligned-second-tick.service';
 
 /**
  * Ponto único de ativação dos dois relógios (sessão + Pomodoro).
@@ -28,14 +29,15 @@ export class StudySessionClockCoordinatorService {
    * o primeiro tick visual ocorre no próximo segundo alinhado ao relógio.
    */
   ativarRelógios(anchor: number, pomodoroEnabled: boolean): void {
-    this.timer.startAt(anchor);
+    const aligned = alinharEpochAoSegundo(anchor);
+    this.timer.startAt(aligned);
 
     if (!pomodoroEnabled) return;
 
     if (this.pomodoro.running()) {
-      this.pomodoro.realinharAnchor(anchor);
+      this.pomodoro.realinharAnchor(aligned);
     } else {
-      this.pomodoro.startAt(anchor);
+      this.pomodoro.startAt(aligned);
     }
 
     this.pomodoro.dismissOverlay();

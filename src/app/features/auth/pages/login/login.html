@@ -19,7 +19,10 @@
       <h2>Entrar</h2>
       <p class="subtitle">Use seu e-mail e senha para continuar</p>
 
-      <div class="form-error" *ngIf="error">{{ error }}</div>
+      <div class="form-error" *ngIf="error" role="alert">
+        <p class="form-error__text">{{ error }}</p>
+        <p class="form-error__detail" *ngIf="errorDetalhe">{{ errorDetalhe }}</p>
+      </div>
 
       <app-form-input
         label="E-mail"

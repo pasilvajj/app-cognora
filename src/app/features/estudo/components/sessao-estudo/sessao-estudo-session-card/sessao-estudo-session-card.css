@@ -146,6 +146,36 @@
   display:flex;
   gap: 12px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-modo-foco {
+  border: 1px solid rgba(30, 58, 138, 0.22);
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  cursor: pointer;
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: #1e3a8a;
+  font-size: 14px;
+  font-weight: 900;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-modo-foco:hover:enabled {
+  transform: translateY(-1px);
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.12);
+}
+
+.btn-modo-foco:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+:host-context([data-theme='dark']) .btn-modo-foco {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: #93c5fd;
 }
 
 .btn-main{
@@ -192,5 +222,6 @@
 
 @media (max-width: 720px) {
   .actions { justify-content: stretch; }
-  .btn-main { width: 100%; }
+  .btn-main,
+  .btn-modo-foco { width: 100%; }
 }

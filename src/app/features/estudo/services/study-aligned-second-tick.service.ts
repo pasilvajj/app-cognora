@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 
 /**
- * Callback recebe o instante exato (epoch ms) capturado UMA única vez por fireAll().
- * Isso garante que todos os cronômetros calculem seus valores a partir do mesmo `now`,
- * eliminando a divergência de 1 s causada pelo delta entre callbacks sequenciais.
+ * Tick único alinhado ao segundo do relógio de parede (Date.now() % 1000 → 0).
  */
 type TickCallback = (nowMs: number) => void;
+
+/** Epoch ms no início do segundo corrente — alinha anchors de sessão e Pomodoro. */
+export function alinharEpochAoSegundo(epochMs: number = Date.now()): number {
+  return epochMs - (epochMs % 1000);
+}
 
 /**
  * Tick único alinhado ao segundo do relógio de parede (Date.now() % 1000 → 0).

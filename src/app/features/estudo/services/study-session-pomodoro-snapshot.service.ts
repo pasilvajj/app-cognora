@@ -22,20 +22,29 @@ export interface PomodoroTempDesativadoRow {
   savedAtEpochMs: number;
 }
 
+/** Tempo estudado congelado no cliente (evita +1s da API ao voltar à página pausada). */
+export interface SessionElapsedSnapshot {
+  estudadoTotalSeg: number;
+  savedAtEpochMs: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class StudySessionPomodoroSnapshotService {
   private static readonly STORAGE_KEY = 'study-pomodoro-snapshots';
   private static readonly OVERLAY_KEY = 'study-pomodoro-overlay-pending';
   private static readonly TEMP_DESAT_KEY = 'study-pomodoro-temp-desativado';
+  private static readonly SESSION_ELAPSED_KEY = 'study-session-elapsed-snapshots';
   private static readonly MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
   private readonly snapshots = new Map<number, PomodoroSnapshot>();
   private readonly overlayPending = new Map<number, PomodoroOverlayPending>();
   private readonly tempDesativado = new Map<number, PomodoroTempDesativadoRow>();
+  private readonly sessionElapsed = new Map<number, SessionElapsedSnapshot>();
 
   constructor() {
     this.loadFromStorage();
     this.loadOverlayFromStorage();
     this.loadTempDesativadoFromStorage();
+    this.loadSessionElapsedFromStorage();
   }
 
   set(sessionId: number, snapshot: PomodoroSnapshot): void {
@@ -64,9 +73,31 @@ export class StudySessionPomodoroSnapshotService {
     this.snapshots.delete(sessionId);
     this.overlayPending.delete(sessionId);
     this.tempDesativado.delete(sessionId);
+    this.sessionElapsed.delete(sessionId);
     this.saveToStorage();
     this.saveOverlayToStorage();
     this.saveTempDesativadoToStorage();
+    this.saveSessionElapsedToStorage();
+  }
+
+  setSessionElapsed(sessionId: number, estudadoTotalSeg: number): void {
+    if (!sessionId || estudadoTotalSeg < 0) return;
+    this.sessionElapsed.set(sessionId, {
+      estudadoTotalSeg: Math.max(0, Math.floor(estudadoTotalSeg)),
+      savedAtEpochMs: Date.now(),
+    });
+    this.saveSessionElapsedToStorage();
+  }
+
+  getSessionElapsed(sessionId: number): SessionElapsedSnapshot | null {
+    const row = this.sessionElapsed.get(sessionId) ?? null;
+    if (!row) return null;
+    if (Date.now() - row.savedAtEpochMs > StudySessionPomodoroSnapshotService.MAX_AGE_MS) {
+      this.sessionElapsed.delete(sessionId);
+      this.saveSessionElapsedToStorage();
+      return null;
+    }
+    return row;
   }
 
   /** Utilizador escolheu “Desativar agora” (pausa o motor Pomodoro localmente). */
@@ -232,6 +263,43 @@ export class StudySessionPomodoroSnapshotService {
     }
     window.localStorage.setItem(
       StudySessionPomodoroSnapshotService.TEMP_DESAT_KEY,
+      JSON.stringify(serializable),
+    );
+  }
+
+  private loadSessionElapsedFromStorage(): void {
+    if (typeof window === 'undefined') return;
+    try {
+      const raw = window.localStorage.getItem(StudySessionPomodoroSnapshotService.SESSION_ELAPSED_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, SessionElapsedSnapshot>;
+      for (const [id, row] of Object.entries(parsed)) {
+        const sessionId = Number(id);
+        if (
+          !sessionId ||
+          !row ||
+          row.estudadoTotalSeg == null ||
+          row.estudadoTotalSeg < 0 ||
+          !row.savedAtEpochMs ||
+          Date.now() - row.savedAtEpochMs > StudySessionPomodoroSnapshotService.MAX_AGE_MS
+        ) {
+          continue;
+        }
+        this.sessionElapsed.set(sessionId, row);
+      }
+    } catch {
+      this.sessionElapsed.clear();
+    }
+  }
+
+  private saveSessionElapsedToStorage(): void {
+    if (typeof window === 'undefined') return;
+    const serializable: Record<number, SessionElapsedSnapshot> = {};
+    for (const [sessionId, row] of this.sessionElapsed.entries()) {
+      serializable[sessionId] = row;
+    }
+    window.localStorage.setItem(
+      StudySessionPomodoroSnapshotService.SESSION_ELAPSED_KEY,
       JSON.stringify(serializable),
     );
   }

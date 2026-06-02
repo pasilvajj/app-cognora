@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ESTUDO_LIVRE_HORAS, ESTUDO_LIVRE_NOME } from '../../constants/estudo-livre.constants';
 
 export type MateriaCicloItem = {
   id: number;
@@ -55,7 +56,10 @@ export class MateriasCicloList {
   @Input() readonly = false; 
   @Output() itemsChange = new EventEmitter<DisciplinaCicloItem[]>();
 
-    stars = [1, 2, 3, 4, 5];
+  readonly estudoLivreNome = ESTUDO_LIVRE_NOME;
+  readonly estudoLivreHorasLabel = `${String(ESTUDO_LIVRE_HORAS).padStart(2, '0')}:00h`;
+
+  stars = [1, 2, 3, 4, 5];
 
   trackById(_: number, it: DisciplinaCicloItem): number {
     return it.id;

@@ -21,7 +21,7 @@
       <article class="dh-metric">
         <span class="dh-metric-label">Tempo de estudo</span>
         <span class="dh-metric-value">{{ tempoEstudoLabel }}</span>
-        <span class="dh-metric-foot muted">Total em todos os ciclos deste edital</span>
+        <span class="dh-metric-foot muted">Total neste ciclo</span>
       </article>
       <article class="dh-metric">
         <span class="dh-metric-label">Desempenho</span>
@@ -50,8 +50,8 @@
         <table class="dh-table">
           <thead>
             <tr>
+              <th class="dh-th-num" title="Posição no ciclo">Nº</th>
               <th>Data</th>
-              <th>Ciclo</th>
               <th>Tópico</th>
               <th>Categoria</th>
               <th>Tempo estudado</th>
@@ -63,8 +63,14 @@
           <tbody>
             @for (s of historicoSessoes(); track s.id) {
               <tr>
+                <td class="dh-td-num">
+                  @if (s.ordemNoCiclo != null && s.ordemNoCiclo > 0) {
+                    <span class="dh-sess-num" [title]="'Posição no ciclo (nº ' + s.ordemNoCiclo + ')'">{{ s.ordemNoCiclo }}</span>
+                  } @else {
+                    <span class="dh-muted">—</span>
+                  }
+                </td>
                 <td>{{ formatarDataSessao(s) }}</td>
-                <td>{{ s.cicloNome }}</td>
                 <td>{{ s.topicoTitulo || '—' }}</td>
                 <td>{{ s.categoriaEstudoLabel || '—' }}</td>
                 <td>{{ formatarDuracaoSessao(s.estudadoTotalSeg) }}</td>
@@ -88,7 +94,7 @@
               </tr>
             } @empty {
               <tr>
-                <td colspan="8" class="dh-empty-cell">Sem segmentos de estudo com tópico registados para esta disciplina neste edital.</td>
+                <td colspan="8" class="dh-empty-cell">Sem segmentos de estudo com tópico registados para esta disciplina neste ciclo.</td>
               </tr>
             }
           </tbody>

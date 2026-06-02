@@ -92,6 +92,12 @@ export interface SessaoDetalheDto {
   estudoLivre?: boolean;
 }
 
+/** Tópico/categoria enviados ao iniciar ou retomar (não na seleção do select). */
+export interface SessaoMetaEstudoRequest {
+  topicoId?: number | null;
+  categoriaEstudo?: string | null;
+}
+
 /** Opções fixas de categoria de estudo na sessão (alinhadas ao enum Java). */
 export const SESSAO_CATEGORIAS_ESTUDO: ReadonlyArray<{ codigo: string; label: string }> = [
   { codigo: 'TEORIA', label: 'Teoria' },
@@ -151,6 +157,8 @@ export interface DisciplinaHistoricoSessaoDto {
   categoriaEstudoCodigo?: string | null;
   cicloId: number | null;
   cicloNome: string;
+  /** Posição da matéria no ciclo (CicloItem.ordem), como em Últimas Sessões. */
+  ordemNoCiclo?: number | null;
   inicio: string | null;
   fim: string | null;
   /** Duração deste segmento (segundos), não o total da sessão inteira. */

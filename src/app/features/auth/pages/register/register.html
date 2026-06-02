@@ -19,6 +19,7 @@
       <h2>Criar conta</h2>
       <p class="subtitle">Preencha seus dados</p>
 
+      <div class="form-error" *ngIf="error">{{ error }}</div>
 
      <app-form-input
         label="Nome completo"

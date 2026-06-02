@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { ToastrService } from 'ngx-toastr';
 import { FormInputComponent } from '../../../../shared/components/form-input/form-input';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button';
+import { mensagemErroCadastro } from '../../../../shared/erro/mensagem-erro-cadastro';
 
 @Component({
   selector: 'app-register',
@@ -24,6 +26,7 @@ export class Register {
 
   loading = false;
   submitted = false;
+  error = '';
 
   signupForm = new FormGroup({
     name: new FormControl('', [
@@ -50,7 +53,7 @@ export class Register {
   ) {}
 
   submit(): void {
-   
+    this.error = '';
     this.submitted = true;
 
     if (this.signupForm.invalid || this.passwordsDoNotMatch()) {
@@ -67,14 +70,17 @@ export class Register {
         this.toastr.success('Conta criada com sucesso!');
         this.router.navigate(['/login']);
       },
-      error: () => {
-        setTimeout(()=>{
+      error: (err: unknown) => {
+        setTimeout(() => {
           this.loading = false;
         });
-       
-        this.toastr.error('Erro ao criar conta');
-        
-      }
+        const mensagem =
+          err instanceof HttpErrorResponse
+            ? mensagemErroCadastro(err)
+            : 'Erro ao criar conta. Tente novamente.';
+        this.error = mensagem;
+        this.toastr.error(mensagem);
+      },
     });
   }
 

@@ -1,3 +1,9 @@
+import {
+  pisoMinutosPorContagemMaterias,
+  SESSAO_MINIMA_MINUTOS,
+  STEP_DISTRIBUICAO_MINUTOS,
+} from '../constants/estudo-livre.constants';
+
 export type MateriaHorasInput = {
   id: number;
   checked: boolean;
@@ -14,7 +20,7 @@ export type MateriaHorasOutput = {
 
 export type CalculoHorasResult = {
   perMateria: MateriaHorasOutput[];
-  /** Pool insuficiente para o mínimo de 1:30h em todas as matérias ativas. */
+  /** Pool insuficiente para o piso mínimo dinâmico de todas as matérias activas. */
   warningMinimoNaoAtendido: boolean;
 };
 
@@ -30,120 +36,93 @@ function pesoEfetivo(m: MateriaHorasInput): number {
   return p > 0 ? p : 1;
 }
 
-function alocarPorMaiorResto(total: number, exact: number[], weights: number[]): number[] {
-  const blocks = exact.map(v => Math.floor(v));
-  let leftover = total - blocks.reduce((a, b) => a + b, 0);
-  const order = weights
-    .map((w, i) => ({ i, frac: exact[i] - blocks[i], w }))
-    .sort((a, b) => b.frac - a.frac || b.w - a.w);
+/**
+ * Hamilton (maior resto) sobre unidades de {@code stepMinutos}.
+ * Empate no resto: ordem da lista (primeira matéria na UI).
+ */
+function hamiltonMinutos(poolMinutos: number, weights: number[], stepMinutos: number): number[] {
+  const n = weights.length;
+  const totalUnits = Math.floor(poolMinutos / stepMinutos);
+  const sumW = weights.reduce((a, b) => a + b, 0);
+  const exact = weights.map(w => (totalUnits * w) / sumW);
+  const units = exact.map(e => Math.floor(e));
+  let leftover = totalUnits - units.reduce((a, b) => a + b, 0);
+
+  const order = [...Array(n).keys()].sort((a, b) => {
+    const fracA = exact[a] - units[a];
+    const fracB = exact[b] - units[b];
+    if (fracB !== fracA) return fracB - fracA;
+    return a - b;
+  });
 
   for (let k = 0; k < leftover; k++) {
-    blocks[order[k].i]++;
+    units[order[k]]++;
   }
-  return blocks;
+
+  return units.map(u => u * stepMinutos);
 }
 
-/** Sobra do pool (ex.: 30 min) vai inteira para a matéria de maior peso. */
-function indiceMaiorPeso(weights: number[]): number {
-  let best = 0;
-  for (let i = 1; i < weights.length; i++) {
-    if (weights[i] > weights[best]) {
-      best = i;
-    }
-  }
-  return best;
-}
-
-function aplicarRestoMinutos(resto: number, weights: number[]): number[] {
-  const extra = weights.map(() => 0);
-  if (resto > 0 && weights.length > 0) {
-    extra[indiceMaiorPeso(weights)] = resto;
-  }
-  return extra;
-}
-
-/**
- * Ao garantir 1 sessão mínima, tira blocos de matérias mais leves (ou, se necessário,
- * da mais pesada), preservando matérias de peso alto como Português e Trânsito.
- */
-function encontrarDoadorMinimo(
-  blocks: number[],
+function encontrarDoadorMinutos(
+  minutos: number[],
   weights: number[],
   beneficiario: number,
-  minBlocks: number,
+  minDonorMinutos: number,
+  step: number,
 ): number | null {
   const pesoBenef = weights[beneficiario];
-
   let donor: number | null = null;
-  for (let j = 0; j < blocks.length; j++) {
-    if (j === beneficiario || blocks[j] <= minBlocks) continue;
-    if (weights[j] > pesoBenef) continue;
-    if (donor == null || weights[j] < weights[donor]) {
-      donor = j;
-    } else if (weights[j] === weights[donor] && blocks[j] > blocks[donor]) {
+
+  for (let j = 0; j < minutos.length; j++) {
+    if (j === beneficiario || minutos[j] < minDonorMinutos + step) continue;
+    if (weights[j] <= pesoBenef) continue;
+    if (
+      donor == null
+      || weights[j] > weights[donor]
+      || (weights[j] === weights[donor] && minutos[j] > minutos[donor])
+    ) {
       donor = j;
     }
   }
   if (donor != null) return donor;
 
-  for (let j = 0; j < blocks.length; j++) {
-    if (j === beneficiario || blocks[j] <= minBlocks) continue;
-    if (donor == null || weights[j] > weights[donor]) {
-      donor = j;
-    } else if (weights[j] === weights[donor] && blocks[j] > blocks[donor]) {
+  for (let j = 0; j < minutos.length; j++) {
+    if (j === beneficiario || minutos[j] < minDonorMinutos + step) continue;
+    if (donor == null || minutos[j] > minutos[donor]) {
       donor = j;
     }
   }
   return donor;
 }
 
-function garantirMinimoBlocos(blocks: number[], weights: number[], minBlocks: number): void {
-  const order = blocks
+/** Piso dinâmico: prioriza matérias de maior peso quando o pool é curto. */
+function garantirMinimoMinutos(
+  minutos: number[],
+  weights: number[],
+  minMinutos: number,
+  step: number,
+): void {
+  const order = minutos
     .map((_, i) => i)
     .sort((a, b) => weights[b] - weights[a]);
 
   for (const i of order) {
-    while (blocks[i] < minBlocks) {
-      const donor = encontrarDoadorMinimo(blocks, weights, i, minBlocks);
+    while (minutos[i] < minMinutos) {
+      const donor = encontrarDoadorMinutos(minutos, weights, i, minMinutos, step);
       if (donor == null) break;
-      blocks[donor]--;
-      blocks[i]++;
+      minutos[donor] -= step;
+      minutos[i] += step;
     }
   }
 }
 
-function encontrarDoadorOrdem(
-  blocks: number[],
+/** Matéria com peso maior não pode ficar com menos minutos que uma de peso menor. */
+function garantirOrdemMinutosPorPeso(
+  minutos: number[],
   weights: number[],
-  beneficiario: number,
-  minBlocks: number,
-): number | null {
-  const pesoBenef = weights[beneficiario];
-  let donor: number | null = null;
-
-  for (let j = 0; j < blocks.length; j++) {
-    if (j === beneficiario || blocks[j] <= minBlocks) continue;
-    if (weights[j] >= pesoBenef) continue;
-    if (donor == null || weights[j] < weights[donor]) {
-      donor = j;
-    } else if (weights[j] === weights[donor] && blocks[j] > blocks[donor]) {
-      donor = j;
-    }
-  }
-  if (donor != null) return donor;
-
-  for (let j = 0; j < blocks.length; j++) {
-    if (j === beneficiario || blocks[j] <= minBlocks) continue;
-    if (donor == null || weights[j] > weights[donor]) {
-      donor = j;
-    }
-  }
-  return donor;
-}
-
-/** Matéria com peso maior não pode ficar com menos sessões que uma de peso menor. */
-function garantirOrdemPorPeso(blocks: number[], weights: number[], minBlocks: number): void {
-  const idx = blocks.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
+  minAbsolutoMinutos: number,
+  step: number,
+): void {
+  const idx = minutos.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
 
   for (let k = 0; k < idx.length - 1; k++) {
     const hi = idx[k];
@@ -151,51 +130,55 @@ function garantirOrdemPorPeso(blocks: number[], weights: number[], minBlocks: nu
       const lo = idx[m];
       if (weights[hi] <= weights[lo]) continue;
 
-      while (blocks[hi] < blocks[lo]) {
-        if (blocks[lo] > minBlocks) {
-          blocks[lo]--;
-          blocks[hi]++;
+      while (minutos[hi] < minutos[lo]) {
+        if (minutos[lo] > minAbsolutoMinutos) {
+          minutos[lo] -= step;
+          minutos[hi] += step;
           continue;
         }
-        const donor = encontrarDoadorOrdem(blocks, weights, hi, minBlocks);
+        const donor = encontrarDoadorMinutos(minutos, weights, hi, minAbsolutoMinutos, step);
         if (donor == null || donor === hi) break;
-        blocks[donor]--;
-        blocks[hi]++;
+        minutos[donor] -= step;
+        minutos[hi] += step;
       }
     }
   }
 }
 
-/** Distribui o total de sessões proporcionalmente ao peso (Hamilton sobre o pool inteiro). */
-function calcularBlocosPorPeso(totalBlocos: number, weights: number[]): number[] {
-  const n = weights.length;
-  if (n === 0) return [];
+/** Distribui o pool em passos de 30 min: Hamilton + piso dinâmico + ordem por peso. */
+export function distribuirMinutosPorPeso(
+  poolMinutos: number,
+  weights: number[],
+  stepMinutos: number = STEP_DISTRIBUICAO_MINUTOS,
+): number[] {
+  if (weights.length === 0 || poolMinutos <= 0) {
+    return [];
+  }
 
-  const sumW = weights.reduce((a, b) => a + b, 0);
-  const exact = weights.map(w => (totalBlocos * w) / sumW);
-  const blocks = alocarPorMaiorResto(totalBlocos, exact, weights);
+  const piso = pisoMinutosPorContagemMaterias(weights.length);
+  const absMin = SESSAO_MINIMA_MINUTOS;
 
-  garantirMinimoBlocos(blocks, weights, 1);
-  garantirOrdemPorPeso(blocks, weights, 1);
+  const minutos = hamiltonMinutos(poolMinutos, weights, stepMinutos);
+  garantirOrdemMinutosPorPeso(minutos, weights, absMin, stepMinutos);
+  garantirMinimoMinutos(minutos, weights, piso, stepMinutos);
+  garantirOrdemMinutosPorPeso(minutos, weights, absMin, stepMinutos);
 
-  return blocks;
+  return minutos;
 }
 
 /**
- * Distribui o pool semanal entre matérias ativas:
- * 1) Garante {@code minHorasPorMateria} (default 1:30h = 1 sessão) por matéria;
- * 2) Distribui sessões proporcionalmente ao peso sobre o pool total;
- * 3) Horas exibidas em blocos de 30 min; sobra do pool vai para a matéria de maior peso.
+ * Distribui o pool semanal entre matérias activas:
+ * 1) Hamilton proporcional ao peso (blocos de 30 min);
+ * 2) Piso dinâmico: ≤5 matérias → 2:30h; 6 → 2:00h; ≥7 → 1:30h;
+ * 3) Peso maior nunca fica com menos horas que peso menor.
  */
 export function calcularHorasPorMateria(params: {
   cargaHorariaSemanal: number;
   materias: MateriaHorasInput[];
-  minHorasPorMateria?: number;
-  stepHoras?: number;
+  stepMinutos?: number;
 }): CalculoHorasResult {
   const weekly = Number(params.cargaHorariaSemanal) || 0;
-  const minEach = params.minHorasPorMateria ?? 1.5;
-  void params.stepHoras;
+  const stepMinutos = params.stepMinutos ?? STEP_DISTRIBUICAO_MINUTOS;
 
   const materias = params.materias ?? [];
   const active = materias.filter(m => !!m.checked && !m.excluirDaDistribuicao);
@@ -210,22 +193,20 @@ export function calcularHorasPorMateria(params: {
     return { perMateria: baseZero, warningMinimoNaoAtendido: false };
   }
 
-  const blocoMinutos = minEach * 60;
   const poolMinutos = Math.round(weekly * 60);
-  const totalBlocos = Math.floor(poolMinutos / blocoMinutos);
-  const restoMinutos = poolMinutos - totalBlocos * blocoMinutos;
-  const warningMinimoNaoAtendido = totalBlocos < active.length;
-  if (totalBlocos <= 0) {
+  const pisoMinutos = pisoMinutosPorContagemMaterias(active.length);
+  const warningMinimoNaoAtendido = poolMinutos < active.length * pisoMinutos;
+
+  if (poolMinutos <= 0) {
     return { perMateria: baseZero, warningMinimoNaoAtendido: true };
   }
 
   const weights = active.map(pesoEfetivo);
-  const blocks = calcularBlocosPorPeso(totalBlocos, weights);
-  const extraMinutos = aplicarRestoMinutos(restoMinutos, weights);
+  const minutosArr = distribuirMinutosPorPeso(poolMinutos, weights, stepMinutos);
 
   const minutosPorId = new Map<number, number>();
   active.forEach((m, idx) => {
-    minutosPorId.set(m.id, blocks[idx] * blocoMinutos + extraMinutos[idx]);
+    minutosPorId.set(m.id, minutosArr[idx]);
   });
 
   const perMateria = materias.map(m => {

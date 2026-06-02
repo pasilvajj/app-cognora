@@ -7,12 +7,13 @@ import { ToastrService } from 'ngx-toastr';
 import { catchError, finalize, firstValueFrom, map, Observable, of } from 'rxjs';
 
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
+import { ModoFocoOverlay } from '../../components/modo-foco-overlay/modo-foco-overlay';
 import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
 import { SessaoEstudoPageHeader } from '../../components/sessao-estudo/sessao-estudo-page-header/sessao-estudo-page-header';
 import { SessaoEstudoSessionCard } from '../../components/sessao-estudo/sessao-estudo-session-card/sessao-estudo-session-card';
 import { RegistroEstudoModalComponent } from '../../components/registro-estudo-modal/registro-estudo-modal';
 import { EstudoApiService } from '../../data/estudo-api.service';
-import { SessaoDetalheDto, SessaoTopicoOpcaoDto } from '../../data/estudo.models';
+import { SessaoDetalheDto, SESSAO_CATEGORIAS_ESTUDO, SessaoMetaEstudoRequest, SessaoTopicoOpcaoDto } from '../../data/estudo.models';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
 import { PomodoroMode } from '../../data/pomodoro.types';
 import { getPomodoroRestanteStrategy } from '../../strategies/pomodoro-restante/pomodoro-restante-strategy.factory';
@@ -24,12 +25,13 @@ import {
   obterCicloContextoEstudoGuardado,
   persistirCicloContextoEstudo,
 } from '../../utils/estudo-contexto-ciclo.storage';
+import { alinharEpochAoSegundo } from '../../services/study-aligned-second-tick.service';
 
 @Component({
   selector: 'app-sessao-estudo-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, PomodoroOverlay, RegistroEstudoModalComponent],
+  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, ModoFocoOverlay, PomodoroOverlay, RegistroEstudoModalComponent],
   templateUrl: './sessao-estudo-page.html',
   styleUrl: './sessao-estudo-page.css',
 })
@@ -68,6 +70,7 @@ export class SessaoEstudoPage implements OnDestroy {
   readonly categoriaSaving = signal(false);
   readonly metaSelectsSaving = computed(() => this.topicoSaving() || this.categoriaSaving());
   readonly registroModalAberto = signal(false);
+  readonly modoFocoAberto = signal(false);
 
   private readonly params = toSignal(this.route.paramMap);
 
@@ -130,12 +133,17 @@ export class SessaoEstudoPage implements OnDestroy {
   );
 
   constructor() {
-    // 🔒 Garante que fim de foco pausa sessão real
+    // 🔒 Garante que fim de foco pausa sessão real (congela relógio na hora, API em seguida)
     effect(() => {
       if (this.pomodoro.focusFinished()) {
         untracked(() => {
           if (!this.timer.pausada() && !this.timer.finalizada()) {
-            this.pausarSessao();
+            const estudadoSeg = this.timer.pause();
+            const id = this.sessao()?.id;
+            if (id) {
+              this.pomodoroSnapshot.setSessionElapsed(id, estudadoSeg);
+            }
+            void this.pausarSessao();
           }
         });
       }
@@ -176,6 +184,12 @@ export class SessaoEstudoPage implements OnDestroy {
         this.enviarEstadoPomodoroAoServidor('fim-pausa-por-timer');
       });
     });
+
+    effect(() => {
+      if (this.timer.finalizada() || !!this.sessao()?.fim) {
+        untracked(() => this.modoFocoAberto.set(false));
+      }
+    });
   }
 
   // ================= STATUS =================
@@ -201,7 +215,7 @@ export class SessaoEstudoPage implements OnDestroy {
     }
 
     this.timer.stop();
-    this.pomodoro.stop();
+    this.pomodoro.freeze();
   }
 
   // ================= INIT =================
@@ -242,10 +256,17 @@ export class SessaoEstudoPage implements OnDestroy {
     }
 
     const metaMs = TempoFormatUtil.minutosParaMs(s.tempoMinutos);
-    const baseMsRaw = Number(s.estudadoTotalSeg ?? 0) * 1000;
-    const baseMs = metaMs > 0 ? Math.min(baseMsRaw, metaMs) : Math.max(0, baseMsRaw);
     const pausada = !!s.pausadoEm || !s.inicio;
     const finalizada = !!s.fim;
+    const apiSeg = Number(s.estudadoTotalSeg ?? 0);
+    const elapsedSnap = this.pomodoroSnapshot.getSessionElapsed(s.id);
+    let baseSeg = apiSeg;
+    if (pausada && elapsedSnap) {
+      // API pode ter +1s (relógio de parede); prefere o valor congelado no cliente.
+      baseSeg = Math.min(elapsedSnap.estudadoTotalSeg, apiSeg);
+    }
+    const baseMsRaw = baseSeg * 1000;
+    const baseMs = metaMs > 0 ? Math.min(baseMsRaw, metaMs) : Math.max(0, baseMsRaw);
 
     this.tempoPlanejado.set(TempoFormatUtil.minutosParaHorasMin(s.tempoMinutos));
     this.observacoes.set(s.observacoes ?? '');
@@ -304,6 +325,12 @@ export class SessaoEstudoPage implements OnDestroy {
       (snapshotLocal.modo === 'PAUSA_CURTA' || snapshotLocal.modo === 'PAUSA_LONGA');
 
     if (!sessaoRodando && snapshotEhPausa && snapshotLocal!.restanteSeg > 0) {
+      const overlayPendente = !!this.pomodoroSnapshot.getOverlayPending(s.id);
+      const retomarBreak =
+        !overlayPendente &&
+        !this.pomodoroTemporariamenteDesativado() &&
+        !defer;
+
       this.pomodoro.restore({
         modo: snapshotLocal!.modo,
         cicloIndex: snapshotLocal!.cicloIndex,
@@ -311,6 +338,11 @@ export class SessaoEstudoPage implements OnDestroy {
         rodando: false,
         deferTicker: defer,
       });
+
+      if (retomarBreak) {
+        this.pomodoro.startAt(alinharEpochAoSegundo());
+      }
+
       this.reaplicarOverlayPomodoroSePendente(s.id);
       return;
     }
@@ -428,7 +460,11 @@ export class SessaoEstudoPage implements OnDestroy {
     const sessao = this.sessao()!;
 
     this.executarAcao(async () => {
-      const s = await firstValueFrom(this.api.comecarSessao(sessao.id, sessao.pomodoroAtivo));
+      this.sounds.primeAudioContext();
+
+      const s = await firstValueFrom(
+        this.api.comecarSessao(sessao.id, sessao.pomodoroAtivo, this.metaEstudoParaApi()),
+      );
 
       this.initSessao(s, true);
 
@@ -442,7 +478,9 @@ export class SessaoEstudoPage implements OnDestroy {
 
   private async pausarSessao(): Promise<void> {
     this.executarAcao(async () => {
-      const estudadoSeg = this.timer.pause();
+      const estudadoSeg = this.timer.pausada()
+        ? Math.floor(this.timer.decorridoMs() / 1000)
+        : this.timer.pause();
       this.pomodoro.pause();
       this.salvarSnapshotPomodoro(this.sessao()!.id);
 
@@ -465,7 +503,11 @@ export class SessaoEstudoPage implements OnDestroy {
       : null;
 
     this.executarAcao(async () => {
-      const s = await firstValueFrom(this.api.retomarSessao(this.sessao()!.id));
+      this.sounds.primeAudioContext();
+
+      const s = await firstValueFrom(
+        this.api.retomarSessao(this.sessao()!.id, this.metaEstudoParaApi()),
+      );
 
       this.initSessao(s, true);
 
@@ -667,6 +709,14 @@ export class SessaoEstudoPage implements OnDestroy {
     const s = this.sessao();
     if (!s || s.fim) return;
 
+    const cur = s.topicoId ?? null;
+    if (cur === topicoId) return;
+
+    if (this.cronometroParadoNoServidor(s)) {
+      this.atualizarMetaEstudoLocal({ topicoId });
+      return;
+    }
+
     this.topicoSaving.set(true);
     this.api
       .definirTopicoSessao(s.id, topicoId)
@@ -681,14 +731,32 @@ export class SessaoEstudoPage implements OnDestroy {
     const s = this.sessao();
     if (!s || s.fim) return;
 
+    const next = categoria?.trim() ? categoria.trim().toUpperCase() : null;
+    const cur = s.categoriaEstudo?.trim() ? s.categoriaEstudo.trim().toUpperCase() : null;
+    if (cur === next) return;
+
+    if (this.cronometroParadoNoServidor(s)) {
+      this.atualizarMetaEstudoLocal({ categoriaEstudo: next });
+      return;
+    }
+
     this.categoriaSaving.set(true);
     this.api
-      .definirCategoriaSessao(s.id, categoria)
+      .definirCategoriaSessao(s.id, next)
       .pipe(finalize(() => this.categoriaSaving.set(false)))
       .subscribe({
         next: (dto) => this.initSessao(dto, true),
         error: () => this.toastr.error('Não foi possível atualizar a categoria.'),
       });
+  }
+
+  abrirModoFoco(): void {
+    if (this.timer.finalizada()) return;
+    this.modoFocoAberto.set(true);
+  }
+
+  fecharModoFoco(): void {
+    this.modoFocoAberto.set(false);
   }
 
   abrirRegistroEstudoTeste(): void {
@@ -774,6 +842,11 @@ export class SessaoEstudoPage implements OnDestroy {
   }
 
   private salvarSnapshotPomodoro(sessaoId: number): void {
+    this.pomodoroSnapshot.setSessionElapsed(
+      sessaoId,
+      Math.floor(this.timer.decorridoMs() / 1000),
+    );
+
     if (!this.pomodoroEnabled()) return;
 
     const restanteSeg = this.pomodoro.restanteSegAtual();
@@ -792,5 +865,54 @@ export class SessaoEstudoPage implements OnDestroy {
 
   private sessaoAindaNaoIniciada(s: SessaoDetalheDto): boolean {
     return !s.inicio && !s.fim && (s.estudadoTotalSeg ?? 0) <= 0;
+  }
+
+  /** Sessão ainda não começou ou está pausada no servidor — meta fica só no cliente até iniciar/retomar. */
+  private cronometroParadoNoServidor(s: SessaoDetalheDto): boolean {
+    return !s.inicio || !!s.pausadoEm;
+  }
+
+  private metaEstudoParaApi(): SessaoMetaEstudoRequest | undefined {
+    const s = this.sessao();
+    if (!s) return undefined;
+
+    const topicoId = s.topicoId ?? null;
+    const categoriaEstudo = s.categoriaEstudo?.trim()
+      ? s.categoriaEstudo.trim().toUpperCase()
+      : null;
+
+    if (topicoId == null && categoriaEstudo == null) {
+      return undefined;
+    }
+
+    return { topicoId, categoriaEstudo };
+  }
+
+  private atualizarMetaEstudoLocal(partial: {
+    topicoId?: number | null;
+    categoriaEstudo?: string | null;
+  }): void {
+    this._sessao.update((prev) => {
+      if (!prev) return prev;
+
+      const topicoId = partial.topicoId !== undefined ? partial.topicoId : (prev.topicoId ?? null);
+      const categoriaEstudo = partial.categoriaEstudo !== undefined
+        ? partial.categoriaEstudo
+        : (prev.categoriaEstudo ?? null);
+
+      const topicoTitulo = topicoId != null
+        ? (this.topicosOpcoes().find((t) => t.id === topicoId)?.titulo ?? prev.topicoTitulo ?? null)
+        : null;
+
+      const cat = SESSAO_CATEGORIAS_ESTUDO.find((c) => c.codigo === categoriaEstudo);
+
+      return {
+        ...prev,
+        topicoId,
+        topicoTitulo,
+        categoriaEstudo,
+        categoriaEstudoLabel: cat?.label ?? (categoriaEstudo ? prev.categoriaEstudoLabel ?? null : null),
+      };
+    });
   }
 }

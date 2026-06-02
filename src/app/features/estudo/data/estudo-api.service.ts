@@ -16,6 +16,7 @@ import {
   SegmentoEstudoRegistroDto,
   SessaoCardDto,
   SessaoDetalheDto,
+  SessaoMetaEstudoRequest,
   SessaoTopicoOpcaoDto,
   SpringDataPageDto,
 } from './estudo.models';
@@ -76,8 +77,15 @@ export class EstudoApiService {
     );
   }
 
-  comecarSessao(id: number, pomodoroAtivo: boolean): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/${pomodoroAtivo}/comecar`, {});
+  comecarSessao(
+    id: number,
+    pomodoroAtivo: boolean,
+    meta?: SessaoMetaEstudoRequest | null,
+  ): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(
+      `${this.base}/estudo/sessoes/${id}/${pomodoroAtivo}/comecar`,
+      meta ?? {},
+    );
   }
 
   getSessao(id: number): Observable<SessaoDetalheDto> {
@@ -142,8 +150,8 @@ export class EstudoApiService {
     return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/pausar`, payload);
   }
 
-  retomarSessao(id: number): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/retomar`, {});
+  retomarSessao(id: number, meta?: SessaoMetaEstudoRequest | null): Observable<SessaoDetalheDto> {
+    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/retomar`, meta ?? {});
   }
 
   /** Persiste modo / restante / ciclo após transições locais (ex.: Pular etapa). */

@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../shared/erro/http-suprimir-toast.context';
 
 export type LoginResponse = {
     userId: number,
@@ -20,6 +21,9 @@ export class AuthService {
 
   private readonly apiUrl = environment.authBaseUrl;
 
+  /** Login/cadastro exibem erro no formulário, não toast genérico. */
+  private readonly authHttpContext = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+
   constructor(private httpClient: HttpClient) {}
 
   // =========================
@@ -27,7 +31,7 @@ export class AuthService {
   // =========================
   login(email: string, password: string): Observable<LoginResponse> {
     return this.httpClient
-      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+      .post<LoginResponse>(`${this.apiUrl}/login`, { email, password }, { context: this.authHttpContext })
       .pipe(
         tap((res) => {
           sessionStorage.setItem(this.TOKEN_KEY, res.token);
@@ -44,7 +48,9 @@ export class AuthService {
 
   signup(name: string, email: string, password: string){
     console.log(email);
-    return this.httpClient.post<LoginResponse>(this.apiUrl + "/register", { name, email, password }).pipe(
+    return this.httpClient
+      .post<LoginResponse>(`${this.apiUrl}/register`, { name, email, password }, { context: this.authHttpContext })
+      .pipe(
       tap((value) => {
         sessionStorage.setItem(this.TOKEN_KEY, value.token);
         sessionStorage.setItem(

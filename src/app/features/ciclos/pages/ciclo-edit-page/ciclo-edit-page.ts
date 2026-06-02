@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { Subject } from 'rxjs';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, MIN_HORAS_POR_MATERIA, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {  MateriasCicloList, DisciplinaCicloItem,CicloEditResponseDto,DisciplinaEditDto} from '../materias-ciclo-list/materias-ciclo-list';
 
@@ -96,7 +96,6 @@ export class CicloEditPage implements OnInit{
         checked: !!m.checked,
         peso: m.peso ?? null,
       })),
-      minHorasPorMateria: MIN_HORAS_POR_MATERIA,
     });
 
     const byId = new Map(result.perMateria.map((x) => [x.id, x]));
@@ -114,7 +113,7 @@ export class CicloEditPage implements OnInit{
     const cargaTotal = Number(cargaHorariaSemanal) || 0;
     this.minimoHorasViolado =
       cargaTotal <= ESTUDO_LIVRE_HORAS ||
-      cargaParaMaterias < nAtivas * MIN_HORAS_POR_MATERIA ||
+      result.warningMinimoNaoAtendido ||
       nAtivas === 0;
   }
 
