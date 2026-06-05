@@ -1,11 +1,11 @@
-import { cognoraApiUrls } from './api-host';
+import { cognoraApiUrlsRelative } from './api-host';
 
 /**
- * Build de produção — mesma API no EC2.
+ * Build de produção (Vercel) — API via proxy same-origin em vercel.json.
  */
 export const environment = {
   production: true,
-  ...cognoraApiUrls(),
+  ...cognoraApiUrlsRelative(),
   stripePublishableKey: '',
   mercadoPagoPublicKey: '',
   useBillingMock: false,

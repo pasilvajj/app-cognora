@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 import { extrairMensagemErroHttp } from './extrair-mensagem-erro-http';
 
 const MENSAGEM_CREDENCIAIS = 'E-mail ou senha inválidos.';
@@ -13,7 +14,9 @@ export function mensagemErroLogin(err: HttpErrorResponse): string {
   if (err.status === 0) {
     return (
       api ??
-      'Não foi possível conectar ao servidor. Verifique se a API está rodando (porta 8080) e o proxy do Angular.'
+      (environment.production
+        ? 'Não foi possível conectar ao servidor. Tente novamente em alguns instantes.'
+        : 'Não foi possível conectar ao servidor. Verifique se a API está rodando (porta 8080) e o proxy do Angular.')
     );
   }
 
