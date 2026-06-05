@@ -29,6 +29,14 @@ export class PomodoroOverlay {
     this.closeOverlay.emit();
   }
 
+  /** Evita fechar ao clicar fora quando a sessão já terminou (clique acidental). */
+  onBackdropClick(): void {
+    if (this.sessaoFinalizada()) {
+      return;
+    }
+    this.onClose();
+  }
+
   onNextStage(): void {
     this.nextStage.emit();
   }

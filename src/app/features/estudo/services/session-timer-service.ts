@@ -169,8 +169,11 @@ export class SessionTimerService {
     if (st.pausada || st.finalizada) return;
 
     const agora = this.calcularDecorridoAgora(nowMs);
+    const metaSeg = Math.floor(st.metaMs / 1000);
+    const decorridoSeg = Math.floor(agora / 1000);
 
-    if (st.metaMs > 0 && agora >= st.metaMs) {
+    // Conclui no mesmo segundo em que o display mostra "Restam: 0:00".
+    if (metaSeg > 0 && decorridoSeg >= metaSeg) {
       this.finish();
     } else {
       this.state.update(s => ({ ...s, decorridoMs: agora }));

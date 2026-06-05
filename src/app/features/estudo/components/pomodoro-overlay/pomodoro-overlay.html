@@ -1,4 +1,4 @@
-<div class="pomodoro-overlay" *ngIf="visible()" (click)="onClose()">
+<div class="pomodoro-overlay" *ngIf="visible()" (click)="onBackdropClick()">
   <div class="pomodoro-modal" (click)="$event.stopPropagation()">
     <div class="modal-icon" [class.break]="!isFocusMode"></div>
 

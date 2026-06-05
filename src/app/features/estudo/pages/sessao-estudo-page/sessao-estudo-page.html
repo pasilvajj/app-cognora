@@ -69,6 +69,12 @@
 />
 
 <!-- Overlay fica fora do fluxo principal para evitar problemas de Z-Index -->
-<app-pomodoro-overlay [visible]="pomodoroVisible()" [mode]="pomodoroMode()" [texto]="pomodoroTexto()"
-  (closeOverlay)="onPomodoroCloseOverlay()" (nextStage)="onPomodoroNextStage()">
-</app-pomodoro-overlay>
+<app-pomodoro-overlay
+  [visible]="pomodoroVisible()"
+  [mode]="pomodoroMode()"
+  [texto]="pomodoroTexto()"
+  [sessaoFinalizada]="!!sessao()?.fim || timer.finalizada()"
+  [acaoLoading]="acaoLoading()"
+  (closeOverlay)="onPomodoroCloseOverlay()"
+  (nextStage)="onPomodoroNextStage()"
+/>

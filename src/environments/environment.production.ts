@@ -1,10 +1,10 @@
 import { cognoraApiUrls } from './api-host';
 
 /**
- * Desenvolvimento (`ng serve`) — API remota no EC2, sem proxy para localhost.
+ * Build de produção — mesma API no EC2.
  */
 export const environment = {
-  production: false,
+  production: true,
   ...cognoraApiUrls(),
   stripePublishableKey: '',
   mercadoPagoPublicKey: '',

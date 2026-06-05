@@ -116,7 +116,7 @@ export class EstudoApiService {
   atualizarSegmentoEstudo1(
     eventoId: number,
     body: {
-      topicoId: number;
+      topicoId: number | null;
       categoriaEstudo: string | null;
       duracaoSegundos: number;
       observacoes: string;

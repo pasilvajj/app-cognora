@@ -345,29 +345,37 @@ export class DisciplinaHistoricoPage implements OnInit {
     this.historicoPagina = 0;
     this.historicoSessoes.set([]);
     this.historicoTotalElements.set(0);
-    forkJoin({
-      ciclo: this.ciclosApi.getCiclo(cicloId),
-      progresso: this.estudoApi.getProgressoCiclo(cicloId),
-      resumoGlobal: this.estudoApi.getDisciplinaHistoricoResumo(disciplinaId, cicloId),
-      sessoes: this.estudoApi.getDisciplinaHistoricoSessoes(disciplinaId, cicloId, 0, this.historicoPageSize),
-    }).subscribe({
-      next: ({ ciclo, progresso, resumoGlobal, sessoes }) => {
-        this.aplicarResumo(progresso ?? [], disciplinaId);
-        this.aplicarResumoGlobal(resumoGlobal);
+    // Sessões primeiro: o backend sincroniza segmentos de Estudo Livre antes de listar.
+    this.estudoApi.getDisciplinaHistoricoSessoes(disciplinaId, cicloId, 0, this.historicoPageSize).subscribe({
+      next: (sessoes) => {
         this.historicoSessoes.set(sessoes?.content ?? []);
         this.historicoTotalElements.set(Number(sessoes?.totalElements ?? 0));
-        this.cicloNome.set(String(ciclo?.nome ?? 'Ciclo'));
-        const concursoId = ciclo?.concursoId;
-        if (concursoId == null || !Number.isFinite(Number(concursoId)) || Number(concursoId) <= 0) {
-          this.toast.error('Este ciclo não tem concurso associado ao edital.');
-          this.loading.set(false);
-          return;
-        }
-        this.carregarArvore(Number(concursoId), ciclo as CicloDto, cicloId, disciplinaId);
+        forkJoin({
+          ciclo: this.ciclosApi.getCiclo(cicloId),
+          progresso: this.estudoApi.getProgressoCiclo(cicloId),
+          resumoGlobal: this.estudoApi.getDisciplinaHistoricoResumo(disciplinaId, cicloId),
+        }).subscribe({
+          next: ({ ciclo, progresso, resumoGlobal }) => {
+            this.aplicarResumo(progresso ?? [], disciplinaId);
+            this.aplicarResumoGlobal(resumoGlobal);
+            this.cicloNome.set(String(ciclo?.nome ?? 'Ciclo'));
+            const concursoId = ciclo?.concursoId;
+            if (concursoId == null || !Number.isFinite(Number(concursoId)) || Number(concursoId) <= 0) {
+              this.toast.error('Este ciclo não tem concurso associado ao edital.');
+              this.loading.set(false);
+              return;
+            }
+            this.carregarArvore(Number(concursoId), ciclo as CicloDto, cicloId, disciplinaId);
+          },
+          error: () => {
+            this.loading.set(false);
+            this.toast.error('Não foi possível carregar os dados da disciplina.');
+          },
+        });
       },
       error: () => {
         this.loading.set(false);
-        this.toast.error('Não foi possível carregar os dados da disciplina.');
+        this.toast.error('Não foi possível carregar o histórico de registos.');
       },
     });
   }

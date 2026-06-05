@@ -265,6 +265,10 @@ export class SessaoEstudoPage implements OnDestroy {
       // API pode ter +1s (relógio de parede); prefere o valor congelado no cliente.
       baseSeg = Math.min(elapsedSnap.estudadoTotalSeg, apiSeg);
     }
+    const metaSeg = metaMs > 0 ? Math.floor(metaMs / 1000) : 0;
+    if (finalizada && s.concluido && metaSeg > 0 && baseSeg >= metaSeg - 1 && baseSeg < metaSeg) {
+      baseSeg = metaSeg;
+    }
     const baseMsRaw = baseSeg * 1000;
     const baseMs = metaMs > 0 ? Math.min(baseMsRaw, metaMs) : Math.max(0, baseMsRaw);
 
@@ -550,6 +554,12 @@ export class SessaoEstudoPage implements OnDestroy {
     const s = this.sessao();
     if (!s || this.finalizandoSessao() || !!s.fim) return;
 
+    const metaSeg = Math.max(0, Math.floor(TempoFormatUtil.minutosParaMs(s.tempoMinutos) / 1000));
+    let estudadoSeg = Math.max(0, Math.floor(this.timer.decorridoMs() / 1000));
+    if (concluido && metaSeg > 0 && estudadoSeg >= metaSeg - 1) {
+      estudadoSeg = metaSeg;
+    }
+
     this.finalizandoSessao.set(true);
     this.acaoLoading.set(true);
     this.timer.finish();
@@ -559,6 +569,7 @@ export class SessaoEstudoPage implements OnDestroy {
       id: s.id,
       concluido,
       observacoes: this.observacoes(),
+      estudadoTotalSeg: estudadoSeg,
     }).pipe(
       finalize(() => {
         this.finalizandoSessao.set(false);
@@ -648,8 +659,8 @@ export class SessaoEstudoPage implements OnDestroy {
   }
 
   onPomodoroCloseOverlay(): void {
-    if (!this.timer.pausada()) {
-      this.pausarSessao();
+    if (!this.timer.pausada() && !this.timer.finalizada()) {
+      void this.pausarSessao();
     }
 
     this.pomodoro.closeOverlay();

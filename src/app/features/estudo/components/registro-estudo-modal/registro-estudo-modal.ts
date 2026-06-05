@@ -78,8 +78,10 @@ export class RegistroEstudoModalComponent implements OnChanges {
       return;
     }
     if (this.topicoId == null || this.topicoId <= 0) {
-      this.toast.warning('Selecione um tópico.');
-      return;
+      if (this.topicosOpcoes.length > 0) {
+        this.toast.warning('Selecione um tópico.');
+        return;
+      }
     }
     const segundos = RegistroEstudoModalComponent.parseHhMmSs(this.tempoTexto);
     if (segundos == null) {
@@ -102,7 +104,7 @@ export class RegistroEstudoModalComponent implements OnChanges {
     this.cdr.markForCheck();
     this.api
       .atualizarSegmentoEstudo1(eventoId, {
-        topicoId: this.topicoId as number,
+        topicoId: this.topicoId != null && this.topicoId > 0 ? this.topicoId : null,
         categoriaEstudo: cat,
         duracaoSegundos,
         observacoes: this.comentarios ?? '',
@@ -125,7 +127,9 @@ export class RegistroEstudoModalComponent implements OnChanges {
     const cat = this.categoriaCodigo?.trim() ? this.categoriaCodigo.trim().toUpperCase() : null;
     try {
       // Sequencial: evita deadlock em MySQL (vários POSTs em paralelo na mesma sessão/eventos).
-      await firstValueFrom(this.api.definirTopicoSessao(sid, this.topicoId));
+      if (this.topicoId != null && this.topicoId > 0) {
+        await firstValueFrom(this.api.definirTopicoSessao(sid, this.topicoId));
+      }
       await firstValueFrom(this.api.definirCategoriaSessao(sid, cat));
       await firstValueFrom(this.api.atualizarObservacoes(sid, this.comentarios ?? ''));
       const s = await this.api.getSessao1(sid);
@@ -174,19 +178,18 @@ export class RegistroEstudoModalComponent implements OnChanges {
 
       const evId = this.segmentoId;
       if (evId != null && evId > 0) {
-        const seg = await this.api.getSegmentoEstudo1(evId);
-        this.topicoId = seg.topicoId ?? null;
-        this.categoriaCodigo = seg.categoriaEstudoCodigo ?? '';
-        this.comentarios = seg.observacoes ?? '';
-        const dur = Math.max(0, Math.floor(Number(seg.duracaoSegundos ?? 0)));
-        this.tempoTexto = RegistroEstudoModalComponent.segundosParaHhMmSs(dur);
+        try {
+          const seg = await this.api.getSegmentoEstudo1(evId);
+          this.topicoId = seg.topicoId ?? null;
+          this.categoriaCodigo = seg.categoriaEstudoCodigo ?? '';
+          this.comentarios = seg.observacoes ?? '';
+          const dur = Math.max(0, Math.floor(Number(seg.duracaoSegundos ?? 0)));
+          this.tempoTexto = RegistroEstudoModalComponent.segundosParaHhMmSs(dur);
+        } catch {
+          await this.preencherFormularioAPartirDaSessao(sid);
+        }
       } else {
-        const sessao = await this.api.getSessao1(sid);
-        this.topicoId = sessao.topicoId ?? null;
-        this.categoriaCodigo = sessao.categoriaEstudo ?? '';
-        this.comentarios = sessao.observacoes ?? '';
-        const seg = Math.max(0, Math.floor(Number(sessao.estudadoTotalSeg ?? 0)));
-        this.tempoTexto = RegistroEstudoModalComponent.segundosParaHhMmSs(seg);
+        await this.preencherFormularioAPartirDaSessao(sid);
       }
     } catch {
       this.toast.error('Não foi possível carregar os dados para o registo.');
@@ -195,6 +198,15 @@ export class RegistroEstudoModalComponent implements OnChanges {
       this.carregando = false;
       this.cdr.markForCheck();
     }
+  }
+
+  private async preencherFormularioAPartirDaSessao(sid: number): Promise<void> {
+    const sessao = await this.api.getSessao1(sid);
+    this.topicoId = sessao.topicoId ?? null;
+    this.categoriaCodigo = sessao.categoriaEstudo ?? '';
+    this.comentarios = sessao.observacoes ?? '';
+    const seg = Math.max(0, Math.floor(Number(sessao.estudadoTotalSeg ?? 0)));
+    this.tempoTexto = RegistroEstudoModalComponent.segundosParaHhMmSs(seg);
   }
 
   static segundosParaHhMmSs(seg: number): string {

@@ -38,6 +38,8 @@ export interface FinalizarSessaoRequest {
   id: number;
   concluido: boolean;
   observacoes?: string;
+  /** Tempo estudado no cliente ao concluir (evita −1s no último trecho em relógio de parede). */
+  estudadoTotalSeg?: number;
 }
 
 export interface AtualizarObservacoesRequest {
