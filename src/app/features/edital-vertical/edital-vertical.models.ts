@@ -17,8 +17,12 @@ export type EditalVerticalCargoDto = {
   disciplinas: EditalVerticalDisciplinaDto[];
 };
 
+import type { EditalTopicoEstadoResponseDto } from './edital-topico-estado.models';
+
 export type EditalVerticalConcursoDto = {
   id: number;
   nome: string;
   cargos: EditalVerticalCargoDto[];
+  /** Incluído quando {@code cicloId} é enviado no GET (evita 2.º request na carga). */
+  estadoTopico?: EditalTopicoEstadoResponseDto | null;
 };

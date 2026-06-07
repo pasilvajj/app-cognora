@@ -1,9 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { finalize, forkJoin, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { Subscription, finalize, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
 import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
@@ -38,7 +38,7 @@ type FooterTone = 'success' | 'warn' | 'muted' | 'primary';
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.css',
 })
-export class DashboardPage implements OnInit {
+export class DashboardPage implements OnInit, OnDestroy {
 
   toast = inject(ToastrService);
 
@@ -78,8 +78,8 @@ export class DashboardPage implements OnInit {
   private actionCicloItemId: number | null = null;
   private actionIsRetomar = signal(false);
 
-  semana: WeekDayDto[] = [];
-  /** Gráfico paralelo (teste): só `estudo_diario_ciclo`; mesmos 7 dias que `semana`. */
+  // semana: WeekDayDto[] = []; // gráfico "Estudos da semana" desativado
+  /** Gráfico ativo (teste): só `estudo_diario_ciclo`. */
   semanaSoDiario: WeekDayDto[] = [];
   /** Mesma fonte/normalização que Estudar Agora (`getProgressoCiclo` + meta das matérias). */
   progressoItems: ProgressDisciplinaItem[] = [];
@@ -91,14 +91,16 @@ export class DashboardPage implements OnInit {
   /** `summary-first` = como no desktop (tempo → … → sessão). `session-first` = CTA “Sessão” no topo. */
   cardsMobileOrder = signal<'summary-first' | 'session-first'>('summary-first');
 
-  /** Segunda-feira (yyyy-MM-dd) da semana exibida no resumo e no gráfico. */
-  private weekStartIso = '';
+  // private weekStartIso = ''; // navegação do gráfico legado desativada
 
-  /** Segunda-feira da semana consultada no gráfico “só diário” (pode diferir do resumo). */
+  /** Segunda-feira da semana exibida no gráfico “só diário”. */
   private weekStartIsoDiario = '';
 
   /** Pedido em curso só para `getSemanaSoDiario` (navegação do 2.º gráfico). */
   soDiarioLoading = signal(false);
+
+  private resumoLoadSub?: Subscription;
+  private soDiarioLoadSub?: Subscription;
 
   dashboardApi = inject(DashboardApiService);
   ciclosApi = inject(CiclosApiService);
@@ -118,6 +120,11 @@ export class DashboardPage implements OnInit {
 
     this.readMobileCardOrderPref();
     this.carregarCiclos();
+  }
+
+  ngOnDestroy(): void {
+    this.resumoLoadSub?.unsubscribe();
+    this.soDiarioLoadSub?.unsubscribe();
   }
 
   private readMobileCardOrderPref(): void {
@@ -145,57 +152,26 @@ export class DashboardPage implements OnInit {
     this.cicloId = id;
     this.salvarCicloPreferido(id);
     const hojeSeg = this.getMondayIso(new Date());
-    this.weekStartIso = hojeSeg;
     this.weekStartIsoDiario = hojeSeg;
     this.carregarResumo();
   }
 
-  get intervaloSemanaLabel(): string {
-    const start = this.weekStartIso || this.getMondayIso(new Date());
-    const end = this.addDaysIso(start, 6);
-    return this.formatarIntervaloSemana(start, end);
-  }
-
-  get semanaPosteriorDesabilitada(): boolean {
-    const cur = this.getMondayIso(new Date());
-    return !this.weekStartIso || this.weekStartIso >= cur;
-  }
-
-  semanaAnterior(): void {
-    if (!this.cicloId || this.loading) {
-      return;
-    }
-    if (!this.weekStartIso) {
-      this.weekStartIso = this.getMondayIso(new Date());
-    }
-    this.weekStartIso = this.addDaysIso(this.weekStartIso, -7);
-    this.carregarResumo();
-  }
-
-  proximaSemana(): void {
-    if (!this.cicloId || this.loading || this.semanaPosteriorDesabilitada) {
-      return;
-    }
-    const cur = this.getMondayIso(new Date());
-    const next = this.addDaysIso(this.weekStartIso, 7);
-    if (next > cur) {
-      return;
-    }
-    this.weekStartIso = next;
-    this.carregarResumo();
-  }
+  /*
+  get intervaloSemanaLabel(): string { ... }
+  get semanaPosteriorDesabilitada(): boolean { ... }
+  semanaAnterior(): void { ... }
+  proximaSemana(): void { ... }
+  */
 
   get intervaloSemanaSoDiarioLabel(): string {
-    const start =
-      this.weekStartIsoDiario || this.weekStartIso || this.getMondayIso(new Date());
+    const start = this.weekStartIsoDiario || this.getMondayIso(new Date());
     const end = this.addDaysIso(start, 6);
     return this.formatarIntervaloSemana(start, end);
   }
 
   get semanaPosteriorDesabilitadaSoDiario(): boolean {
     const cur = this.getMondayIso(new Date());
-    const start =
-      this.weekStartIsoDiario || this.weekStartIso || this.getMondayIso(new Date());
+    const start = this.weekStartIsoDiario || this.getMondayIso(new Date());
     return start >= cur;
   }
 
@@ -204,7 +180,7 @@ export class DashboardPage implements OnInit {
       return;
     }
     if (!this.weekStartIsoDiario) {
-      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+      this.weekStartIsoDiario = this.getMondayIso(new Date());
     }
     this.weekStartIsoDiario = this.addDaysIso(this.weekStartIsoDiario, -7);
     this.carregarSoDiarioSolo();
@@ -220,7 +196,7 @@ export class DashboardPage implements OnInit {
       return;
     }
     if (!this.weekStartIsoDiario) {
-      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+      this.weekStartIsoDiario = this.getMondayIso(new Date());
     }
     const cur = this.getMondayIso(new Date());
     const next = this.addDaysIso(this.weekStartIsoDiario, 7);
@@ -250,11 +226,8 @@ export class DashboardPage implements OnInit {
         this.salvarCicloPreferido(this.cicloId);
       }
 
-      if (!this.weekStartIso) {
-        this.weekStartIso = this.getMondayIso(new Date());
-      }
       if (!this.weekStartIsoDiario) {
-        this.weekStartIsoDiario = this.weekStartIso;
+        this.weekStartIsoDiario = this.getMondayIso(new Date());
       }
 
       // Como é uma sequência lógica, o resumo só carrega após o sucesso dos ciclos
@@ -271,67 +244,60 @@ export class DashboardPage implements OnInit {
   }
 
 
-  private carregarResumo(): void {
-    if (!this.cicloId) return;
+  private carregarResumo(): Promise<void> {
+    if (!this.cicloId) {
+      return Promise.resolve();
+    }
 
     const cicloId = this.cicloId;
 
-    if (!this.weekStartIso) {
-      this.weekStartIso = this.getMondayIso(new Date());
-    }
     if (!this.weekStartIsoDiario) {
-      this.weekStartIsoDiario = this.weekStartIso;
+      this.weekStartIsoDiario = this.getMondayIso(new Date());
     }
 
+    this.resumoLoadSub?.unsubscribe();
     this.loading = true;
 
-    forkJoin({
-      resumo: this.dashboardApi.getResumo(cicloId, this.weekStartIso),
-      soDiario: this.dashboardApi.getSemanaSoDiario(cicloId, this.weekStartIsoDiario).pipe(
-        catchError(() =>
-          of<DashboardSemanaSoDiarioDto>({
-            cicloId,
-            segundaFeiraSemana: this.weekStartIsoDiario,
-            estudadoSemanaSeg: 0,
-            semana: [],
-          }),
+    return new Promise((resolve, reject) => {
+      this.resumoLoadSub = forkJoin({
+        resumo: this.dashboardApi.getResumo(cicloId, {
+          chartWeekStart: this.weekStartIsoDiario,
+        }),
+        estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId).pipe(
+          catchError(() => of(null)),
         ),
-      ),
-      estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId).pipe(
-        catchError(() => of(null)),
-      ),
-    }).subscribe({
-      next: ({ resumo: r, soDiario, estadoMaterias }) => {
-        this.resumo = r;
-        this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
-        this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
+      }).subscribe({
+        next: ({ resumo: r, estadoMaterias }) => {
+          this.resumo = r;
+          this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
+          this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
 
-        // ===== STREAK =====
-        const streak = r.streakDias ?? 0;
-        this.streakValue = `${streak} dia${streak === 1 ? '' : 's'} consecutivo${streak === 1 ? '' : 's'}`;
-        this.streakFooterText = `Recorde: ${r.recordeStreakDias ?? 0} dias`;
+          const streak = r.streakDias ?? 0;
+          this.streakValue = `${streak} dia${streak === 1 ? '' : 's'} consecutivo${streak === 1 ? '' : 's'}`;
+          this.streakFooterText = `Recorde: ${r.recordeStreakDias ?? 0} dias`;
 
-        const materiasList = estadoMaterias?.materias ?? [];
-        const aguardandoNovaRodada = estadoMaterias?.aguardandoNovaRodada ?? false;
-        const proximaAlinhada = aguardandoNovaRodada
-          ? null
-          : alinharProximaSessaoAoItensDoCiclo(r.proximaSessao ?? undefined, materiasList);
+          const materiasList = estadoMaterias?.materias ?? [];
+          const aguardandoNovaRodada = estadoMaterias?.aguardandoNovaRodada ?? false;
+          const proximaAlinhada = aguardandoNovaRodada
+            ? null
+            : alinharProximaSessaoAoItensDoCiclo(r.proximaSessao ?? undefined, materiasList);
 
-        // ===== CARD DE AÇÃO (sem “próxima matéria” entre rodadas até confirmar nova volta no Estudar Agora) =====
-        this.aplicarCardAcao(r.recentes ?? [], proximaAlinhada);
+          this.aplicarCardAcao(r.recentes ?? [], proximaAlinhada);
 
-        // ===== CHART / PROGRESSO =====
-        this.semana = r.semana ?? [];
-        this.semanaSoDiario = soDiario.semana ?? [];
-        this.carregarProgressoPorDisciplina(r.progresso ?? [], materiasList);
+          const soDiario = r.semanaSoDiario;
+          this.semanaSoDiario = soDiario?.semana ?? [];
+          this.aplicarProgressoPorDisciplina(r.progresso ?? [], materiasList);
 
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
+          this.loading = false;
+          this.cdr.detectChanges();
+          resolve();
+        },
+        error: (err) => {
+          this.loading = false;
+          this.cdr.detectChanges();
+          reject(err);
+        },
+      });
     });
   }
 
@@ -342,10 +308,11 @@ export class DashboardPage implements OnInit {
     }
     const cicloId = this.cicloId;
     if (!this.weekStartIsoDiario) {
-      this.weekStartIsoDiario = this.weekStartIso || this.getMondayIso(new Date());
+      this.weekStartIsoDiario = this.getMondayIso(new Date());
     }
+    this.soDiarioLoadSub?.unsubscribe();
     this.soDiarioLoading.set(true);
-    this.dashboardApi
+    this.soDiarioLoadSub = this.dashboardApi
       .getSemanaSoDiario(cicloId, this.weekStartIsoDiario)
       .pipe(
         catchError(() =>
@@ -368,61 +335,48 @@ export class DashboardPage implements OnInit {
   }
 
   /**
-   * Progresso por disciplina: `EstudoApiService.getProgressoCiclo` + meta via matérias do ciclo
-   * (equivalente ao painel em Estudar Agora). Em falha parcial, usa `progresso` do resumo do dashboard.
+   * Progresso por disciplina a partir do resumo do dashboard + metas das matérias do ciclo.
+   * Só dispara `getProgressoCiclo` quando o resumo não trouxe progresso.
    */
-  private carregarProgressoPorDisciplina(
+  private aplicarProgressoPorDisciplina(
     fallbackResumo: ProgressoDisciplinaDto[],
-    materiasPrefetched?: CicloMateriaDto[],
+    materiasList: CicloMateriaDto[],
   ): void {
     if (!this.cicloId) {
       this.progressoItems = [];
       return;
     }
 
+    if (fallbackResumo.length > 0) {
+      this.montarProgressoItems(fallbackResumo as unknown as ProgressoEstudoDto[], materiasList);
+      return;
+    }
+
     const cicloId = this.cicloId;
+    this.estudoApi
+      .getProgressoCiclo(cicloId)
+      .pipe(catchError(() => of([] as ProgressoEstudoDto[])))
+      .subscribe((progresso) => {
+        this.montarProgressoItems(progresso ?? [], materiasList);
+        this.cdr.detectChanges();
+      });
+  }
 
-    const materias$ =
-      materiasPrefetched !== undefined
-        ? of(materiasPrefetched)
-        : this.ciclosApi.getMateriasCiclo(cicloId).pipe(
-            map((resp) => resp?.materias ?? []),
-            catchError(() => of([] as CicloMateriaDto[])),
-          );
+  private montarProgressoItems(lista: ProgressoEstudoDto[], materiasList: CicloMateriaDto[]): void {
+    const getMeta = (nome: string): number => {
+      const key = normalizarNomeDisciplina(nome);
+      const item = materiasList.find((m) => normalizarNomeDisciplina(m.disciplinaNome) === key);
+      const meta = Number(item?.tempoMinutos ?? 0);
+      return Number.isFinite(meta) && meta > 0 ? meta : 0;
+    };
 
-    const progresso$ =
-      fallbackResumo.length > 0
-        ? of(fallbackResumo as unknown as ProgressoEstudoDto[])
-        : this.estudoApi.getProgressoCiclo(cicloId).pipe(
-            catchError(() => of([] as ProgressoEstudoDto[])),
-          );
+    this.aplicarCardHorasCiclo(lista, materiasList, getMeta);
 
-    forkJoin({
-      progresso: progresso$,
-      materias: materias$,
-    }).subscribe(({ progresso, materias }) => {
-      const materiasList = materias ?? [];
-      const getMeta = (nome: string): number => {
-        const key = normalizarNomeDisciplina(nome);
-        const item = materiasList.find((m) => normalizarNomeDisciplina(m.disciplinaNome) === key);
-        const meta = Number(item?.tempoMinutos ?? 0);
-        return Number.isFinite(meta) && meta > 0 ? meta : 0;
-      };
-
-      let lista: ProgressoEstudoDto[] = progresso ?? [];
-      if (!lista.length && fallbackResumo.length) {
-        lista = fallbackResumo as unknown as ProgressoEstudoDto[];
-      }
-
-      this.aplicarCardHorasCiclo(lista, materiasList, getMeta);
-
-      this.progressoItems = lista.map((p) => ({
-        name: p.disciplinaNome,
-        percent: normalizarPercentualProgresso(p, getMeta),
-        disciplinaId: Number.isFinite(Number(p.disciplinaId)) ? Number(p.disciplinaId) : undefined,
-      }));
-      this.cdr.detectChanges();
-    });
+    this.progressoItems = lista.map((p) => ({
+      name: p.disciplinaNome,
+      percent: normalizarPercentualProgresso(p, getMeta),
+      disciplinaId: Number.isFinite(Number(p.disciplinaId)) ? Number(p.disciplinaId) : undefined,
+    }));
   }
 
   private aplicarCardHorasCiclo(

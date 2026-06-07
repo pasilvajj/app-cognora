@@ -145,6 +145,38 @@ function garantirOrdemMinutosPorPeso(
   }
 }
 
+/**
+ * Após o piso dinâmico, a matéria de maior peso pode empatar com outra de peso menor.
+ * Transfere 1 bloco de 30 min da de menor peso para a de maior peso quando empata,
+ * apenas se a de menor peso ainda puder ceder sem violar o piso absoluto.
+ */
+function garantirDiferencaMinimaEntrePesosDistintos(
+  minutos: number[],
+  weights: number[],
+  minAbsolutoMinutos: number,
+  step: number,
+): void {
+  const maxWeight = Math.max(...weights);
+  const idx = minutos.map((_, i) => i).sort((a, b) => weights[b] - weights[a]);
+
+  for (let k = 0; k < idx.length - 1; k++) {
+    const hi = idx[k];
+    if (weights[hi] !== maxWeight) {
+      continue;
+    }
+    for (let m = k + 1; m < idx.length; m++) {
+      const lo = idx[m];
+      if (weights[hi] <= weights[lo] || minutos[hi] !== minutos[lo]) {
+        continue;
+      }
+      if (minutos[lo] > minAbsolutoMinutos) {
+        minutos[lo] -= step;
+        minutos[hi] += step;
+      }
+    }
+  }
+}
+
 /** Distribui o pool em passos de 30 min: Hamilton + piso dinâmico + ordem por peso. */
 export function distribuirMinutosPorPeso(
   poolMinutos: number,
@@ -162,6 +194,7 @@ export function distribuirMinutosPorPeso(
   garantirOrdemMinutosPorPeso(minutos, weights, absMin, stepMinutos);
   garantirMinimoMinutos(minutos, weights, piso, stepMinutos);
   garantirOrdemMinutosPorPeso(minutos, weights, absMin, stepMinutos);
+  garantirDiferencaMinimaEntrePesosDistintos(minutos, weights, absMin, stepMinutos);
 
   return minutos;
 }

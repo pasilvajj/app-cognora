@@ -1,3 +1,5 @@
+import type { CicloMateriasComEstadoDto } from '../../ciclos/data/ciclos-api.service';
+
 /**
  * DTOs de Configuração e Ciclo
  */
@@ -22,6 +24,14 @@ export interface ProgressoDisciplinaDto {
 
 /** Resposta agregada: mesmo critério que progresso + recentes, uma carga no servidor. */
 export interface ProgressoRecentesRodadaDto {
+  progresso: ProgressoDisciplinaDto[];
+  recentes: SessaoCardDto[];
+}
+
+/** Carga única da página Estudar Agora. */
+export interface EstudarAgoraCargaDto {
+  estadoMaterias: CicloMateriasComEstadoDto;
+  proximaSessao: ProximaSessaoDto | null;
   progresso: ProgressoDisciplinaDto[];
   recentes: SessaoCardDto[];
 }
@@ -131,6 +141,7 @@ export interface SessaoCardDto {
   estudadoTotalSeg: number;
   /** Ordem da matéria no ciclo (CicloItem.ordem). */
   ordemNoCiclo?: number | null;
+  observacoes?: string | null;
 }
 
 export interface SessaoResumoDto {

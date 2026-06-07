@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, OnInit, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin, of } from 'rxjs';
+import { EMPTY, Subscription } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { EstudarAgoraCicloFimBanner } from '../../components/estudar-agora/estudar-agora-ciclo-fim-banner/estudar-agora-ciclo-fim-banner';
@@ -12,7 +12,7 @@ import { EstudarAgoraProgressoCicloCard } from '../../components/estudar-agora/e
 import { EstudarAgoraProximaSessaoCard } from '../../components/estudar-agora/estudar-agora-proxima-sessao-card/estudar-agora-proxima-sessao-card';
 import { EstudarAgoraObservacaoItem, EstudarAgoraProgressItem } from '../../components/estudar-agora/estudar-agora-view.models';
 import { TempoFormatUtil } from '../../../../shared/utils/tempo-format.util';
-import { CicloMateriaDto, CiclosApiService, CicloMateriasComEstadoDto } from '../../../ciclos/data/ciclos-api.service';
+import { CicloMateriaDto, CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
 import {
   normalizarNomeDisciplina,
   normalizarPercentualProgresso as normalizarPercentualProgressoUtil,
@@ -41,7 +41,7 @@ import { ProgressoDisciplinaDto, ProximaSessaoDto, SessaoCardDto } from '../../d
   templateUrl: './estudar-agora.html',
   styleUrl: './estudar-agora.css',
 })
-export class EstudarAgora implements OnInit {
+export class EstudarAgora implements OnInit, OnDestroy {
 
   cicloId!: number;
   loading = signal(true);
@@ -76,6 +76,8 @@ export class EstudarAgora implements OnInit {
   rodadaAtualNumero = signal<number | null>(null);
   iniciandoNovaRodada = signal(false);
 
+  private loadSub?: Subscription;
+
   constructor(
     private readonly ciclosApi: CiclosApiService,
     private readonly estudoApi: EstudoApiService,
@@ -106,27 +108,30 @@ export class EstudarAgora implements OnInit {
     this.carregarEstudarAgora();
   }
 
+  ngOnDestroy(): void {
+    this.loadSub?.unsubscribe();
+  }
+
   voltarParaMeusCiclos(): void {
     this.router.navigate(['/ciclos']);
   }
 
   /** Recarrega próxima sessão, matérias (com estado de rodada), progresso e últimas sessões. */
   private carregarEstudarAgora(): void {
+    this.loadSub?.unsubscribe();
     this.loading.set(true);
-    forkJoin({
-      proxima: this.estudoApi.getProximaSessao(this.cicloId).pipe(catchError(() => of(undefined))),
-      estadoMaterias: this.ciclosApi.getMateriasCiclo(this.cicloId).pipe(
-        catchError(() => of(undefined as CicloMateriasComEstadoDto | undefined)),
-      ),
-      progressoRecentes: this.estudoApi.getProgressoERecentesRodada(this.cicloId, 10).pipe(
-        catchError(() =>
-          of({ progresso: [] as ProgressoDisciplinaDto[], recentes: [] as SessaoCardDto[] }),
-        ),
-      ),
-    })
-      .pipe(finalize(() => this.loading.set(false)))
+    this.loadSub = this.estudoApi
+      .getEstudarAgoraCarga(this.cicloId)
+      .pipe(
+        catchError(() => {
+          this.toastr.error('Erro ao carregar a página de estudo.');
+          return EMPTY;
+        }),
+        finalize(() => this.loading.set(false)),
+      )
       .subscribe({
-        next: ({ proxima, estadoMaterias, progressoRecentes }) => {
+        next: (carga) => {
+          const estadoMaterias = carga.estadoMaterias;
           if (!estadoMaterias) {
             this.toastr.error('Não foi possível carregar as matérias do ciclo.');
             return;
@@ -160,6 +165,7 @@ export class EstudarAgora implements OnInit {
             estadoMaterias.materias.map((m) => normalizarNomeDisciplina(m.disciplinaNome)),
           );
 
+          const proxima = carga.proximaSessao ?? undefined;
           if (estadoMaterias.aguardandoNovaRodada) {
             this.proximaSessaoDto = undefined;
             this.selecionadoCicloItemId = undefined;
@@ -172,19 +178,18 @@ export class EstudarAgora implements OnInit {
             this.alinharProximaSessaoAoCiclo();
           }
 
-          this.progressoBruto = progressoRecentes?.progresso ?? [];
+          this.progressoBruto = carga.progresso ?? [];
           this.recalcularProgresso();
 
-          const lista = progressoRecentes?.recentes ?? [];
+          const lista = carga.recentes ?? [];
           const inicializadas = lista
             .filter((s) => this.sessaoCronometroJaIniciou(s))
             .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome));
           this.recentSessions = inicializadas.map((s) => this.mapSessaoParaCard(s));
-          this.carregarObservacoesDasSessoes(inicializadas);
+          this.aplicarObservacoesDasSessoes(inicializadas);
 
           this.cdr.detectChanges();
         },
-        error: () => this.toastr.error('Erro ao carregar a página de estudo.'),
       });
   }
 
@@ -405,43 +410,24 @@ export class EstudarAgora implements OnInit {
     return `${dd}/${mm}`;
   }
 
-  private carregarObservacoesDasSessoes(sessoes: SessaoCardDto[]): void {
-    const ids = [...new Set((sessoes ?? []).map(s => Number(s.id)).filter(id => Number.isFinite(id) && id > 0))];
-    if (!ids.length) {
-      this.observacoesMateria = [];
-      return;
-    }
-
-    this.observacoesLoading.set(true);
-
-    forkJoin(
-      ids.map(id =>
-        this.estudoApi.getSessao(id).pipe(
-          catchError(() => of(null)),
-        ),
-      ),
-    ).pipe(
-      finalize(() => this.observacoesLoading.set(false)),
-    ).subscribe((detalhes) => {
-      const notas = (detalhes ?? [])
-        .filter((s): s is NonNullable<typeof s> => !!s)
-        .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome))
-        .map((s) => {
-          const dataSessao = s.inicio ?? s.fim;
-          return {
+  private aplicarObservacoesDasSessoes(sessoes: SessaoCardDto[]): void {
+    this.observacoesLoading.set(false);
+    const notas = (sessoes ?? [])
+      .filter((s) => this.disciplinaAindaNoCicloExec(s.disciplinaId, s.disciplinaNome))
+      .map((s) => {
+        const dataSessao = s.inicio ?? s.fim;
+        return {
           sessaoId: s.id,
           disciplina: s.disciplinaNome,
           observacao: (s.observacoes ?? '').trim(),
-          dataIso: dataSessao,
+          dataIso: dataSessao ?? '',
           dataLabel: this.formatDataHora(dataSessao),
         };
-        })
-        .filter((n) => !!n.observacao)
-        .sort((a, b) => Date.parse(b.dataIso) - Date.parse(a.dataIso));
+      })
+      .filter((n) => !!n.observacao)
+      .sort((a, b) => Date.parse(b.dataIso) - Date.parse(a.dataIso));
 
-      this.observacoesMateria = notas;
-      this.cdr.detectChanges();
-    });
+    this.observacoesMateria = notas;
   }
 
   private formatDataHora(iso?: string | null): string {

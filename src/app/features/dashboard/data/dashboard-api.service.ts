@@ -60,6 +60,8 @@ export type DashboardResumoDto = {
   semana: WeekDayDto[];
   progresso: ProgressoDisciplinaDto[];
   recentes: SessaoCardDto[];
+  /** Incluído quando {@code chartWeekStart} é enviado no resumo (evita 2º GET na carga). */
+  semanaSoDiario?: DashboardSemanaSoDiarioDto | null;
 };
 
 /** Resposta de `GET /dashboard/semana-so-diario` (gráfico de teste só com `estudo_diario_ciclo`). */
@@ -77,14 +79,21 @@ export class DashboardApiService {
   constructor(private http: HttpClient) {}
 
   /**
-   * @param weekStartIso segunda-feira da semana (yyyy-MM-dd); omitido = semana atual no servidor
+   * @param options.weekStart segunda-feira dos cards (yyyy-MM-dd); omitido = semana atual
+   * @param options.chartWeekStart segunda-feira do gráfico “só diário” (incluída na resposta)
    */
-  getResumo(cicloId: number, weekStartIso?: string | null): Observable<DashboardResumoDto> {
+  getResumo(
+    cicloId: number,
+    options?: { weekStart?: string | null; chartWeekStart?: string | null },
+  ): Observable<DashboardResumoDto> {
     let params = new HttpParams().set('cicloId', String(cicloId));
-    if (weekStartIso) {
-      params = params.set('weekStart', weekStartIso);
+    if (options?.weekStart) {
+      params = params.set('weekStart', options.weekStart);
     }
-    
+    if (options?.chartWeekStart) {
+      params = params.set('chartWeekStart', options.chartWeekStart);
+    }
+
     return this.http.get<DashboardResumoDto>(`${this.baseUrl}/dashboard/resumo`, { params });
   }
 

@@ -1,7 +1,7 @@
 import { resolveCognoraApiUrls } from './api-host';
 
 /**
- * Desenvolvimento (`ng serve`) — HTTP local usa EC2 direto; HTTPS usa `/api` (proxy).
+ * Desenvolvimento (`ng serve`) — `/api` via proxy para EC2 AWS.
  */
 export const environment = {
   production: false,

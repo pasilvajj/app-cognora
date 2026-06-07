@@ -1,7 +1,7 @@
-/** API Cognora no EC2 (backend Spring Boot, porta 8080). */
+/** API no EC2 (Spring Boot, porta 8080). */
 export const COGNORA_API_HOST = 'http://3.141.199.149:8080';
 
-/** URLs absolutas — `ng serve` em http://localhost chama o EC2 direto. */
+/** URLs absolutas — acesso direto ao backend (ex.: testes fora do `ng serve`). */
 export const cognoraApiUrls = () => ({
   apiBaseUrl: `${COGNORA_API_HOST}/api`,
   authBaseUrl: `${COGNORA_API_HOST}/api/auth`,
@@ -9,8 +9,8 @@ export const cognoraApiUrls = () => ({
 });
 
 /**
- * URLs relativas — Vercel (HTTPS) usa proxy em vercel.json (`/api` → EC2).
- * Evita mixed content (HTTPS → HTTP) e CORS no browser.
+ * URLs relativas — `ng serve` usa proxy.conf.json (`/api` → EC2 AWS).
+ * Na Vercel (HTTPS) usa vercel.json (`/api` → EC2).
  */
 export const cognoraApiUrlsRelative = () => ({
   apiBaseUrl: '/api',
@@ -18,9 +18,17 @@ export const cognoraApiUrlsRelative = () => ({
   billingApiPath: '/api/billing',
 });
 
-/** Em HTTPS (ex.: Vercel) o browser bloqueia chamadas HTTP ao EC2. */
+/** Em localhost ou HTTPS usa `/api` (proxy); caso contrário, URL absoluta. */
 export function mustUseRelativeApiUrls(): boolean {
-  return typeof globalThis !== 'undefined' && globalThis.location?.protocol === 'https:';
+  if (typeof globalThis === 'undefined' || !globalThis.location) {
+    return false;
+  }
+  const { protocol, hostname } = globalThis.location;
+  return (
+    protocol === 'https:' ||
+    hostname === 'localhost' ||
+    hostname === '127.0.0.1'
+  );
 }
 
 export function resolveCognoraApiUrls() {

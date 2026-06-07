@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnInit, computed, signal } from '@angular/core';
-import { forkJoin } from 'rxjs';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, signal } from '@angular/core';
+import { Subscription, forkJoin } from 'rxjs';
 import { finalize } from 'rxjs/operators';
 import { ToastrService } from 'ngx-toastr';
 import { CicloOption, CicloSelector } from '../../../../shared/components/ciclo-selector/ciclo-selector';
@@ -33,7 +33,7 @@ export type LinhaTopicoVisivel = {
   styleUrl: './edital-vertical-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditalVerticalPage implements OnInit {
+export class EditalVerticalPage implements OnInit, OnDestroy {
   private static readonly LS_CICLO_PREF = 'cognora:lastCicloId';
 
   readonly ciclosLista = signal<CicloDto[]>([]);
@@ -65,6 +65,10 @@ export class EditalVerticalPage implements OnInit {
   ultimoEstudoPorTopicoId = signal<Map<number, string | null>>(new Map());
   private readonly allTopicIds = signal<number[]>([]);
 
+  private arvoreLoadSub?: Subscription;
+  private estadoLoadSub?: Subscription;
+  private toggleLoadSub?: Subscription;
+
   readonly progressoGlobal = computed(() => {
     const total = this.allTopicIds().length;
     const done = this.allTopicIds().filter((id) => this.checkedTopicIds().has(id)).length;
@@ -78,6 +82,12 @@ export class EditalVerticalPage implements OnInit {
     private readonly editalTopicoEstadoApi: EditalTopicoEstadoApiService,
     private readonly toast: ToastrService,
   ) {}
+
+  ngOnDestroy(): void {
+    this.arvoreLoadSub?.unsubscribe();
+    this.estadoLoadSub?.unsubscribe();
+    this.toggleLoadSub?.unsubscribe();
+  }
 
   async ngOnInit(): Promise<void> {
     this.loadingCiclos.set(true);
@@ -213,7 +223,8 @@ export class EditalVerticalPage implements OnInit {
       });
     }
 
-    forkJoin(
+    this.toggleLoadSub?.unsubscribe();
+    this.toggleLoadSub = forkJoin(
       idsAfetados.map((tid) =>
         this.editalTopicoEstadoApi.definirConcluido(cicloId, tid, { concluido: novoConcluido }),
       ),
@@ -272,10 +283,12 @@ export class EditalVerticalPage implements OnInit {
   }
 
   private carregarArvore(concursoId: number, cicloId: number, cargoId: number): void {
+    this.arvoreLoadSub?.unsubscribe();
+    this.estadoLoadSub?.unsubscribe();
     this.loadingArvore.set(true);
     this.arvore.set(null);
-    this.editalVerticalApi
-      .getArvorePorConcurso(concursoId)
+    this.arvoreLoadSub = this.editalVerticalApi
+      .getArvorePorConcurso(concursoId, cicloId)
       .pipe(finalize(() => this.loadingArvore.set(false)))
       .subscribe({
         next: (a: EditalVerticalConcursoDto) => {
@@ -291,7 +304,12 @@ export class EditalVerticalPage implements OnInit {
             this.expandedTopicoIds.set(new Set());
             return;
           }
-          this.aplicarTopicIdsEChecks(a, cargoId, cicloId);
+          this.inicializarTopicIdsPorCargo(a, cargoId);
+          if (a.estadoTopico) {
+            this.aplicarEstadoTopicoResposta(a.estadoTopico, new Set(this.allTopicIds()));
+          } else {
+            this.carregarEstadoTopicoServidor(cicloId, new Set(this.allTopicIds()));
+          }
         },
         error: () => this.toast.error('Não foi possível carregar o edital verticalizado.'),
       });
@@ -302,37 +320,43 @@ export class EditalVerticalPage implements OnInit {
     if (!a) {
       return;
     }
-    this.aplicarTopicIdsEChecks(a, cargoId, cicloId);
+    this.inicializarTopicIdsPorCargo(a, cargoId);
+    this.carregarEstadoTopicoServidor(cicloId, new Set(this.allTopicIds()));
   }
 
-  private aplicarTopicIdsEChecks(a: EditalVerticalConcursoDto, cargoId: number, cicloId: number): void {
+  private inicializarTopicIdsPorCargo(a: EditalVerticalConcursoDto, cargoId: number): void {
     const idsColetados = coletarIdsPorCargo(a, cargoId);
     this.allTopicIds.set(idsColetados);
     this.checkedTopicIds.set(new Set());
     this.ultimoEstudoPorTopicoId.set(new Map());
     this.expandedDisciplinaIds.set(new Set());
     this.expandedTopicoIds.set(new Set());
-    this.carregarEstadoTopicoServidor(cicloId, new Set(idsColetados));
+  }
+
+  private aplicarEstadoTopicoResposta(
+    resp: { itens?: { topicoId: number; concluido?: boolean; ultimoEstudoEm?: string | null }[] },
+    permitidos: Set<number>,
+  ): void {
+    const checks = new Set<number>();
+    const ultimos = new Map<number, string | null>();
+    for (const it of resp.itens ?? []) {
+      const tid = Number(it.topicoId);
+      if (!permitidos.has(tid)) {
+        continue;
+      }
+      if (it.concluido) {
+        checks.add(tid);
+      }
+      ultimos.set(tid, it.ultimoEstudoEm ?? null);
+    }
+    this.checkedTopicIds.set(checks);
+    this.ultimoEstudoPorTopicoId.set(ultimos);
   }
 
   private carregarEstadoTopicoServidor(cicloId: number, permitidos: Set<number>): void {
-    this.editalTopicoEstadoApi.listarPorCiclo(cicloId).subscribe({
-      next: (resp) => {
-        const checks = new Set<number>();
-        const ultimos = new Map<number, string | null>();
-        for (const it of resp.itens ?? []) {
-          const tid = Number(it.topicoId);
-          if (!permitidos.has(tid)) {
-            continue;
-          }
-          if (it.concluido) {
-            checks.add(tid);
-          }
-          ultimos.set(tid, it.ultimoEstudoEm ?? null);
-        }
-        this.checkedTopicIds.set(checks);
-        this.ultimoEstudoPorTopicoId.set(ultimos);
-      },
+    this.estadoLoadSub?.unsubscribe();
+    this.estadoLoadSub = this.editalTopicoEstadoApi.listarPorCiclo(cicloId).subscribe({
+      next: (resp) => this.aplicarEstadoTopicoResposta(resp, permitidos),
       error: () => {
         this.checkedTopicIds.set(new Set());
         this.ultimoEstudoPorTopicoId.set(new Map());

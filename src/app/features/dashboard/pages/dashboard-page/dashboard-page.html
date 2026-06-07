@@ -53,6 +53,8 @@
 
   <section class="dashboard-main">
     <div class="dashboard-charts-column">
+      <!-- Gráfico "Estudos da semana" (legado + trechos) desativado — ver semana-so-diario -->
+      <!--
       <div class="dashboard-block chart">
         @if (cicloId) {
         <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico">
@@ -66,6 +68,7 @@
         }
         <app-week-chart [days]="semana"></app-week-chart>
       </div>
+      -->
 
       @if (cicloId) {
       <div class="dashboard-block chart dashboard-chart--so-diario">
@@ -78,10 +81,7 @@
             [disabled]="loading || soDiarioLoading() || semanaPosteriorDesabilitadaSoDiario"
             title="Semana seguinte (só diário)" aria-label="Semana seguinte (só diário)">›</button>
         </div>
-        <p class="dashboard-chart-so-diario-hint">
-          Comparação (teste): apenas acúmulo em <code>estudo_diario_ciclo</code> — sem trechos nem legado.
-        </p>
-        <app-week-chart [days]="semanaSoDiario" chartTitle="Semana (só diário — teste)"></app-week-chart>
+          <app-week-chart [days]="semanaSoDiario" chartTitle="Estudo Semanal"></app-week-chart>
       </div>
       }
     </div>

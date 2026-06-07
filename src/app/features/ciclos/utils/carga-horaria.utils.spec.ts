@@ -112,6 +112,22 @@ describe('calcularHorasPorMateria', () => {
     expect(ativas.reduce((s, m) => s + m.horas, 0)).toBe(26);
   });
 
+  it('carga 19h (8 matérias): peso 30 fica com 30 min a mais que peso 18 quando empatavam em 3:00h', () => {
+    const pesos = [30, 18, 8, 7, 7, 6, 6, 5];
+    const poolMateriasHoras = 19 - 4;
+    const result = calcularHorasPorMateria({
+      cargaHorariaSemanal: poolMateriasHoras,
+      materias: materiasComPesos(pesos),
+    });
+
+    const transito = horas(1, result);
+    const portugues = horas(2, result);
+    expect(transito.horasLabel).toBe('3:30h');
+    expect(portugues.horasLabel).toBe('2:30h');
+    expect(transito.horas - portugues.horas).toBe(1);
+    expect(result.perMateria.reduce((s, m) => s + m.horas, 0)).toBe(poolMateriasHoras);
+  });
+
   it('sinaliza pool insuficiente para o piso dinâmico', () => {
     const pesos = Array.from({ length: 18 }, () => 5);
     const result = calcularHorasPorMateria({

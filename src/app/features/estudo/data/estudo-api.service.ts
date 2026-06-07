@@ -10,6 +10,7 @@ import {
   DisciplinaHistoricoSessaoDto,
   FinalizarSessaoRequest,
   IniciarSessaoRequest,
+  EstudarAgoraCargaDto,
   ProgressoDisciplinaDto,
   ProgressoRecentesRodadaDto,
   ProximaSessaoDto,
@@ -68,6 +69,12 @@ export class EstudoApiService {
 
   getProximaSessao(cicloId: number): Observable<ProximaSessaoDto> {
     return this.http.get<ProximaSessaoDto>(`${this.base}/estudo/sessoes/ciclos/${cicloId}/proxima`);
+  }
+
+  /** Carga única: matérias + próxima + progresso + recentes (com observações). */
+  getEstudarAgoraCarga(cicloId: number): Observable<EstudarAgoraCargaDto> {
+    const params = new HttpParams().set('cicloId', String(cicloId));
+    return this.http.get<EstudarAgoraCargaDto>(`${this.base}/estudo/estudar-agora`, { params });
   }
 
   iniciarSessao(cicloId: number, payload?: IniciarSessaoRequest | null): Observable<SessaoDetalheDto> {
