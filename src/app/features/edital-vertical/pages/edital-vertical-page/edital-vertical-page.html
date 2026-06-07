@@ -3,14 +3,8 @@
     <div class="ev-header-row">
       <div>
         <h1>Edital verticalizado</h1>
-        <p class="ev-lead">
-          Escolhe o teu ciclo (como no dashboard). Só são listadas as disciplinas e tópicos do cargo desse ciclo.
-          Subtópicos ficam ocultos até expandires o tópico-pai (seta na primeira coluna). O progresso dos checks e a
-          data do último estudo ficam guardados na tua conta, por ciclo.
-        </p>
       </div>
       <div class="ev-header-actions">
-        <button type="button" class="ev-btn-primary" (click)="adicionarEstudo()">Adicionar estudo</button>
         <app-ciclo-selector
           [ciclos]="ciclosOpcoes()"
           [selectedId]="cicloSelecionadoId()"
