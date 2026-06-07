@@ -34,14 +34,7 @@
             />
             <small class="field-hint error" *ngIf="cargaHorariaSemanal <= 0">
               Informe a carga horária semanal.
-            </small>
-            <small class="field-hint error" *ngIf="cargaHorariaSemanal > 0 && minimoHorasViolado">
-              A carga semanal deve ser maior que 4h (Estudo Livre) e permitir o mínimo dinâmico por matéria activa (2:30h até 5 matérias; 2:00h com 6; 1:30h com 7+).
-            </small>
-            <p class="field-hint estudo-livre-info">
-              4 sessões de 1h de <strong>Estudo Livre</strong> já estão incluídas na carga semanal (4h).
-              Cada sessão de matéria dura por padrão <strong>2h</strong> (cargas menores, como 1:30h, permanecem numa sessão única). A distribuição semanal é proporcional ao peso (blocos de 30 min), com piso dinâmico conforme o número de matérias activas.
-            </p>
+            </small>         
           </div>
 
           <div class="field toggle">
