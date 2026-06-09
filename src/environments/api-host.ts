@@ -1,4 +1,4 @@
-/** API no EC2 (Spring Boot, porta 8080). */
+/** API na EC2 AWS (Spring Boot, porta 8080). */
 export const COGNORA_API_HOST = 'http://3.141.199.149:8080';
 
 /** URLs absolutas — acesso direto ao backend (ex.: testes fora do `ng serve`). */

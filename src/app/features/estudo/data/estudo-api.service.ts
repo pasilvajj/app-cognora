@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { firstValueFrom, Observable, throwError } from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { environment } from '../../../../environments/environment';
 import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../../shared/erro/http-suprimir-toast.context';
@@ -12,10 +12,8 @@ import {
   IniciarSessaoRequest,
   EstudarAgoraCargaDto,
   ProgressoDisciplinaDto,
-  ProgressoRecentesRodadaDto,
-  ProximaSessaoDto,
   SegmentoEstudoRegistroDto,
-  SessaoCardDto,
+  SessaoCargaDto,
   SessaoDetalheDto,
   SessaoMetaEstudoRequest,
   SessaoTopicoOpcaoDto,
@@ -67,10 +65,6 @@ export class EstudoApiService {
   }
 
 
-  getProximaSessao(cicloId: number): Observable<ProximaSessaoDto> {
-    return this.http.get<ProximaSessaoDto>(`${this.base}/estudo/sessoes/ciclos/${cicloId}/proxima`);
-  }
-
   /** Carga única: matérias + próxima + progresso + recentes (com observações). */
   getEstudarAgoraCarga(cicloId: number): Observable<EstudarAgoraCargaDto> {
     const params = new HttpParams().set('cicloId', String(cicloId));
@@ -103,6 +97,14 @@ export class EstudoApiService {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
       this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`, { context }),
+    );
+  }
+
+  /** Carga única: detalhe da sessão + tópicos do edital. */
+  getSessaoCarga1(id: number): Promise<SessaoCargaDto> {
+    const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
+    return firstValueFrom(
+      this.http.get<SessaoCargaDto>(`${this.base}/estudo/sessoes/${id}/carga`, { context }),
     );
   }
 
@@ -181,31 +183,6 @@ export class EstudoApiService {
   getProgressoCiclo(cicloId: number): Observable<ProgressoDisciplinaDto[]> {
     return this.http.get<ProgressoDisciplinaDto[]>(
       `${this.base}/estudo/ciclos/${cicloId}/progresso`,
-    );
-  }
-
-  /**
-   * Mesmo critério que {@link getProgressoCiclo} + {@link getSessoesRecentes}, num único pedido
-   * (evita duplicar cabeça da execução no servidor).
-   * Usa {@code GET .../ciclos-rodada?cicloId=&limit=} para o {@code cicloId} ir sempre na query
-   * (menos erros de path do que interpolar segmentos no URL).
-   */
-  getProgressoERecentesRodada(cicloId: number, limit = 10): Observable<ProgressoRecentesRodadaDto> {
-    const id = Number(cicloId);
-    if (!Number.isFinite(id) || id <= 0) {
-      return throwError(() => new Error('cicloId inválido para progresso e recentes da rodada'));
-    }
-    const params = new HttpParams().set('cicloId', String(id)).set('limit', String(limit));
-    return this.http.get<ProgressoRecentesRodadaDto>(
-      `${this.base}/estudo/ciclos-rodada`,
-      { params },
-    );
-  }
-
-  getSessoesRecentes(cicloId: number, limit = 10): Observable<SessaoCardDto[]> {
-    return this.http.get<SessaoCardDto[]>(
-      `${this.base}/estudo/sessoes/recentes`,
-      { params: { cicloId: String(cicloId), limit: String(limit) } },
     );
   }
 

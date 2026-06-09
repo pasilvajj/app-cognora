@@ -85,15 +85,12 @@ export class SessaoEstudoPage implements OnDestroy {
     loader: async ({ params: id }) => {
       if (!id || isNaN(id) || id <= 0) return null;
       try {
-        const dados = await this.api.getSessao1(id);
-        untracked(() => this.initSessao(dados, false));
-        try {
-          const topicos = await this.api.getTopicosSessao1(id);
-          untracked(() => this._topicosOpcoes.set(topicos ?? []));
-        } catch {
-          untracked(() => this._topicosOpcoes.set([]));
-        }
-        return dados;
+        const carga = await this.api.getSessaoCarga1(id);
+        untracked(() => {
+          this.initSessao(carga.sessao, false);
+          this._topicosOpcoes.set(carga.topicos ?? []);
+        });
+        return carga.sessao;
       } catch (err: unknown) {
         const status = err instanceof HttpErrorResponse ? err.status : 0;
         if (status === 404 || status === 403) {

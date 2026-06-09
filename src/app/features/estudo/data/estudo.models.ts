@@ -22,12 +22,6 @@ export interface ProgressoDisciplinaDto {
   percentual: number;
 }
 
-/** Resposta agregada: mesmo critério que progresso + recentes, uma carga no servidor. */
-export interface ProgressoRecentesRodadaDto {
-  progresso: ProgressoDisciplinaDto[];
-  recentes: SessaoCardDto[];
-}
-
 /** Carga única da página Estudar Agora. */
 export interface EstudarAgoraCargaDto {
   estadoMaterias: CicloMateriasComEstadoDto;
@@ -102,6 +96,12 @@ export interface SessaoDetalheDto {
 
   /** Sessão de Estudo Livre (bloco reservado no ciclo). */
   estudoLivre?: boolean;
+}
+
+/** Carga inicial da página de sessão (detalhe + tópicos do edital). */
+export interface SessaoCargaDto {
+  sessao: SessaoDetalheDto;
+  topicos: SessaoTopicoOpcaoDto[];
 }
 
 /** Tópico/categoria enviados ao iniciar ou retomar (não na seleção do select). */
