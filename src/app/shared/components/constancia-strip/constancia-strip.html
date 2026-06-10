@@ -1,0 +1,43 @@
+<div class="constancia">
+  <div class="constancia__head">
+    <span class="constancia__eyebrow">Constância nos estudos</span>
+    @if (temDados) {
+      <p class="constancia__subtitle">
+        Você está há <strong>{{ streakLabel }} dia{{ streakLabel === 1 ? '' : 's' }}</strong> sem falhar!
+      </p>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="constancia__strip constancia__strip--skeleton" aria-hidden="true">
+      @for (s of [].constructor(30); track $index) {
+        <span class="cell cell--skeleton"></span>
+      }
+    </div>
+  } @else if (temDados) {
+    <div class="constancia__strip" role="list">
+      @for (dia of dias; track trackByIso($index, dia)) {
+        <span
+          class="cell"
+          [class.cell--done]="dia.estudou"
+          [class.cell--miss]="!dia.estudou"
+          role="listitem"
+          [attr.aria-label]="dia.rotuloData + (dia.estudou ? ' — estudou' : ' — sem estudo')"
+        >
+          @if (dia.estudou) {
+            <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          } @else {
+            <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          }
+          <span class="cell__tip" role="tooltip">{{ dia.rotuloData }}</span>
+        </span>
+      }
+    </div>
+  } @else {
+    <p class="constancia__empty">Ainda sem registos de estudo para mostrar a constância.</p>
+  }
+</div>

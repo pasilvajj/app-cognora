@@ -7,6 +7,7 @@ import { CicloOption, CicloSelector } from '../../../../shared/components/ciclo-
 import { resolverCicloPadrao } from '../../../../shared/service/resolverCicloPadrao';
 import { CiclosApiService } from '../../../ciclos/data/ciclos-api.service';
 import { CicloDto } from '../../../ciclos/data/ciclos.models';
+import { corDisciplina } from '../../../../shared/utils/cor-disciplina.util';
 import { EditalVerticalApiService } from '../../edital-vertical-api.service';
 import { EditalTopicoEstadoApiService } from '../../edital-topico-estado-api.service';
 import {
@@ -280,6 +281,11 @@ export class EditalVerticalPage implements OnInit, OnDestroy {
 
   adicionarEstudo(): void {
     this.toast.info('Funcionalidade de estudo por tópico em desenvolvimento.');
+  }
+
+  /** Cor fixa por disciplina (mesma lógica em todas as telas). */
+  corDisciplina(nome: string | null | undefined): string {
+    return corDisciplina(nome);
   }
 
   private carregarArvore(concursoId: number, cicloId: number, cargoId: number): void {

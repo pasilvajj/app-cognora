@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { PlanejamentoSemanalDto } from './planejamento.models';
+import { PlanejamentoPersonalizadoReq, PlanejamentoSemanalDto } from './planejamento.models';
 
 @Injectable({ providedIn: 'root' })
 export class PlanejamentoApiService {
@@ -32,16 +32,35 @@ export class PlanejamentoApiService {
    * Por enquanto, pode só chamar o GET (idempotente).
    */
   gerarPlanejamentoSemanal(cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
-    // Opção A (recomendado): GET idempotente
     return this.getPlanejamentoSemanal(cicloId, weekStartIso);
+  }
 
-    // Opção B (se você criar um POST real):
-    // let params = new HttpParams().set('usuarioId', usuarioId);
-    // if (weekStartIso) params = params.set('weekStart', weekStartIso);
-    // return this.http.post<PlanejamentoSemanalDto>(
-    //   `${this.base}/planejamento/ciclos/${cicloId}/semanal/gerar`,
-    //   {},
-    //   { params }
-    // );
+  /**
+   * Salva a organização feita pelo usuário (arrastar).
+   * PUT /api/planejamento/ciclos/{cicloId}/semanal
+   */
+  salvarPlanejamentoSemanal(
+    cicloId: number,
+    payload: PlanejamentoPersonalizadoReq,
+  ): Observable<PlanejamentoSemanalDto> {
+    return this.http.put<PlanejamentoSemanalDto>(
+      `${this.base}/planejamento/ciclos/${cicloId}/semanal`,
+      payload,
+    );
+  }
+
+  /**
+   * Remove a personalização e volta ao plano gerado.
+   * DELETE /api/planejamento/ciclos/{cicloId}/semanal?weekStart=YYYY-MM-DD
+   */
+  resetarPlanejamentoSemanal(cicloId: number, weekStartIso?: string): Observable<PlanejamentoSemanalDto> {
+    let params = new HttpParams();
+    if (weekStartIso) {
+      params = params.set('weekStart', weekStartIso);
+    }
+    return this.http.delete<PlanejamentoSemanalDto>(
+      `${this.base}/planejamento/ciclos/${cicloId}/semanal`,
+      { params },
+    );
   }
 }

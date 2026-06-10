@@ -191,7 +191,13 @@
   align-self: stretch;
   min-height: 2.25rem;
   border-radius: 4px;
-  background: linear-gradient(180deg, #fb923c, #f97316);
+  /* Cor fixa por disciplina, definida via [style.--ev-accent] no template. */
+  --ev-accent: #fb923c;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ev-accent) 80%, #ffffff),
+    var(--ev-accent)
+  );
   flex-shrink: 0;
 }
 

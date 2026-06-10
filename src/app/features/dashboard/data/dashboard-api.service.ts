@@ -72,6 +72,22 @@ export type DashboardSemanaSoDiarioDto = {
   semana: WeekDayDto[];
 };
 
+/** Um dia da faixa de constância (data ISO `yyyy-MM-dd` + se houve estudo). */
+export type DiaConstanciaDto = {
+  data: string;
+  estudou: boolean;
+};
+
+/** Resposta de `GET /dashboard/constancia` — constância global (todos os ciclos). */
+export type DashboardConstanciaDto = {
+  inicio: string;
+  fim: string;
+  totalDias: number;
+  diasEstudados: number;
+  streakAtual: number;
+  dias: DiaConstanciaDto[];
+};
+
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
   private readonly baseUrl = environment.apiBaseUrl;
@@ -107,5 +123,11 @@ export class DashboardApiService {
       params = params.set('weekStart', weekStartIso);
     }
     return this.http.get<DashboardSemanaSoDiarioDto>(`${this.baseUrl}/dashboard/semana-so-diario`, { params });
+  }
+
+  /** Faixa de constância nos estudos (global): últimos `dias` dias civis até hoje. */
+  getConstancia(dias = 30): Observable<DashboardConstanciaDto> {
+    const params = new HttpParams().set('dias', String(dias));
+    return this.http.get<DashboardConstanciaDto>(`${this.baseUrl}/dashboard/constancia`, { params });
   }
 }

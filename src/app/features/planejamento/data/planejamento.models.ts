@@ -34,3 +34,19 @@ export type PlanejamentoSemanalDto = {
   distribuicao: DistribuicaoDisciplinaDto[];
   resumo: ResumoPlanejamentoDto;
 };
+
+/** Payload para salvar a organização feita pelo usuário (arrastar). */
+export type ItemPersonalizadoReq = {
+  disciplinaId: number;
+  duracaoSeg: number;
+};
+
+export type DiaPersonalizadoReq = {
+  data: string;            // "YYYY-MM-DD"
+  itens: ItemPersonalizadoReq[];
+};
+
+export type PlanejamentoPersonalizadoReq = {
+  weekStart: string;       // "YYYY-MM-DD"
+  dias: DiaPersonalizadoReq[];
+};

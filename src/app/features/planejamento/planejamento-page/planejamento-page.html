@@ -2,7 +2,10 @@
   <div class="top">
     <div class="top-left">
       <h1>Planejamento</h1>
-      <div class="sub">Roteiro recomendado para a semana (não obrigatório).</div>
+      <div class="sub">
+        Arraste as disciplinas para organizar o seu dia — a ordem é salva automaticamente.
+        <span class="save-state" *ngIf="salvando()">• Salvando…</span>
+      </div>
     </div>
 
     <div class="top-right">
@@ -16,8 +19,9 @@
       </button>
 
       <button class="btn ghost" type="button" (click)="gerarPlanejamento()"
-        [disabled]="carregando || gerando || !cicloIdSelecionado">
-        {{ gerando ? 'Gerando...' : 'Gerar planejamento' }}
+        [disabled]="carregando || gerando || !cicloIdSelecionado"
+        title="Descarta a organização manual e gera o plano automático desta semana">
+        {{ gerando ? 'Refazendo...' : 'Refazer automático' }}
       </button>
     </div>
   </div>
@@ -51,16 +55,24 @@
     <div class="board-body">
       <!-- GRID PRINCIPAL (7 dias) -->
       <div class="grid">
-        <div class="day-col" *ngFor="let d of dias; let idx = index">
+        <div class="day-col" *ngFor="let d of dias; let idx = index" [class.day-col--today]="d.isHoje">
           <div class="day-head">
             <div class="day-name">{{ d.diaSemanaLabel }}</div>
             <div class="day-number">{{ d.diaMes }}</div>
+            <span class="day-today-tag" *ngIf="d.isHoje">Hoje</span>
           </div>
 
-          <div class="day-cards">
-            <div class="item-card" *ngFor="let it of d.itens" [class.free]="it.duracaoSeg <= 0">
+          <div class="day-cards" cdkDropList [id]="'dia-' + idx" [cdkDropListData]="d.itens"
+            [cdkDropListConnectedTo]="dropListIds" (cdkDropListDropped)="onDrop($event)">
+            <div class="item-card" *ngFor="let it of d.itens" cdkDrag
+              [class.free]="it.duracaoSeg <= 0"
+              [style.--card-color]="it.duracaoSeg <= 0 ? null : corDisciplina(it.disciplinaNome)"
+              (click)="abrirEdicao(d, it)" title="Clique para editar o tempo">
+              <div class="item-card-placeholder" *cdkDragPlaceholder></div>
+
               <div class="item-top">
-                <span class="dot" [class]="it.corTag || 'c-cinza'"></span>
+                <span class="item-grip" cdkDragHandle aria-hidden="true"
+                  (click)="$event.stopPropagation()" title="Arraste para mover">⋮⋮</span>
                 <div class="item-title">{{ it.disciplinaNome }}</div>
               </div>
 
@@ -74,6 +86,8 @@
                 {{ it.topico || d.observacao || 'Dia livre' }}
               </div>
             </div>
+
+            <div class="day-empty-hint" *ngIf="d.itens.length === 0">Solte aqui</div>
           </div>
 
           <div class="day-footer">
@@ -90,7 +104,7 @@
 
           <div class="dist-row" *ngFor="let x of distribuicao">
             <div class="dist-left">
-              <span class="dot small" [class]="x.corTag || 'c-cinza'"></span>
+              <span class="dot small" [style.background]="corDisciplina(x.disciplinaNome)"></span>
               <span class="dist-name">{{ x.disciplinaNome }}</span>
             </div>
             <div class="dist-time">{{ formatarTempo(x.totalSeg) }}</div>
@@ -124,5 +138,43 @@
 
   <div class="state" *ngIf="carregando" style="margin-top: 12px; color: var(--text-muted); font-weight: 700;">
     Carregando planejamento...
+  </div>
+</div>
+
+<!-- MODAL DE EDIÇÃO DO ITEM -->
+<div class="modal-backdrop" *ngIf="modalAberto && itemEdicao" (click)="fecharEdicao()">
+  <div class="modal-card" (click)="$event.stopPropagation()"
+    [style.--card-color]="corDisciplina(itemEdicao!.disciplinaNome)">
+
+    <div class="modal-head">
+      <span class="dot" [style.background]="corDisciplina(itemEdicao!.disciplinaNome)"></span>
+      <div class="modal-title">{{ itemEdicao!.disciplinaNome }}</div>
+      <button class="modal-ico" type="button" (click)="fecharEdicao()" title="Fechar">✕</button>
+    </div>
+
+    <div class="modal-row">
+      <span class="modal-row-ico" aria-hidden="true">⏱</span>
+
+      <div class="time-edit">
+        <button class="time-step" type="button" (click)="ajustarMinutos(-5)" title="−5 min">−</button>
+
+        <div class="time-inputs">
+          <label class="time-field">
+            <input type="number" min="0" max="23" [(ngModel)]="edicaoHoras" />
+            <span>h</span>
+          </label>
+          <label class="time-field">
+            <input type="number" min="0" max="59" [(ngModel)]="edicaoMinutos" />
+            <span>min</span>
+          </label>
+        </div>
+
+        <button class="time-step" type="button" (click)="ajustarMinutos(5)" title="+5 min">+</button>
+      </div>
+    </div>
+
+    <div class="modal-preview">Total: <strong>{{ previewTempoEdicao }}</strong></div>
+
+    <button class="modal-save" type="button" (click)="salvarEdicao()">Salvar</button>
   </div>
 </div>

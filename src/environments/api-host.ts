@@ -1,4 +1,4 @@
-/** API na EC2 AWS (Spring Boot, porta 8080). */
+/** API na AWS (EC2, porta 8080). */
 export const COGNORA_API_HOST = 'http://3.141.199.149:8080';
 
 /** URLs absolutas — acesso direto ao backend (ex.: testes fora do `ng serve`). */
@@ -9,7 +9,7 @@ export const cognoraApiUrls = () => ({
 });
 
 /**
- * URLs relativas — `ng serve` usa proxy.conf.json (`/api` → EC2 AWS).
+ * URLs relativas — `ng serve` usa proxy.conf.json (`/api` → EC2).
  * Na Vercel (HTTPS) usa vercel.json (`/api` → EC2).
  */
 export const cognoraApiUrlsRelative = () => ({

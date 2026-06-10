@@ -9,6 +9,7 @@ import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo
 import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
 import { ProgressBar, ProgressDisciplinaItem } from '../../../../shared/components/progress-bar/progress-bar';
 import { WeekChart } from '../../../../shared/components/week-chart/week-chart';
+import { ConstanciaStrip } from '../../../../shared/components/constancia-strip/constancia-strip';
 import {
   normalizarNomeDisciplina,
   normalizarPercentualProgresso,
@@ -24,6 +25,7 @@ import {
   DashboardApiService,
   DashboardResumoDto,
   DashboardSemanaSoDiarioDto,
+  DiaConstanciaDto,
   ProgressoDisciplinaDto,
   SessaoCardDto,
   WeekDayDto,
@@ -34,7 +36,7 @@ type FooterTone = 'success' | 'warn' | 'muted' | 'primary';
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, MetricCard, WeekChart, ProgressBar, CicloSelector],
+  imports: [CommonModule, MetricCard, WeekChart, ProgressBar, CicloSelector, ConstanciaStrip],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.css',
 })
@@ -57,6 +59,13 @@ export class DashboardPage implements OnInit, OnDestroy {
   // ===== Card STREAK =====
   streakValue = '—';
   streakFooterText = '';
+
+  // ===== Faixa de CONSTÂNCIA (global, todos os ciclos) =====
+  constanciaDias: DiaConstanciaDto[] = [];
+  constanciaStreak: number | null = null;
+  constanciaLoading = signal(false);
+  /** Quantos dias mostrar na faixa de constância. */
+  private static readonly CONSTANCIA_DIAS = 30;
 
   // ===== Card HORAS DO CICLO =====
   cicloHorasFeitas = '—';
@@ -101,6 +110,7 @@ export class DashboardPage implements OnInit, OnDestroy {
 
   private resumoLoadSub?: Subscription;
   private soDiarioLoadSub?: Subscription;
+  private constanciaLoadSub?: Subscription;
 
   dashboardApi = inject(DashboardApiService);
   ciclosApi = inject(CiclosApiService);
@@ -120,11 +130,33 @@ export class DashboardPage implements OnInit, OnDestroy {
 
     this.readMobileCardOrderPref();
     this.carregarCiclos();
+    this.carregarConstancia();
+  }
+
+  /** Faixa de constância é global (todos os ciclos): carrega uma vez, independente do ciclo selecionado. */
+  private carregarConstancia(): void {
+    this.constanciaLoadSub?.unsubscribe();
+    this.constanciaLoading.set(true);
+    this.constanciaLoadSub = this.dashboardApi
+      .getConstancia(DashboardPage.CONSTANCIA_DIAS)
+      .pipe(
+        catchError(() => of(null)),
+        finalize(() => {
+          this.constanciaLoading.set(false);
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe((res) => {
+        this.constanciaDias = res?.dias ?? [];
+        this.constanciaStreak = res?.streakAtual ?? null;
+        this.cdr.detectChanges();
+      });
   }
 
   ngOnDestroy(): void {
     this.resumoLoadSub?.unsubscribe();
     this.soDiarioLoadSub?.unsubscribe();
+    this.constanciaLoadSub?.unsubscribe();
   }
 
   private readMobileCardOrderPref(): void {

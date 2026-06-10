@@ -1,0 +1,151 @@
+:host {
+  display: block;
+}
+
+.constancia {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.constancia__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.constancia__eyebrow {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted, #64748b);
+}
+
+.constancia__subtitle {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text, #334155);
+}
+
+.constancia__subtitle strong {
+  font-weight: 800;
+  color: var(--text, #0f172a);
+}
+
+.constancia__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted, #64748b);
+}
+
+/* FAIXA */
+.constancia__strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  /* tooltip precisa “sair” por cima da faixa */
+  overflow: visible;
+}
+
+.cell {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.cell__icon {
+  width: 16px;
+  height: 16px;
+}
+
+.cell--done {
+  background: color-mix(in srgb, #16a34a 18%, #ffffff);
+  color: #16a34a;
+}
+
+.cell--miss {
+  background: color-mix(in srgb, #ef4444 14%, #ffffff);
+  color: #ef4444;
+}
+
+.cell:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
+  z-index: 3;
+}
+
+/* TOOLTIP (mostra a data ao passar o rato) */
+.cell__tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #1e293b;
+  color: #f8fafc;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  padding: 7px 10px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.28);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  z-index: 4;
+}
+
+.cell__tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.cell:hover .cell__tip,
+.cell:focus-visible .cell__tip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* SKELETON */
+.cell--skeleton {
+  background: color-mix(in srgb, var(--text, #94a3b8) 12%, transparent);
+  animation: constancia-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes constancia-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* DARK */
+:host-context([data-theme='dark']) .cell--done {
+  background: color-mix(in srgb, #22c55e 26%, transparent);
+  color: #4ade80;
+}
+
+:host-context([data-theme='dark']) .cell--miss {
+  background: color-mix(in srgb, #ef4444 24%, transparent);
+  color: #f87171;
+}
+
+:host-context([data-theme='dark']) .cell__tip {
+  background: #0f172a;
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.5);
+}
+
+:host-context([data-theme='dark']) .cell__tip::after {
+  border-top-color: #0f172a;
+}

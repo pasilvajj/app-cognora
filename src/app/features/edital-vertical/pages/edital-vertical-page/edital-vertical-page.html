@@ -62,7 +62,7 @@
                 [id]="'disc-head-' + d.id"
                 (click)="alternarDisciplina(d.id)"
               >
-                <span class="ev-acc-accent" aria-hidden="true"></span>
+                <span class="ev-acc-accent" aria-hidden="true" [style.--ev-accent]="corDisciplina(d.nome)"></span>
                 <span class="ev-acc-title">{{ d.nome }}</span>
                 <span class="ev-acc-meta">{{ pd.done }}/{{ pd.total }}</span>
                 <svg class="ev-chevron" viewBox="0 0 24 24" aria-hidden="true">

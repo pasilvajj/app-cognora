@@ -51,6 +51,14 @@
     </app-metric-card>
   </section>
 
+  <section class="dashboard-block dashboard-constancia">
+    <app-constancia-strip
+      [dias]="constanciaDias"
+      [streakAtual]="constanciaStreak"
+      [loading]="constanciaLoading()">
+    </app-constancia-strip>
+  </section>
+
   <section class="dashboard-main">
     <div class="dashboard-charts-column">
       <!-- Gráfico "Estudos da semana" (legado + trechos) desativado — ver semana-so-diario -->
