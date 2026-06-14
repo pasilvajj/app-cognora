@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient,withInterceptors } from '@angular/common/http';
 import { AuthInterceptor } from './core/auth/auth.interceptor';
 import { provideToastr } from 'ngx-toastr';
+import { apiTimeoutInterceptor } from './shared/erro/api-timeout.interceptor';
 import { erroInterceptor } from './shared/erro/erro.interceptor';
 // import { provideAnimations } from '@angular/platform-browser/animations'
 
@@ -15,7 +16,7 @@ export const appConfig: ApplicationConfig = {
     // provideAnimations(),
     provideToastr(),
    provideHttpClient(
-      withInterceptors([AuthInterceptor,erroInterceptor])
+      withInterceptors([AuthInterceptor, apiTimeoutInterceptor, erroInterceptor])
     ),
   ]
 };

@@ -6,14 +6,15 @@ import { DiaConstanciaDto } from '../../../features/dashboard/data/dashboard-api
 interface DiaConstanciaVm {
   iso: string;
   estudou: boolean;
+  naoAplicavel: boolean;
   diaNumero: number;
   /** Ex.: "quarta-feira, 17/jan." */
   rotuloData: string;
 }
 
 /**
- * Faixa horizontal de constância nos estudos: um quadrado por dia (✓ estudou / ✗ falhou),
- * com a data ao passar o rato. Visual independente de ciclo (streak global).
+ * Faixa horizontal de constância nos estudos: um quadrado por dia do mês
+ * (✓ estudou / ✗ falhou / · neutro antes do cadastro ou ciclo).
  */
 @Component({
   selector: 'app-constancia-strip',
@@ -37,6 +38,7 @@ export class ConstanciaStrip {
     this._dias = lista.map((d) => ({
       iso: d.data,
       estudou: !!d.estudou,
+      naoAplicavel: !!d.naoAplicavel,
       diaNumero: this.diaDoMes(d.data),
       rotuloData: this.formatarData(d.data),
     }));
@@ -53,12 +55,28 @@ export class ConstanciaStrip {
     }
     let streak = 0;
     for (let i = this._dias.length - 1; i >= 0; i--) {
-      if (!this._dias[i].estudou) {
+      const dia = this._dias[i];
+      if (dia.naoAplicavel) {
+        continue;
+      }
+      if (!dia.estudou) {
         break;
       }
       streak++;
     }
     return streak;
+  }
+
+  /** Quantidade de células no skeleton = dias do mês até hoje. */
+  get skeletonCount(): number {
+    return new Date().getDate();
+  }
+
+  rotuloAria(dia: DiaConstanciaVm): string {
+    if (dia.naoAplicavel) {
+      return `${dia.rotuloData} — antes do cadastro ou ciclo`;
+    }
+    return `${dia.rotuloData}${dia.estudou ? ' — estudou' : ' — sem estudo'}`;
   }
 
   get temDados(): boolean {

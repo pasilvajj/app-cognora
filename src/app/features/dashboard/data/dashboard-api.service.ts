@@ -76,6 +76,8 @@ export type DashboardSemanaSoDiarioDto = {
 export type DiaConstanciaDto = {
   data: string;
   estudou: boolean;
+  /** Antes do cadastro ou do primeiro ciclo — exibir neutro (ponto cinza). */
+  naoAplicavel?: boolean;
 };
 
 /** Resposta de `GET /dashboard/constancia` — constância global (todos os ciclos). */
@@ -125,9 +127,8 @@ export class DashboardApiService {
     return this.http.get<DashboardSemanaSoDiarioDto>(`${this.baseUrl}/dashboard/semana-so-diario`, { params });
   }
 
-  /** Faixa de constância nos estudos (global): últimos `dias` dias civis até hoje. */
-  getConstancia(dias = 30): Observable<DashboardConstanciaDto> {
-    const params = new HttpParams().set('dias', String(dias));
-    return this.http.get<DashboardConstanciaDto>(`${this.baseUrl}/dashboard/constancia`, { params });
+  /** Faixa de constância nos estudos (global): mês atual até hoje. */
+  getConstancia(): Observable<DashboardConstanciaDto> {
+    return this.http.get<DashboardConstanciaDto>(`${this.baseUrl}/dashboard/constancia`);
   }
 }

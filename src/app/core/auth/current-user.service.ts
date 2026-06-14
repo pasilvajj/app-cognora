@@ -17,4 +17,8 @@ export class CurrentUserService {
   get isLogged(): boolean {
     return this.auth.isAuthenticated();
   }
+
+  get isAdmin(): boolean {
+    return this.auth.isAdmin();
+  }
 }

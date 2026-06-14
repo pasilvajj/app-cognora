@@ -10,7 +10,7 @@
 
   @if (loading) {
     <div class="constancia__strip constancia__strip--skeleton" aria-hidden="true">
-      @for (s of [].constructor(30); track $index) {
+      @for (s of [].constructor(skeletonCount); track $index) {
         <span class="cell cell--skeleton"></span>
       }
     </div>
@@ -20,11 +20,14 @@
         <span
           class="cell"
           [class.cell--done]="dia.estudou"
-          [class.cell--miss]="!dia.estudou"
+          [class.cell--miss]="!dia.estudou && !dia.naoAplicavel"
+          [class.cell--neutral]="dia.naoAplicavel"
           role="listitem"
-          [attr.aria-label]="dia.rotuloData + (dia.estudou ? ' — estudou' : ' — sem estudo')"
+          [attr.aria-label]="rotuloAria(dia)"
         >
-          @if (dia.estudou) {
+          @if (dia.naoAplicavel) {
+            <span class="cell__dot" aria-hidden="true"></span>
+          } @else if (dia.estudou) {
             <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
               <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
             </svg>

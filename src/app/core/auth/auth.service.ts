@@ -6,10 +6,17 @@ import { environment } from '../../../environments/environment';
 import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../shared/erro/http-suprimir-toast.context';
 
 export type LoginResponse = {
-    userId: number,
-    name: string,
-    token: string
-}
+  userId: number;
+  name: string;
+  token: string;
+  roles?: string[];
+};
+
+export type AuthUser = {
+  id: number;
+  name: string;
+  roles: string[];
+};
 
 @Injectable({
   providedIn: 'root',
@@ -40,7 +47,8 @@ export class AuthService {
             JSON.stringify({
               id: res.userId,
               name: res.name,
-            })
+              roles: res.roles ?? [],
+            } satisfies AuthUser),
           );
         })
       );
@@ -58,7 +66,8 @@ export class AuthService {
             JSON.stringify({
               id: value.userId,
               name: value.name,
-            })
+              roles: value.roles ?? [],
+            } satisfies AuthUser),
           );
       })
     )
@@ -91,9 +100,49 @@ export class AuthService {
     return token;
   }
 
-  getUser(): { id: number; name: string } | null {
+  getUser(): AuthUser | null {
     const raw = sessionStorage.getItem(this.USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw) as Partial<AuthUser>;
+      if (parsed.id == null || !parsed.name) {
+        return null;
+      }
+      return {
+        id: parsed.id,
+        name: parsed.name,
+        roles: parsed.roles ?? this.getRolesFromToken(),
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  getRoles(): string[] {
+    return this.getUser()?.roles ?? this.getRolesFromToken();
+  }
+
+  isAdmin(): boolean {
+    return this.getRoles().some(r => r.toUpperCase() === 'ADMIN');
+  }
+
+  private getRolesFromToken(): string[] {
+    const token = sessionStorage.getItem(this.TOKEN_KEY);
+    if (!token) {
+      return [];
+    }
+    try {
+      const payload = this.decodeTokenPayload(token);
+      const roles = payload?.['roles'];
+      if (!Array.isArray(roles)) {
+        return [];
+      }
+      return roles.filter((r): r is string => typeof r === 'string');
+    } catch {
+      return [];
+    }
   }
 
   private isTokenExpired(token: string): boolean {

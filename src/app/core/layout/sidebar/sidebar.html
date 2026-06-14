@@ -35,6 +35,13 @@
       <span class="nav-label">Edital vertical</span>
     </a>
 
+    @if (isAdmin()) {
+      <a routerLink="/catalogo" routerLinkActive="active" title="Catálogo de concursos" (click)="onNavigate()">
+        <img src="assets/icons/book.svg" class="icon-img" alt="">
+        <span class="nav-label">Catálogo</span>
+      </a>
+    }
+
     <a routerLink="/configuracoes" routerLinkActive="active" class="bottom" title="Configurações" (click)="onNavigate()">
       <img src="assets/icons/gear.svg" class="icon-img" alt="">
       <span class="nav-label">Configurações</span>

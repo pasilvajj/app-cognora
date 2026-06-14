@@ -1,0 +1,329 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Catálogo</h1>
+      <p class="subtitle">
+        Gerencie concursos, cargos, disciplinas e tópicos do edital sem precisar de inserts manuais no banco.
+      </p>
+    </div>
+  </div>
+
+  <div class="catalog-grid">
+    <!-- Concursos -->
+    <section class="panel" aria-label="Concursos">
+      <header class="panel-header">
+        <h2>Concursos</h2>
+        <app-button label="Novo" variant="secondary" size="sm" (clicked)="openCreate('concurso')"></app-button>
+      </header>
+      @if (loadingConcursos()) {
+        <p class="panel-loading">Carregando…</p>
+      } @else if (concursos().length === 0) {
+        <p class="panel-empty">Nenhum concurso cadastrado.</p>
+      } @else {
+        <ul class="item-list">
+          @for (c of concursos(); track c.id) {
+            <li>
+              <button
+                type="button"
+                class="item-row"
+                [class.item-row--active]="selectedConcursoId() === c.id"
+                (click)="selectConcurso(c.id)">
+                <span class="item-title">{{ c.nome }}</span>
+                <span class="item-meta">
+                  {{ c.escopo === 'ESTADUAL' ? c.uf : 'Nacional' }}
+                </span>
+              </button>
+              <div class="item-actions">
+                <button type="button" class="icon-btn" title="Editar" (click)="openEditConcurso(c)">✎</button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  title="Excluir"
+                  (click)="confirmDelete({ kind: 'concurso', id: c.id, label: c.nome })">
+                  ✕
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- Cargos -->
+    <section class="panel" aria-label="Cargos">
+      <header class="panel-header">
+        <h2>Cargos</h2>
+        <app-button
+          label="Novo"
+          variant="secondary"
+          size="sm"
+          [disabled]="selectedConcursoId() == null"
+          (clicked)="openCreate('cargo')">
+        </app-button>
+      </header>
+      @if (selectedConcursoId() == null) {
+        <p class="panel-hint">Selecione um concurso.</p>
+      } @else if (loadingCargos()) {
+        <p class="panel-loading">Carregando…</p>
+      } @else if (cargos().length === 0) {
+        <p class="panel-empty">Nenhum cargo neste concurso.</p>
+      } @else {
+        <ul class="item-list">
+          @for (c of cargos(); track c.id) {
+            <li>
+              <button
+                type="button"
+                class="item-row"
+                [class.item-row--active]="selectedCargoId() === c.id"
+                (click)="selectCargo(c.id)">
+                <span class="item-title">{{ c.nome }}</span>
+              </button>
+              <div class="item-actions">
+                <button type="button" class="icon-btn" title="Editar" (click)="openEditCargo(c)">✎</button>
+                <button
+                  type="button"
+                  class="icon-btn icon-btn--danger"
+                  title="Excluir"
+                  (click)="confirmDelete({ kind: 'cargo', id: c.id, label: c.nome })">
+                  ✕
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- Disciplinas -->
+    <section class="panel" aria-label="Disciplinas">
+      <header class="panel-header">
+        <h2>Disciplinas</h2>
+        <app-button
+          label="Nova"
+          variant="secondary"
+          size="sm"
+          [disabled]="selectedCargoId() == null"
+          (clicked)="openCreate('disciplina')">
+        </app-button>
+      </header>
+      @if (selectedCargoId() == null) {
+        <p class="panel-hint">Selecione um cargo.</p>
+      } @else if (loadingDisciplinas()) {
+        <p class="panel-loading">Carregando…</p>
+      } @else if (disciplinas().length === 0) {
+        <p class="panel-empty">Nenhuma disciplina neste cargo.</p>
+      } @else {
+        <ul class="item-list">
+          @for (d of disciplinas(); track d.id) {
+            <li>
+              <button
+                type="button"
+                class="item-row"
+                [class.item-row--active]="selectedDisciplinaId() === d.id"
+                [disabled]="d.estudoLivre"
+                (click)="selectDisciplina(d.id)">
+                <span class="item-title">{{ d.nome }}</span>
+                <span class="item-meta">
+                  @if (d.estudoLivre) {
+                    reservado
+                  } @else {
+                    peso {{ d.peso }}
+                  }
+                </span>
+              </button>
+              @if (!d.estudoLivre) {
+                <div class="item-actions">
+                  <button type="button" class="icon-btn" title="Editar" (click)="openEditDisciplina(d)">✎</button>
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    title="Excluir"
+                    (click)="confirmDelete({ kind: 'disciplina', id: d.id, label: d.nome })">
+                    ✕
+                  </button>
+                </div>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <!-- Tópicos -->
+    <section class="panel panel--wide" aria-label="Tópicos">
+      <header class="panel-header">
+        <div>
+          <h2>Tópicos</h2>
+          @if (selectedDisciplina(); as disc) {
+            <span class="panel-sub">{{ disc.nome }}</span>
+          }
+        </div>
+        <app-button
+          label="Novo tópico"
+          variant="secondary"
+          size="sm"
+          [disabled]="novoTopicoDisabled()"
+          (clicked)="openCreateTopico()">
+        </app-button>
+      </header>
+      @if (selectedDisciplinaId() == null) {
+        <p class="panel-hint">Selecione uma disciplina.</p>
+      } @else if (selectedDisciplina()?.estudoLivre) {
+        <p class="panel-hint">Estudo Livre não utiliza tópicos no edital.</p>
+      } @else if (loadingTopicos()) {
+        <p class="panel-loading">Carregando…</p>
+      } @else if (topicos().length === 0) {
+        <p class="panel-empty">Nenhum tópico. Adicione o primeiro item do edital.</p>
+      } @else {
+        <ul class="topico-tree">
+          <ng-container *ngTemplateOutlet="topicoBranch; context: { nodes: topicos(), parentId: null }"></ng-container>
+        </ul>
+      }
+    </section>
+  </div>
+</div>
+
+<ng-template #topicoBranch let-nodes="nodes" let-parentId="parentId">
+  @for (node of nodes; track node.id) {
+    <li class="topico-node" [style.--depth]="0">
+      <div class="topico-row">
+        <span class="topico-title">{{ node.titulo }}</span>
+        <span class="topico-ordem">ordem {{ node.ordem }}</span>
+        <div class="topico-actions">
+          <button type="button" class="icon-btn" title="Subtópico" (click)="openCreateTopico(node.id)">+</button>
+          <button type="button" class="icon-btn" title="Editar" (click)="openEditTopico(node, parentId)">✎</button>
+          <button
+            type="button"
+            class="icon-btn icon-btn--danger"
+            title="Excluir"
+            (click)="confirmDelete({ kind: 'topico', id: node.id, label: node.titulo })">
+            ✕
+          </button>
+        </div>
+      </div>
+      @if (node.children?.length) {
+        <ul class="topico-children">
+          <ng-container
+            *ngTemplateOutlet="topicoBranchDeep; context: { nodes: node.children, parentId: node.id, depth: 1 }">
+          </ng-container>
+        </ul>
+      }
+    </li>
+  }
+</ng-template>
+
+<ng-template #topicoBranchDeep let-nodes="nodes" let-parentId="parentId" let-depth="depth">
+  @for (node of nodes; track node.id) {
+    <li class="topico-node" [style.--depth]="depth">
+      <div class="topico-row">
+        <span class="topico-title">{{ node.titulo }}</span>
+        <span class="topico-ordem">ordem {{ node.ordem }}</span>
+        <div class="topico-actions">
+          <button type="button" class="icon-btn" title="Subtópico" (click)="openCreateTopico(node.id)">+</button>
+          <button type="button" class="icon-btn" title="Editar" (click)="openEditTopico(node, parentId)">✎</button>
+          <button
+            type="button"
+            class="icon-btn icon-btn--danger"
+            title="Excluir"
+            (click)="confirmDelete({ kind: 'topico', id: node.id, label: node.titulo })">
+            ✕
+          </button>
+        </div>
+      </div>
+      @if (node.children?.length) {
+        <ul class="topico-children">
+          <ng-container
+            *ngTemplateOutlet="topicoBranchDeep; context: { nodes: node.children, parentId: node.id, depth: depth + 1 }">
+          </ng-container>
+        </ul>
+      }
+    </li>
+  }
+</ng-template>
+
+@if (formOpen()) {
+  <div class="overlay" (click)="closeForm()"></div>
+  <div class="modal" role="dialog" aria-modal="true" [attr.aria-label]="formTitle()">
+    <h2>{{ formTitle() }}</h2>
+
+    @if (formKind() === 'concurso') {
+      <form [formGroup]="concursoForm" (ngSubmit)="submitForm()">
+        <app-form-input label="Nome" [control]="concursoForm.controls.nome"></app-form-input>
+        <label class="field">
+          <span class="field-label">Escopo</span>
+          <select formControlName="escopo" class="select">
+            <option value="NACIONAL">Nacional</option>
+            <option value="ESTADUAL">Estadual</option>
+          </select>
+        </label>
+        @if (isEstadual()) {
+          <label class="field">
+            <span class="field-label">UF</span>
+            <select formControlName="uf" class="select">
+              <option value="">Selecione</option>
+              @for (uf of ufs; track uf) {
+                <option [value]="uf">{{ uf }}</option>
+              }
+            </select>
+          </label>
+        }
+        <div class="actions">
+          <app-button label="Cancelar" variant="ghost" type="button" (clicked)="closeForm()"></app-button>
+          <app-button label="Salvar" variant="primary" type="submit" [loading]="saving()"></app-button>
+        </div>
+      </form>
+    }
+
+    @if (formKind() === 'cargo') {
+      <form [formGroup]="cargoForm" (ngSubmit)="submitForm()">
+        <app-form-input label="Nome" [control]="cargoForm.controls.nome"></app-form-input>
+        <div class="actions">
+          <app-button label="Cancelar" variant="ghost" type="button" (clicked)="closeForm()"></app-button>
+          <app-button label="Salvar" variant="primary" type="submit" [loading]="saving()"></app-button>
+        </div>
+      </form>
+    }
+
+    @if (formKind() === 'disciplina') {
+      <form [formGroup]="disciplinaForm" (ngSubmit)="submitForm()">
+        <app-form-input label="Nome" [control]="disciplinaForm.controls.nome"></app-form-input>
+        <app-form-input label="Peso" type="text" [control]="disciplinaForm.controls.peso"></app-form-input>
+        <div class="actions">
+          <app-button label="Cancelar" variant="ghost" type="button" (clicked)="closeForm()"></app-button>
+          <app-button label="Salvar" variant="primary" type="submit" [loading]="saving()"></app-button>
+        </div>
+      </form>
+    }
+
+    @if (formKind() === 'topico') {
+      <form [formGroup]="topicoForm" (ngSubmit)="submitForm()">
+        <app-form-input label="Título" [control]="topicoForm.controls.titulo"></app-form-input>
+        <app-form-input label="Ordem" type="text" [control]="topicoForm.controls.ordem"></app-form-input>
+        <label class="field">
+          <span class="field-label">Tópico pai (opcional)</span>
+          <select formControlName="parentId" class="select">
+            <option value="">Raiz</option>
+            @for (t of flatTopicos(); track t.id) {
+              @if (editingId() !== t.id) {
+                <option [value]="t.id">{{ '—'.repeat(t.depth) }} {{ t.titulo }}</option>
+              }
+            }
+          </select>
+        </label>
+        <div class="actions">
+          <app-button label="Cancelar" variant="ghost" type="button" (clicked)="closeForm()"></app-button>
+          <app-button label="Salvar" variant="primary" type="submit" [loading]="saving()"></app-button>
+        </div>
+      </form>
+    }
+  </div>
+}
+
+@if (deleteTarget(); as target) {
+  <app-confirm-dialog
+    title="Confirmar exclusão"
+    [message]="deleteMessage(target)"
+    [loading]="deleting()"
+    (confirm)="executeDelete()"
+    (cancel)="cancelDelete()" />
+}

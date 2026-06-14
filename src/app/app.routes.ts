@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { AdminGuard } from './core/auth/admin.guard';
 import { AuthGuard } from './core/auth/auth.guard';
 import { pauseSessionGuard } from './core/guards/pause-session.guard';
 import { MainLayout } from './core/layout/main-layout/main-layout';
@@ -132,6 +133,14 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/edital-vertical/pages/edital-vertical-page/edital-vertical-page')
             .then(m => m.EditalVerticalPage),
+      },
+
+      {
+        path: 'catalogo',
+        canActivate: [AdminGuard],
+        loadComponent: () =>
+          import('./features/catalogo/pages/catalogo-page/catalogo-page')
+            .then(m => m.CatalogoPage),
       },
 
       {

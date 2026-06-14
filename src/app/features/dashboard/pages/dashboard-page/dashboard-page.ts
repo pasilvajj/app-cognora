@@ -64,8 +64,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   constanciaDias: DiaConstanciaDto[] = [];
   constanciaStreak: number | null = null;
   constanciaLoading = signal(false);
-  /** Quantos dias mostrar na faixa de constância. */
-  private static readonly CONSTANCIA_DIAS = 30;
 
   // ===== Card HORAS DO CICLO =====
   cicloHorasFeitas = '—';
@@ -138,7 +136,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.constanciaLoadSub?.unsubscribe();
     this.constanciaLoading.set(true);
     this.constanciaLoadSub = this.dashboardApi
-      .getConstancia(DashboardPage.CONSTANCIA_DIAS)
+      .getConstancia()
       .pipe(
         catchError(() => of(null)),
         finalize(() => {

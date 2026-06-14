@@ -76,6 +76,19 @@
   color: #ef4444;
 }
 
+.cell--neutral {
+  background: color-mix(in srgb, var(--text-muted, #94a3b8) 10%, #ffffff);
+  color: var(--text-muted, #94a3b8);
+}
+
+.cell__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+
 .cell:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
@@ -139,6 +152,11 @@
 :host-context([data-theme='dark']) .cell--miss {
   background: color-mix(in srgb, #ef4444 24%, transparent);
   color: #f87171;
+}
+
+:host-context([data-theme='dark']) .cell--neutral {
+  background: color-mix(in srgb, #94a3b8 18%, transparent);
+  color: #94a3b8;
 }
 
 :host-context([data-theme='dark']) .cell__tip {
