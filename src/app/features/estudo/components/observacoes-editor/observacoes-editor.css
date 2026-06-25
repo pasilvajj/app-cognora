@@ -42,3 +42,9 @@ textarea:disabled {
   font-weight: 800;
   font-size: 12px;
 }
+
+@media (max-width: 560px) {
+  .notes {
+    padding: 0 14px 14px;
+  }
+}

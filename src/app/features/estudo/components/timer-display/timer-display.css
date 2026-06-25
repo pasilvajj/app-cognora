@@ -60,3 +60,25 @@
     font-size: 46px;
   }
 }
+
+@media (max-width: 560px) {
+  .timer {
+    padding: 18px 14px 14px;
+  }
+
+  .time {
+    font-size: 40px;
+    letter-spacing: 0;
+  }
+
+  .chips {
+    gap: 8px;
+    width: 100%;
+    padding: 0 4px;
+  }
+
+  .chip {
+    font-size: 12px;
+    padding: 8px 12px;
+  }
+}

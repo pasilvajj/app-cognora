@@ -7,12 +7,6 @@
     [ordem]="s.ordem"
     (backClicked)="voltar()" />
 
-  <div class="sessao-registro-teste-wrap">
-    <button type="button" class="sessao-registro-teste-btn" (click)="abrirRegistroEstudoTeste()">
-      Registo de estudo (teste)
-    </button>
-  </div>
-
   <app-sessao-estudo-session-card
     [disciplinaNome]="s.disciplinaNome"
     [estudoLivre]="!!s.estudoLivre"
@@ -45,14 +39,6 @@
   {{ loading() ? 'Carregando sessão...' : 'Não foi possível carregar a sessão.' }}
 </div>
 }
-
-<app-registro-estudo-modal
-  [open]="registroModalAberto()"
-  [sessaoId]="sessaoId()"
-  titulo="Registo de estudo"
-  (openChange)="onRegistroModalOpenChange($event)"
-  (gravado)="onRegistroEstudoGravado()"
-/>
 
 <app-modo-foco-overlay
   [visible]="modoFocoAberto()"

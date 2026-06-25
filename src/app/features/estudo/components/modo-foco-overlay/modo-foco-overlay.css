@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -34,10 +34,10 @@
   right: 0;
   width: 36px;
   height: 36px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.45);
   border-radius: 999px;
-  background: rgba(248, 250, 252, 0.9);
-  color: #64748b;
+  background: rgba(30, 41, 59, 0.75);
+  color: #e2e8f0;
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
@@ -45,14 +45,8 @@
 }
 
 .mf-close:hover {
-  background: #f1f5f9;
-  color: #334155;
-}
-
-:host-context([data-theme='dark']) .mf-close {
-  background: color-mix(in srgb, var(--surface) 90%, #ffffff);
-  border-color: var(--border);
-  color: var(--text-muted);
+  background: rgba(51, 65, 85, 0.9);
+  color: #f8fafc;
 }
 
 .mf-title {
@@ -60,10 +54,6 @@
   font-size: clamp(1.35rem, 3vw, 1.65rem);
   font-weight: 800;
   letter-spacing: -0.02em;
-  color: #1e3a8a;
-}
-
-:host-context([data-theme='dark']) .mf-title {
   color: #93c5fd;
 }
 
@@ -108,12 +98,8 @@
   font-weight: 900;
   letter-spacing: -0.04em;
   line-height: 1;
-  color: #1e3a8a;
-  font-variant-numeric: tabular-nums;
-}
-
-:host-context([data-theme='dark']) .mf-timer {
   color: #dbeafe;
+  font-variant-numeric: tabular-nums;
 }
 
 .mf-badges {

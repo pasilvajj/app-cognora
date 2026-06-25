@@ -132,3 +132,47 @@ button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+@media (max-width: 560px) {
+  .pomodoro {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 14px;
+  }
+
+  .pomodoro-left {
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .cycle-text {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+
+  .pomodoro-right {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .time-pill {
+    grid-column: 1 / -1;
+    justify-self: end;
+    min-width: 0;
+    width: auto;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .btn-ghost,
+  .btn-warning {
+    width: 100%;
+    padding: 9px 8px;
+    font-size: 12px;
+    line-height: 1.25;
+    text-align: center;
+  }
+}

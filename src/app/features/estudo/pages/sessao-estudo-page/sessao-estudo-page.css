@@ -8,21 +8,16 @@
   font-weight: 700;
 }
 
-.sessao-registro-teste-wrap {
-  margin: 0 0 14px;
-}
+@media (max-width: 560px) {
+  .page {
+    padding:
+      max(10px, env(safe-area-inset-top))
+      max(10px, env(safe-area-inset-right))
+      max(16px, env(safe-area-inset-bottom))
+      max(10px, env(safe-area-inset-left));
+  }
 
-.sessao-registro-teste-btn {
-  border: 1px solid #26a69b;
-  border-radius: 10px;
-  padding: 0.45rem 0.9rem;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  background: color-mix(in srgb, #26a69b 10%, transparent);
-  color: #1a8a78;
-}
-
-.sessao-registro-teste-btn:hover {
-  background: color-mix(in srgb, #26a69b 18%, transparent);
+  .state {
+    padding: 14px 10px;
+  }
 }

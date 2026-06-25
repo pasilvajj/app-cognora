@@ -11,7 +11,6 @@ import { ModoFocoOverlay } from '../../components/modo-foco-overlay/modo-foco-ov
 import { PomodoroOverlay } from '../../components/pomodoro-overlay/pomodoro-overlay';
 import { SessaoEstudoPageHeader } from '../../components/sessao-estudo/sessao-estudo-page-header/sessao-estudo-page-header';
 import { SessaoEstudoSessionCard } from '../../components/sessao-estudo/sessao-estudo-session-card/sessao-estudo-session-card';
-import { RegistroEstudoModalComponent } from '../../components/registro-estudo-modal/registro-estudo-modal';
 import { EstudoApiService } from '../../data/estudo-api.service';
 import { SessaoDetalheDto, SESSAO_CATEGORIAS_ESTUDO, SessaoMetaEstudoRequest, SessaoTopicoOpcaoDto } from '../../data/estudo.models';
 import { PomodoroEngineService } from '../../services/pomodoro-engine-service';
@@ -31,7 +30,7 @@ import { alinharEpochAoSegundo } from '../../services/study-aligned-second-tick.
   selector: 'app-sessao-estudo-page',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, ModoFocoOverlay, PomodoroOverlay, RegistroEstudoModalComponent],
+  imports: [CommonModule, RouterModule, SessaoEstudoPageHeader, SessaoEstudoSessionCard, ModoFocoOverlay, PomodoroOverlay],
   templateUrl: './sessao-estudo-page.html',
   styleUrl: './sessao-estudo-page.css',
 })
@@ -69,7 +68,6 @@ export class SessaoEstudoPage implements OnDestroy {
   readonly topicoSaving = signal(false);
   readonly categoriaSaving = signal(false);
   readonly metaSelectsSaving = computed(() => this.topicoSaving() || this.categoriaSaving());
-  readonly registroModalAberto = signal(false);
   readonly modoFocoAberto = signal(false);
 
   private readonly params = toSignal(this.route.paramMap);
@@ -765,34 +763,6 @@ export class SessaoEstudoPage implements OnDestroy {
 
   fecharModoFoco(): void {
     this.modoFocoAberto.set(false);
-  }
-
-  abrirRegistroEstudoTeste(): void {
-    const id = this.sessaoId();
-    if (!id || !Number.isFinite(id) || id <= 0) {
-      this.toastr.warning('Sessão inválida.');
-      return;
-    }
-    this.registroModalAberto.set(true);
-  }
-
-  onRegistroModalOpenChange(aberto: boolean): void {
-    this.registroModalAberto.set(aberto);
-  }
-
-  async onRegistroEstudoGravado(): Promise<void> {
-    const id = this.sessaoId();
-    if (!id || !Number.isFinite(id) || id <= 0) {
-      return;
-    }
-    try {
-      const dados = await this.api.getSessao1(id);
-      this.initSessao(dados, true);
-      const topicos = await this.api.getTopicosSessao1(id);
-      this._topicosOpcoes.set(topicos ?? []);
-    } catch {
-      this.toastr.error('Não foi possível actualizar a sessão.');
-    }
   }
 
   voltar(): void {

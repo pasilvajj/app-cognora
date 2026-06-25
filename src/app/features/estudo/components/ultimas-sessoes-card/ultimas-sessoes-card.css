@@ -323,10 +323,153 @@
   color: #fbbf24;
 }
 
-/* Responsivo */
-@media (max-width: 920px) {
-  .disc { max-width: 320px; font-size: 18px; }
-  .time { font-size: 13px; }
-  .cta { font-size: 13px; padding: 12px 14px; }
-  .status { width: 40px; height: 40px; }
+/* Responsivo — tablet */
+@media (max-width: 920px) and (min-width: 561px) {
+  .disc { max-width: 240px; }
+  .time { font-size: 14px; }
+}
+
+/* Responsivo — telemóvel */
+@media (max-width: 560px) {
+  .card-header {
+    padding: 14px 16px;
+  }
+
+  .card-body {
+    padding: 10px 14px 14px;
+  }
+
+  .session-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 0;
+  }
+
+  .session-row.clickable {
+    margin: 0;
+    padding: 12px 8px;
+  }
+
+  .session-left {
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    width: 100%;
+  }
+
+  .sess-num {
+    font-size: 11px;
+    min-width: 1.25rem;
+  }
+
+  .status {
+    width: 28px;
+    height: 28px;
+    border-width: 2px;
+  }
+
+  .status.done {
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.12);
+  }
+
+  .status.open {
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  }
+
+  .status.paused {
+    box-shadow: 0 0 0 4px rgba(148, 163, 184, 0.12);
+  }
+
+  .status-icon.check {
+    font-size: 11px;
+  }
+
+  .status-icon.pause {
+    width: 8px;
+    height: 8px;
+    gap: 3px;
+  }
+
+  .status-icon.pause i {
+    width: 3px;
+    height: 8px;
+  }
+
+  .date-chip {
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .date-cal {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    grid-template-rows: 15px 1fr;
+  }
+
+  .date-cal-top {
+    font-size: 9px;
+  }
+
+  .date-cal-day {
+    font-size: 12px;
+  }
+
+  .date-text {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .disc {
+    order: 10;
+    flex: 1 1 100%;
+    max-width: 100%;
+    font-size: 13px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.35;
+  }
+
+  .pill {
+    margin-left: auto;
+    font-size: 11px;
+    padding: 6px 12px;
+  }
+
+  .session-right {
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .time-col {
+    align-items: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 4px;
+  }
+
+  .session-right:not(:has(.cta)) .time-col {
+    width: 100%;
+  }
+
+  .time {
+    font-size: 12px;
+    white-space: normal;
+    line-height: 1.35;
+  }
+
+  .time.muted {
+    font-size: 12px;
+  }
+
+  .cta {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 12px;
+  }
 }

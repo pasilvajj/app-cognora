@@ -54,3 +54,45 @@ h1{
   box-shadow: 0 16px 30px rgba(245, 158, 11, 0.26);
   filter: brightness(1.02);
 }
+
+@media (max-width: 560px) {
+  .header {
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  h1 {
+    font-size: 20px;
+    line-height: 1.2;
+    padding-right: 8px;
+  }
+
+  .btn-back {
+    padding: 8px 12px;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .sub {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    align-items: flex-start;
+  }
+
+  .dot {
+    display: none;
+  }
+
+  .pill {
+    width: 100%;
+    max-width: 100%;
+    white-space: normal;
+    line-height: 1.35;
+    font-size: 11px;
+    padding: 5px 9px;
+  }
+
+  .muted {
+    font-size: 12px;
+  }
+}
