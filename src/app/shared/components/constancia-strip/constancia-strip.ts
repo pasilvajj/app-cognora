@@ -54,12 +54,17 @@ export class ConstanciaStrip {
       return this.streakAtual;
     }
     let streak = 0;
+    let ignorouHojeSemEstudo = false;
     for (let i = this._dias.length - 1; i >= 0; i--) {
       const dia = this._dias[i];
       if (dia.naoAplicavel) {
         continue;
       }
       if (!dia.estudou) {
+        if (!ignorouHojeSemEstudo && i === this._dias.length - 1) {
+          ignorouHojeSemEstudo = true;
+          continue;
+        }
         break;
       }
       streak++;
