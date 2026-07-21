@@ -65,21 +65,29 @@
           <div class="day-cards" cdkDropList [id]="'dia-' + idx" [cdkDropListData]="d.itens"
             [cdkDropListConnectedTo]="dropListIds" (cdkDropListDropped)="onDrop($event)">
             <div class="item-card" *ngFor="let it of d.itens" cdkDrag
+              [cdkDragDisabled]="!it.editavel"
               [class.free]="it.duracaoSeg <= 0"
+              [class.item-card--completed]="it.concluida"
+              [class.item-card--loading]="iniciandoDisciplinaId() === it.disciplinaId"
               [style.--card-color]="it.duracaoSeg <= 0 ? null : corDisciplina(it.disciplinaNome)"
-              (click)="abrirEdicao(d, it)" title="Clique para editar o tempo">
+              (click)="abrirSessao(it)"
+              [title]="it.editavel ? 'Clique para estudar esta matéria' : 'Matéria concluída — sessão bloqueada'">
               <div class="item-card-placeholder" *cdkDragPlaceholder></div>
 
               <div class="item-top">
-                <span class="item-grip" cdkDragHandle aria-hidden="true"
+                <span class="item-grip" *ngIf="it.editavel" cdkDragHandle aria-hidden="true"
                   (click)="$event.stopPropagation()" title="Arraste para mover">⋮⋮</span>
                 <div class="item-title">{{ it.disciplinaNome }}</div>
+                <span class="completed-badge" *ngIf="it.concluida">Concluída</span>
+                <button class="item-edit" *ngIf="it.editavel" type="button"
+                  (click)="$event.stopPropagation(); abrirEdicao(d, it)"
+                  aria-label="Editar tempo planejado" title="Editar tempo">✎</button>
               </div>
 
               <div class="item-sub" *ngIf="it.topico">{{ it.topico }}</div>
 
               <div class="item-time" *ngIf="it.duracaoSeg > 0">
-                {{ formatarTempo(it.duracaoSeg) }}
+                {{ iniciandoDisciplinaId() === it.disciplinaId ? 'Abrindo sessão…' : formatarTempo(it.duracaoSeg) }}
               </div>
 
               <div class="free-note" *ngIf="it.duracaoSeg <= 0">
@@ -102,14 +110,21 @@
         <div class="side-card">
           <div class="side-title">Distribuição por disciplina</div>
 
-          <div class="dist-row" *ngFor="let x of distribuicao">
+          <div class="dist-row" *ngFor="let x of distribuicao" [class.dist-row--completed]="x.concluida">
             <div class="dist-left">
               <span class="dot small" [style.background]="corDisciplina(x.disciplinaNome)"></span>
               <span class="dist-name">{{ x.disciplinaNome }}</span>
+              <span class="dist-status" *ngIf="x.concluida">Concluída</span>
             </div>
             <div class="dist-time">{{ formatarTempo(x.totalSeg) }}</div>
           </div>
         </div>
+
+        <button class="apply-cycle-btn" type="button"
+          (click)="aplicarAoCiclo()"
+          [disabled]="aplicandoAoCiclo() || carregando || gerando || salvando() || !podeAplicarAoCiclo">
+          {{ aplicandoAoCiclo() ? 'Aplicando…' : 'Aplicar ao ciclo' }}
+        </button>
 
         <div class="side-card">
           <div class="side-title">Resumo</div>

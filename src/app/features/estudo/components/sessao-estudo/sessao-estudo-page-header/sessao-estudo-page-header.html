@@ -1,5 +1,5 @@
 <div class="header">
-  <div>
+  <div class="header__copy">
     <h1>Sessão de Estudo</h1>
     <div class="sub">
       <span class="pill">{{ cicloNome() }}</span>
@@ -10,7 +10,30 @@
     </div>
   </div>
 
-  <button class="btn-back" type="button" (click)="backClicked.emit()">
-    Voltar
-  </button>
+  <div class="header__controls">
+    <div class="header__actions">
+      <span class="header__status" [class.header__status--running]="statusLabel() === 'Em andamento'">
+        <i aria-hidden="true"></i>{{ statusLabel() }}
+      </span>
+      <button class="btn-back" type="button" (click)="backClicked.emit()">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M19 12H5m6-6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        Voltar
+      </button>
+    </div>
+
+    @if (pomodoroEnabled()) {
+      <div class="header__pomodoro-actions" aria-label="Controles secundários do Pomodoro">
+        <button type="button" class="btn-pomodoro-secondary" [disabled]="!podePularPomodoro()"
+          (click)="pomodoroSkipStage.emit()">
+          <span aria-hidden="true">▷</span>Pular etapa
+        </button>
+        <button type="button" class="btn-pomodoro-toggle" [disabled]="sessaoFinalizada()"
+          (click)="pomodoroToggleEnabled.emit()">
+          <span aria-hidden="true">◉</span>{{ pomodoroTemporariamenteDesativado() ? 'Ativar agora' : 'Desativar agora' }}
+        </button>
+      </div>
+    }
+  </div>
 </div>

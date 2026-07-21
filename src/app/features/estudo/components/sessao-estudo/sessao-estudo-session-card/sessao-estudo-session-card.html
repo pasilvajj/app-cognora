@@ -1,95 +1,143 @@
 <section class="card">
-  <div class="card-header">
-    <div>
-      <h2>{{ disciplinaNome() }}</h2>
-      <div class="meta">Planejado: {{ tempoPlanejado() }}</div>
-    </div>
-
-    <span class="status-pill" [class.is-pausada]="timer.pausada()"
-      [class.is-ready]="statusLabel() === 'Pronta para iniciar'" [class.is-running]="statusLabel() === 'Em andamento'"
-      [class.is-done]="statusLabel() === 'Concluída'" [class.is-closed]="statusLabel() === 'Encerrada'">
-      {{ statusLabel() }}
-    </span>
-  </div>
-
   @if (estudoLivre()) {
-  <div class="estudo-livre-callout" role="note">
-    <p class="estudo-livre-callout-titulo">Sessão livre</p>
-    <p class="estudo-livre-callout-texto">{{ estudoLivreMensagem }}</p>
-  </div>
+    <div class="estudo-livre-callout" role="note">
+      <p class="estudo-livre-callout-titulo">Sessão livre</p>
+      <p class="estudo-livre-callout-texto">{{ estudoLivreMensagem }}</p>
+    </div>
   }
-
-  <div class="campos-meta-sessao">
-    @if (topicosOpcoes().length > 0) {
-    <div class="campo-topico">
-      <span class="campo-rotulo">Tópico do edital</span>
-      <select
-        class="select-meta"
-        [ngModel]="topicoSelectModel()"
-        (ngModelChange)="onTopicoNgModel($event)"
-        [disabled]="topicoSelectDisabled() || metaSaving()"
-      >
-        <option value="">— Opcional —</option>
-        @for (o of topicosOpcoes(); track o.id) {
-          <option [value]="'' + o.id">{{ o.titulo }}</option>
-        }
-      </select>
-    </div>
-    }
-
-    <div class="campo-categoria">
-      <span class="campo-rotulo">Categoria</span>
-      <select
-        class="select-meta"
-        [ngModel]="categoriaSelectModel()"
-        (ngModelChange)="onCategoriaNgModel($event)"
-        [disabled]="categoriaSelectDisabled() || metaSaving()"
-      >
-        <option value="">Selecione…</option>
-        @for (c of categoriasEstudo; track c.codigo) {
-          <option [value]="c.codigo">{{ c.label }}</option>
-        }
-      </select>
-    </div>
-  </div>
 
   @if (pomodoroEnabled()) {
-  <app-pomodoro-timer [sessaoFinalizada]="timer.finalizada()"
-    [desativado]="pomodoroTemporariamenteDesativado()"
-    (skipStage)="pomodoroSkipStage.emit()"
-    (toggleEnabled)="pomodoroToggleEnabled.emit()">
-  </app-pomodoro-timer>
+    <div class="pomodoro-journey-scroll">
+      <div class="pomodoro-journey" aria-label="Etapas do Pomodoro"
+        [style.grid-template-columns]="'repeat(' + pomodoroStages().length + ', minmax(var(--pomodoro-stage-min-width), 1fr))'">
+        <div class="pomodoro-journey__line">
+          <span [style.width.%]="pomodoroProgressoPercentual()"></span>
+        </div>
+        @for (stage of pomodoroStages(); track stage.key) {
+          <div class="pomodoro-stage"
+            [class.pomodoro-stage--active]="stage.ativa"
+            [class.pomodoro-stage--complete]="stage.concluida"
+            [style.--stage-progress]="stage.progresso + '%'">
+            <span class="pomodoro-stage__node">
+              @if (stage.concluida) { ✓ } @else { {{ stage.icon }} }
+            </span>
+            <strong>{{ stage.label }}</strong>
+            <small>{{ stage.intervalo }}</small>
+            @if (stage.ativa) {
+              <em>{{ pomodoro.timeLabel() }} restantes</em>
+            }
+          </div>
+        }
+        <div class="pomodoro-time-ruler" aria-label="Linha do tempo da sessão">
+          <div class="pomodoro-time-ruler__labels">
+            @for (mark of timelineMarks(); track $index) {
+              <span [style.left.%]="mark.percentual" [class.is-first]="$first" [class.is-last]="$last">{{ mark.label }}</span>
+            }
+          </div>
+          <div class="pomodoro-time-ruler__track">
+            <span [style.width.%]="progressoPercentual()"></span>
+            @for (tick of timelineMinorTicks(); track $index) {
+              <s class="timeline-minor-tick" [style.left.%]="tick" aria-hidden="true"></s>
+            }
+            @for (mark of timelineMarks(); track $index) {
+              <b class="timeline-major-tick" [style.left.%]="mark.percentual" aria-hidden="true"></b>
+            }
+            <i [style.left.%]="progressoPercentual()" aria-hidden="true"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="session-ruler" aria-label="Progresso temporal da sessão"
+      [style.--ruler-progress]="progressoPercentual() + '%'">
+      <div class="session-ruler__labels">
+        <span class="session-ruler__now">
+          <strong>Início</strong><small>{{ restanteSessaoFormatado() }}</small>
+        </span>
+        <span class="session-ruler__meta"><strong>Meta</strong><small>{{ metaFormatada() }}</small></span>
+      </div>
+      <div class="session-ruler__track">
+        <span class="session-ruler__fill" [style.width.%]="progressoPercentual()"></span>
+        <i></i>
+      </div>
+      <div class="session-ruler__scale-labels" aria-hidden="true">
+        @for (mark of timelineMarks(); track $index) {
+          <span [style.left.%]="mark.percentual" [class.is-first]="$first" [class.is-last]="$last">{{ mark.label }}</span>
+        }
+      </div>
+      <div class="session-ruler__ticks" aria-hidden="true">
+        @for (tick of timelineMinorTicks(); track $index) {
+          <span class="timeline-minor-tick" [style.left.%]="tick"></span>
+        }
+        @for (mark of timelineMarks(); track $index) {
+          <i class="timeline-major-tick" [style.left.%]="mark.percentual"></i>
+        }
+      </div>
+    </div>
   }
 
-  <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()">
-  </app-timer-display>
+  <div class="study-workspace">
+    <main class="study-content">
+      <app-timer-display [decorridoMs]="timer.decorridoMs()" [metaMs]="timer.metaMs()" />
 
-  <div class="actions">
-    <button
-      type="button"
-      class="btn-modo-foco"
-      [disabled]="timer.finalizada()"
-      (click)="modoFocoOpen.emit()"
-      title="Estudar em ecrã limpo, sem distrações"
-    >
-      Modo Foco
-    </button>
+      <div class="timer-actions" aria-label="Controles da sessão">
+        <button class="btn-main" type="button" (click)="mainActionClick.emit()"
+          [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
+          [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            @if (timer.pausada() || statusLabel() === 'Pronta para iniciar') {
+              <path d="M8 5l11 7-11 7V5z" fill="currentColor" />
+            } @else {
+              <path d="M8 6v12M16 6v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+            }
+          </svg>
+          {{ statusLabel() === 'Pronta para iniciar' ? 'Iniciar' : timer.pausada() ? 'Retomar' : 'Pausar' }}
+        </button>
 
-    <button class="btn-main" type="button" (click)="mainActionClick.emit()"
-      [disabled]="timer.finalizada() || acaoLoading() || retomarBloqueadoNaPausaCurta()"
-      [title]="retomarBloqueadoNaPausaCurta() ? 'Aguarde o fim da pausa curta para retomar.' : ''">
-      {{
-      statusLabel() === 'Pronta para iniciar'
-      ? 'Iniciar'
-      : timer.pausada()
-      ? 'Retomar'
-      : 'Pausar'
-      }}
-    </button>
+        <button type="button" class="btn-modo-foco" [disabled]="timer.finalizada()" (click)="modoFocoOpen.emit()"
+          title="Estudar em ecrã limpo, sem distrações">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.8"/></svg>
+          Modo Foco
+        </button>
+
+      </div>
+
+      <div class="campos-meta-sessao"
+        [class.campos-meta-sessao--categoria-unica]="topicosOpcoes().length === 0">
+        @if (topicosOpcoes().length > 0) {
+          <label class="campo-meta campo-topico">
+            <span class="campo-meta__icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M7 3.5h7l4 4V20H7V3.5zM14 3.5V8h4M10 12h5M10 15.5h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </span>
+            <span class="campo-meta__body">
+              <span class="campo-rotulo">Tópico do edital</span>
+              <select class="select-meta" [ngModel]="topicoSelectModel()" (ngModelChange)="onTopicoNgModel($event)"
+                [disabled]="topicoSelectDisabled() || metaSaving()">
+                <option value="">— Opcional —</option>
+                @for (o of topicosOpcoes(); track o.id) { <option [value]="'' + o.id">{{ o.titulo }}</option> }
+              </select>
+            </span>
+          </label>
+        }
+
+        <label class="campo-meta campo-categoria">
+          <span class="campo-meta__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4.5 5.5A3.5 3.5 0 018 4h4v15H8a3.5 3.5 0 00-3.5 1.5v-15zM19.5 5.5A3.5 3.5 0 0016 4h-4v15h4a3.5 3.5 0 013.5 1.5v-15z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" /></svg>
+          </span>
+          <span class="campo-meta__body">
+            <span class="campo-rotulo">Categoria</span>
+            <select class="select-meta" [ngModel]="categoriaSelectModel()" (ngModelChange)="onCategoriaNgModel($event)"
+              [disabled]="categoriaSelectDisabled() || metaSaving()">
+              <option value="">Selecione…</option>
+              @for (c of categoriasEstudo; track c.codigo) { <option [value]="c.codigo">{{ c.label }}</option> }
+            </select>
+          </span>
+        </label>
+      </div>
+
+      <app-observacoes-editor [observacoes]="observacoes()" [sessaoFinalizada]="timer.finalizada()"
+        (observacoesChange)="observacoesChange.emit($event)" (saveRequest)="observacoesSaveRequest.emit($event)" />
+    </main>
+
   </div>
-
-  <app-observacoes-editor [observacoes]="observacoes()" [sessaoFinalizada]="timer.finalizada()"
-    (observacoesChange)="observacoesChange.emit($event)" (saveRequest)="observacoesSaveRequest.emit($event)">
-  </app-observacoes-editor>
-
 </section>

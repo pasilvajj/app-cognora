@@ -1,8 +1,12 @@
 .notes {
-  padding: 0 18px 18px;
+  margin: 0 28px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  border: 1px solid var(--border, #dbe4f0);
+  border-radius: 13px;
+  background: var(--bg-card, #fff);
 }
 
 .notes label {
@@ -16,7 +20,7 @@ textarea {
   box-sizing: border-box;
   display: block;
   min-height: 110px;
-  border-radius: 14px;
+  border-radius: 10px;
   border: 1px solid var(--border);
   padding: 12px;
   outline: none;
@@ -43,8 +47,15 @@ textarea:disabled {
   font-size: 12px;
 }
 
+@media (min-width: 981px) {
+  .notes { gap: 5px; margin: 0 20px; padding: 9px 12px; }
+  textarea { min-height: 110px; padding: 9px 10px; }
+  .notes-status { margin-top: 0; font-size: 10px; }
+}
+
 @media (max-width: 560px) {
   .notes {
-    padding: 0 14px 14px;
+    margin: 0 14px;
+    padding: 12px;
   }
 }

@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { Subject } from 'rxjs';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { AuthService } from '../../../../core/auth/auth.service';
 import {  MateriasCicloList, DisciplinaCicloItem,CicloEditResponseDto,DisciplinaEditDto} from '../materias-ciclo-list/materias-ciclo-list';
 
@@ -69,8 +69,6 @@ export class CicloEditPage implements OnInit{
         this.disciplinas = this.mapEditDtoToCicloItems(data.disciplinas );
 
         this.nomeCiclo = this.ciclo.nome
-
-        this.aplicarHorasPorMateria();
       },
       error: err => console.error(err),
       complete: () => {
@@ -152,13 +150,20 @@ export class CicloEditPage implements OnInit{
           .map(d => ({
           id: d.id,
           nome: d.nome,
-          tempoMinutos: BLOCO_SESSAO_MINUTOS,
+          tempoMinutos: d.tempoPlanejadoMinutos ?? 0,
           checked: d.checked,
           completouEdital: d.completouEdital,
           peso: d.peso,
           nivel: d.nivel,
-          horasLabel: '0:00h',
+          horasLabel: this.formatarMinutos(d.tempoPlanejadoMinutos),
         }));
+      }
+
+      private formatarMinutos(total: number | null | undefined): string {
+        const minutos = Math.max(0, Math.floor(Number(total) || 0));
+        const horas = Math.floor(minutos / 60);
+        const resto = minutos % 60;
+        return `${horas}:${String(resto).padStart(2, '0')}h`;
       }
 
 }

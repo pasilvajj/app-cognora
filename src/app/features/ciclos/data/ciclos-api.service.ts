@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import {
   CargoDto,
   CicloCreateRequest,
+  CicloCriadoDto,
   CicloDto,
   CicloEditResponseDto,
   CicloUpdateRequest,
@@ -27,7 +28,7 @@ export type CicloMateriaDto = {
   estudoLivre?: boolean;
 };
 
-/** Resposta de GET /ciclo/materias/:id */
+/** Resposta de GET /v1/ciclos/:id/materias */
 export type CicloMateriasComEstadoDto = {
   materias: CicloMateriaDto[];
   aguardandoNovaRodada: boolean;
@@ -48,6 +49,7 @@ export type NovaRodadaDto = {
 @Injectable({ providedIn: 'root' })
 export class CiclosApiService {
   private readonly base = environment.apiBaseUrl;
+  private readonly ciclosV1Base = `${environment.apiBaseUrl}/v1/ciclos`;
 
   constructor(private http: HttpClient) { }
 
@@ -63,24 +65,24 @@ export class CiclosApiService {
     if (uf) {
       params = params.set('uf', uf);
     }
-    return this.http.get<ConcursoDto[]>(`${this.base}/concursos`, { params });
+    return this.http.get<ConcursoDto[]>(`${this.base}/v1/concursos`, { params });
   }
 
   // escolha UM: por concursoId ou por editalId (ou ambos)
-  listDisciplinasByConcurso(cargoId: number): Observable<DisciplinaDto[]> {
-    return this.http.get<DisciplinaDto[]>(`${this.base}/ciclo/lista-disciplina-cargo/${cargoId}`);
+  listDisciplinasByCargo(cargoId: number): Observable<DisciplinaDto[]> {
+    return this.http.get<DisciplinaDto[]>(`${this.base}/v1/cargos/${cargoId}/disciplinas`);
   }
 
   detalharCicloParaEdicao(idCiclo: number): Observable<CicloEditResponseDto> {
-    return this.http.get<CicloEditResponseDto>(`${this.base}/ciclo/detalhe-ciclo/${idCiclo}`);
+    return this.http.get<CicloEditResponseDto>(`${this.ciclosV1Base}/${idCiclo}/configuracao`);
   }
 
   listCargosByConcurso(concursoId: number): Observable<CargoDto[]> {
-    return this.http.get<CargoDto[]>(`${this.base}/cargo/${concursoId}`);
+    return this.http.get<CargoDto[]>(`${this.base}/v1/concursos/${concursoId}/cargos`);
   }
 
-  saveCiclo(payload: CicloCreateRequest): Observable<CicloDto[]> {
-    return this.http.post<CicloDto[]>(`${this.base}/ciclo/salvar`, payload);
+  saveCiclo(payload: CicloCreateRequest): Observable<CicloCriadoDto> {
+    return this.http.post<CicloCriadoDto>(this.ciclosV1Base, payload);
   }
 
   /**
@@ -89,28 +91,28 @@ export class CiclosApiService {
    */
   atualizarCiclo(cicloId: number, body: CicloUpdateRequest): Observable<void> {
     return this.http
-      .put(`${this.base}/ciclo/${cicloId}`, body, { responseType: 'text' })
+      .put(`${this.ciclosV1Base}/${cicloId}`, body, { responseType: 'text' })
       .pipe(map(() => undefined));
   }
   listCiclos(): Promise<CicloDto[]> {
-    return firstValueFrom(this.http.get<CicloDto[]>(`${this.base}/ciclo`));
+    return firstValueFrom(this.http.get<CicloDto[]>(this.ciclosV1Base));
   }
 
   getCiclo(id: number) {
-    return this.http.get<CicloDto>(`${this.base}/ciclo/${id}`);
+    return this.http.get<CicloDto>(`${this.ciclosV1Base}/${id}`);
   }
 
   getMateriasCiclo(cicloId: number) {
-    return this.http.get<CicloMateriasComEstadoDto>(`${this.base}/ciclo/materias/${cicloId}`);
+    return this.http.get<CicloMateriasComEstadoDto>(`${this.ciclosV1Base}/${cicloId}/materias`);
   }
 
   /** Confirma início da próxima rodada após concluir o ciclo (requer JWT). */
   iniciarNovaRodada(cicloId: number) {
-    return this.http.post<NovaRodadaDto>(`${this.base}/ciclo/${cicloId}/execucao/iniciar-nova`, {});
+    return this.http.post<NovaRodadaDto>(`${this.ciclosV1Base}/${cicloId}/execucoes`, {});
   }
 
   deletarCiclo(cicloId: number) {
-    return this.http.delete(`${this.base}/ciclo/delete/${cicloId}`);
+    return this.http.delete(`${this.ciclosV1Base}/${cicloId}`);
   }
 
 }

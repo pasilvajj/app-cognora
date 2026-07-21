@@ -1,20 +1,20 @@
-/** API remota (EC2). */
-export const COGNORA_API_HOST = 'http://3.141.199.149:8080';
+/** API local (desenvolvimento). */
+export const COGNORA_API_HOST = 'http://localhost:8080';
 
 /** URLs absolutas — acesso direto ao backend (ex.: testes fora do `ng serve`). */
 export const cognoraApiUrls = () => ({
   apiBaseUrl: `${COGNORA_API_HOST}/api`,
-  authBaseUrl: `${COGNORA_API_HOST}/api/auth`,
+  authBaseUrl: `${COGNORA_API_HOST}/api/v1/auth`,
   billingApiPath: `${COGNORA_API_HOST}/api/billing`,
 });
 
 /**
- * URLs relativas — `ng serve` usa proxy.conf.json (`/api` → EC2).
+ * URLs relativas — `ng serve` usa proxy.conf.json (`/api` → localhost:8080).
  * Na Vercel (HTTPS) usa vercel.json (`/api` → backend remoto).
  */
 export const cognoraApiUrlsRelative = () => ({
   apiBaseUrl: '/api',
-  authBaseUrl: '/api/auth',
+  authBaseUrl: '/api/v1/auth',
   billingApiPath: '/api/billing',
 });
 

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import type { CicloMateriasComEstadoDto } from '../../ciclos/data/ciclos-api.service';
 
 export type WeekDayDto = {
   label: string;
@@ -62,6 +63,10 @@ export type DashboardResumoDto = {
   recentes: SessaoCardDto[];
   /** Incluído quando {@code chartWeekStart} é enviado no resumo (evita 2º GET na carga). */
   semanaSoDiario?: DashboardSemanaSoDiarioDto | null;
+  /** Constância global reutilizando a mesma carga do streak. */
+  constancia?: DashboardConstanciaDto | null;
+  /** Estado das matérias reaproveitando a carga do resumo. */
+  estadoMaterias?: CicloMateriasComEstadoDto | null;
 };
 
 /** Resposta de `GET /dashboard/semana-so-diario` (gráfico de teste só com `estudo_diario_ciclo`). */
@@ -92,7 +97,7 @@ export type DashboardConstanciaDto = {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardApiService {
-  private readonly baseUrl = environment.apiBaseUrl;
+  private readonly baseUrl = `${environment.apiBaseUrl}/v1/dashboards`;
 
   constructor(private http: HttpClient) {}
 
@@ -112,7 +117,7 @@ export class DashboardApiService {
       params = params.set('chartWeekStart', options.chartWeekStart);
     }
 
-    return this.http.get<DashboardResumoDto>(`${this.baseUrl}/dashboard/resumo`, { params });
+    return this.http.get<DashboardResumoDto>(`${this.baseUrl}/resumo`, { params });
   }
 
   /**
@@ -124,11 +129,11 @@ export class DashboardApiService {
     if (weekStartIso) {
       params = params.set('weekStart', weekStartIso);
     }
-    return this.http.get<DashboardSemanaSoDiarioDto>(`${this.baseUrl}/dashboard/semana-so-diario`, { params });
+    return this.http.get<DashboardSemanaSoDiarioDto>(`${this.baseUrl}/semana-so-diario`, { params });
   }
 
   /** Faixa de constância nos estudos (global): mês atual até hoje. */
   getConstancia(): Observable<DashboardConstanciaDto> {
-    return this.http.get<DashboardConstanciaDto>(`${this.baseUrl}/dashboard/constancia`);
+    return this.http.get<DashboardConstanciaDto>(`${this.baseUrl}/constancia`);
   }
 }

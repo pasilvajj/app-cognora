@@ -18,7 +18,7 @@ export class EditalVerticalApiService {
       params = params.set('cicloId', String(cicloId));
     }
     return this.http.get<EditalVerticalConcursoDto>(
-      `${this.base}/concursos/${concursoId}/edital-vertical`,
+      `${this.base}/v1/concursos/${concursoId}/edital-vertical`,
       { params },
     );
   }

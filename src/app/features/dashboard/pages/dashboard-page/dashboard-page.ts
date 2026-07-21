@@ -2,11 +2,10 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Subscription, finalize, forkJoin, of } from 'rxjs';
+import { Subscription, finalize, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { CicloOption, CicloSelector, } from '../../../../shared/components/ciclo-selector/ciclo-selector';
-import { MetricCard } from '../../../../shared/components/metric-card/metric-card';
 import { ProgressBar, ProgressDisciplinaItem } from '../../../../shared/components/progress-bar/progress-bar';
 import { WeekChart } from '../../../../shared/components/week-chart/week-chart';
 import { ConstanciaStrip } from '../../../../shared/components/constancia-strip/constancia-strip';
@@ -36,7 +35,7 @@ type FooterTone = 'success' | 'warn' | 'muted' | 'primary';
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [CommonModule, MetricCard, WeekChart, ProgressBar, CicloSelector, ConstanciaStrip],
+  imports: [CommonModule, WeekChart, ProgressBar, CicloSelector, ConstanciaStrip],
   templateUrl: './dashboard-page.html',
   styleUrl: './dashboard-page.css',
 })
@@ -59,6 +58,8 @@ export class DashboardPage implements OnInit, OnDestroy {
   // ===== Card STREAK =====
   streakValue = '—';
   streakFooterText = '';
+  streakDias = 0;
+  recordeStreakDias = 0;
 
   // ===== Faixa de CONSTÂNCIA (global, todos os ciclos) =====
   constanciaDias: DiaConstanciaDto[] = [];
@@ -70,6 +71,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   cicloHorasEsperadas = '—';
   cicloHorasFooterText = '';
   cicloHorasFooterTone: FooterTone = 'muted';
+  cicloPercentual = 0;
 
   // ===== Card AÇÃO (Retomar OU Próxima) =====
   actionTitle = '—';
@@ -83,7 +85,7 @@ export class DashboardPage implements OnInit, OnDestroy {
   private actionSessaoId: number | null = null;
   /** Para “Iniciar”: `cicloItemId` da próxima matéria recomendada. */
   private actionCicloItemId: number | null = null;
-  private actionIsRetomar = signal(false);
+  readonly actionIsRetomar = signal(false);
 
   // semana: WeekDayDto[] = []; // gráfico "Estudos da semana" desativado
   /** Gráfico ativo (teste): só `estudo_diario_ciclo`. */
@@ -92,12 +94,6 @@ export class DashboardPage implements OnInit, OnDestroy {
   progressoItems: ProgressDisciplinaItem[] = [];
 
   private readonly LS_KEY = 'cognora:lastCicloId';
-  /** Preferência A/B: ordem dos 4 cards quando a grelha vira uma coluna (telemóvel / tablet estreito). */
-  private static readonly LS_MOBILE_CARD_ORDER = 'cognora.dashboard.mobileCardOrder';
-
-  /** `summary-first` = como no desktop (tempo → … → sessão). `session-first` = CTA “Sessão” no topo. */
-  cardsMobileOrder = signal<'summary-first' | 'session-first'>('summary-first');
-
   // private weekStartIso = ''; // navegação do gráfico legado desativada
 
   /** Segunda-feira da semana exibida no gráfico “só diário”. */
@@ -126,9 +122,7 @@ export class DashboardPage implements OnInit, OnDestroy {
       return;
     }
 
-    this.readMobileCardOrderPref();
     this.carregarCiclos();
-    this.carregarConstancia();
   }
 
   /** Faixa de constância é global (todos os ciclos): carrega uma vez, independente do ciclo selecionado. */
@@ -155,26 +149,6 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.resumoLoadSub?.unsubscribe();
     this.soDiarioLoadSub?.unsubscribe();
     this.constanciaLoadSub?.unsubscribe();
-  }
-
-  private readMobileCardOrderPref(): void {
-    try {
-      const v = localStorage.getItem(DashboardPage.LS_MOBILE_CARD_ORDER);
-      if (v === 'session-first' || v === 'summary-first') {
-        this.cardsMobileOrder.set(v);
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-
-  setMobileCardOrder(order: 'summary-first' | 'session-first'): void {
-    this.cardsMobileOrder.set(order);
-    try {
-      localStorage.setItem(DashboardPage.LS_MOBILE_CARD_ORDER, order);
-    } catch {
-      /* ignore */
-    }
   }
 
   onCicloChange(id: number): void {
@@ -289,22 +263,27 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.loading = true;
 
     return new Promise((resolve, reject) => {
-      this.resumoLoadSub = forkJoin({
-        resumo: this.dashboardApi.getResumo(cicloId, {
+      this.resumoLoadSub = this.dashboardApi.getResumo(cicloId, {
           chartWeekStart: this.weekStartIsoDiario,
-        }),
-        estadoMaterias: this.ciclosApi.getMateriasCiclo(cicloId).pipe(
-          catchError(() => of(null)),
-        ),
-      }).subscribe({
-        next: ({ resumo: r, estadoMaterias }) => {
+        }).subscribe({
+        next: (r) => {
+          const estadoMaterias = r.estadoMaterias ?? null;
           this.resumo = r;
           this.timeValue = this.formatSecondsToHMin(r.estudadoSemanaSeg ?? 0);
           this.aplicarDeltaSemana(r.deltaSemanaSeg ?? 0);
 
           const streak = r.streakDias ?? 0;
+          this.streakDias = streak;
+          this.recordeStreakDias = r.recordeStreakDias ?? 0;
           this.streakValue = `${streak} dia${streak === 1 ? '' : 's'} consecutivo${streak === 1 ? '' : 's'}`;
           this.streakFooterText = `Recorde: ${r.recordeStreakDias ?? 0} dias`;
+          if (r.constancia) {
+            this.constanciaDias = r.constancia.dias ?? [];
+            this.constanciaStreak = r.constancia.streakAtual ?? null;
+          } else {
+            // Compatibilidade durante deploy gradual: backend antigo ainda exige endpoint separado.
+            this.carregarConstancia();
+          }
 
           const materiasList = estadoMaterias?.materias ?? [];
           const aguardandoNovaRodada = estadoMaterias?.aguardandoNovaRodada ?? false;
@@ -435,6 +414,7 @@ export class DashboardPage implements OnInit, OnDestroy {
     this.cicloHorasFeitas = this.formatMinutesToHMin(feitosTotalMin);
 
     const percentual = metaTotalMin > 0 ? Math.min(100, Math.round((feitosTotalMin / metaTotalMin) * 100)) : 0;
+    this.cicloPercentual = percentual;
     this.cicloHorasFooterText = `${percentual}% concluído do ciclo`;
     this.cicloHorasFooterTone = percentual >= 70 ? 'success' : percentual >= 35 ? 'primary' : 'warn';
   }
@@ -537,8 +517,16 @@ export class DashboardPage implements OnInit, OnDestroy {
     }
   }
 
+  get primeiroNomeUsuario(): string {
+    const user = this.auth.getUser() as { name?: string; nome?: string; email?: string } | null;
+    const nome = String(user?.name ?? user?.nome ?? user?.email ?? '').trim();
+    const primeiroNome = nome.split(/[\s@]/)[0];
+    return primeiroNome || 'Estudante';
+  }
+
   private aplicarDeltaSemana(delta: number): void {
-    const abs = this.formatSecondsToHMin(Math.abs(delta));
+    const deltaAbsoluto = Math.abs(delta);
+    const abs = deltaAbsoluto < 60 ? 'menos de 1min' : this.formatSecondsToHMin(deltaAbsoluto);
     if (delta > 0) {
       this.timeFooterText = `▲ ${abs} em relação à última semana`;
       this.timeFooterTone = 'success';

@@ -20,12 +20,12 @@ export class TimerDisplay {
 
   // 1. Formata o tempo decorrido
   readonly decorridoFormatado = computed(() =>
-    this.pipe.transform(this.decorridoMs())
+    this.comMinutosDeDoisDigitos(this.pipe.transform(this.decorridoMs()))
   );
 
   // 2. Formata a meta de tempo
   readonly metaFormatado = computed(() =>
-    this.pipe.transform(this.metaMs())
+    this.comMinutosDeDoisDigitos(this.pipe.transform(this.metaMs()))
   );
 
   /**
@@ -37,7 +37,11 @@ export class TimerDisplay {
     const metaSeg = Math.floor(this.metaMs() / 1000);
     const decorridoSeg = Math.floor(this.decorridoMs() / 1000);
     const restanteSeg = Math.max(0, metaSeg - decorridoSeg);
-    return this.pipe.transform(restanteSeg * 1000, 'floor');
+    return this.comMinutosDeDoisDigitos(this.pipe.transform(restanteSeg * 1000, 'floor'));
   });
+
+  private comMinutosDeDoisDigitos(valor: string): string {
+    return /^\d:\d{2}$/.test(valor) ? `0${valor}` : valor;
+  }
 
 }

@@ -1,14 +1,25 @@
 <div class="discipline-card">
 
   <div class="header">
-    <h3>Progresso por disciplina</h3>
+    <span class="header__eyebrow">Domínio do edital</span>
+    <div class="header__title">
+      <span class="header__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M6 4.5h12a1.5 1.5 0 011.5 1.5v12a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 18V6A1.5 1.5 0 016 4.5z" stroke="currentColor" stroke-width="1.7" />
+          <path d="M8 9.5l1.5 1.5L12 8.5M8 15h8M13.5 10h2.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </span>
+      <div>
+        <h3>Progresso por disciplina</h3>
+      </div>
+    </div>
   </div>
 
   <div class="discipline-list" *ngIf="items().length > 0">
 
     <div
       class="discipline-item"
-      *ngFor="let d of items(); trackBy: trackByName"
+      *ngFor="let d of visibleItems(); trackBy: trackByName"
       [class.discipline-item--clickable]="isClickable(d)"
       (click)="onItemClick(d)"
       (keydown.enter)="onItemClick(d)"
@@ -33,6 +44,16 @@
     </div>
 
   </div>
+
+  <button
+    *ngIf="items().length > 5"
+    type="button"
+    class="discipline-toggle"
+    (click)="toggleExpanded()"
+    [attr.aria-expanded]="expanded">
+    {{ expanded ? 'Mostrar menos' : 'Ver todas as disciplinas' }}
+    <span aria-hidden="true">{{ expanded ? '↑' : '→' }}</span>
+  </button>
 
   <p class="empty-hint" *ngIf="items().length === 0">
     Nenhum dado de progresso para este ciclo ainda.

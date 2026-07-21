@@ -6,6 +6,7 @@ import { environment } from '../../../../environments/environment';
 import { HTTP_SUPRIMIR_TOAST_ERRO } from '../../../shared/erro/http-suprimir-toast.context';
 import {
   AtualizarObservacoesRequest,
+  ComecarSessaoRequest,
   DisciplinaHistoricoResumoDto,
   DisciplinaHistoricoSessaoDto,
   FinalizarSessaoRequest,
@@ -16,6 +17,7 @@ import {
   SessaoCargaDto,
   SessaoDetalheDto,
   SessaoMetaEstudoRequest,
+  SessaoReservaDto,
   SessaoTopicoOpcaoDto,
   SpringDataPageDto,
 } from './estudo.models';
@@ -38,7 +40,7 @@ export class EstudoApiService {
     estudadoTotalSeg: number,
     pomodoro?: { modo: string; restanteSeg: number; cicloIndex: number },
   ): void {
-    const url = `${this.base}/estudo/sessoes/${id}/pausar`;
+    const url = `${this.base}/v1/sessoes/${id}/pausa`;
     const token = this.auth.getToken();
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -68,13 +70,20 @@ export class EstudoApiService {
   /** Carga única: matérias + próxima + progresso + recentes (com observações). */
   getEstudarAgoraCarga(cicloId: number): Observable<EstudarAgoraCargaDto> {
     const params = new HttpParams().set('cicloId', String(cicloId));
-    return this.http.get<EstudarAgoraCargaDto>(`${this.base}/estudo/estudar-agora`, { params });
+    return this.http.get<EstudarAgoraCargaDto>(`${this.base}/v1/estudos/estudar-agora`, { params });
   }
 
   iniciarSessao(cicloId: number, payload?: IniciarSessaoRequest | null): Observable<SessaoDetalheDto> {
     return this.http.post<SessaoDetalheDto>(
-      `${this.base}/estudo/sessoes/ciclos/${cicloId}/sessoes/iniciar`,
+      `${this.base}/v1/ciclos/${cicloId}/sessoes`,
       payload ?? {},
+    );
+  }
+
+  iniciarSessaoDisciplina(cicloId: number, disciplinaId: number): Observable<SessaoReservaDto> {
+    return this.http.post<SessaoReservaDto>(
+      `${this.base}/v1/ciclos/${cicloId}/disciplinas/${disciplinaId}/sessoes`,
+      {},
     );
   }
 
@@ -83,20 +92,21 @@ export class EstudoApiService {
     pomodoroAtivo: boolean,
     meta?: SessaoMetaEstudoRequest | null,
   ): Observable<SessaoDetalheDto> {
+    const payload: ComecarSessaoRequest = { pomodoroAtivo, ...(meta ?? {}) };
     return this.http.post<SessaoDetalheDto>(
-      `${this.base}/estudo/sessoes/${id}/${pomodoroAtivo}/comecar`,
-      meta ?? {},
+      `${this.base}/v1/sessoes/${id}/inicio`,
+      payload,
     );
   }
 
   getSessao(id: number): Observable<SessaoDetalheDto> {
-    return this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`);
+    return this.http.get<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}`);
   }
 
   getSessao1(id: number): Promise<SessaoDetalheDto> {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
-      this.http.get<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}`, { context }),
+      this.http.get<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}`, { context }),
     );
   }
 
@@ -104,21 +114,21 @@ export class EstudoApiService {
   getSessaoCarga1(id: number): Promise<SessaoCargaDto> {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
-      this.http.get<SessaoCargaDto>(`${this.base}/estudo/sessoes/${id}/carga`, { context }),
+      this.http.get<SessaoCargaDto>(`${this.base}/v1/sessoes/${id}/carga`, { context }),
     );
   }
 
   getTopicosSessao1(id: number): Promise<SessaoTopicoOpcaoDto[]> {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
-      this.http.get<SessaoTopicoOpcaoDto[]>(`${this.base}/estudo/sessoes/${id}/topicos`, { context }),
+      this.http.get<SessaoTopicoOpcaoDto[]>(`${this.base}/v1/sessoes/${id}/topicos`, { context }),
     );
   }
 
   getSegmentoEstudo1(eventoId: number): Promise<SegmentoEstudoRegistroDto> {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
-      this.http.get<SegmentoEstudoRegistroDto>(`${this.base}/estudo/segmentos/${eventoId}`, { context }),
+      this.http.get<SegmentoEstudoRegistroDto>(`${this.base}/v1/segmentos/${eventoId}`, { context }),
     );
   }
 
@@ -133,16 +143,16 @@ export class EstudoApiService {
   ): Promise<void> {
     const context = new HttpContext().set(HTTP_SUPRIMIR_TOAST_ERRO, true);
     return firstValueFrom(
-      this.http.patch<void>(`${this.base}/estudo/segmentos/${eventoId}`, body, { context }),
+      this.http.patch<void>(`${this.base}/v1/segmentos/${eventoId}`, body, { context }),
     );
   }
 
   definirTopicoSessao(id: number, topicoId: number | null): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/topico`, { topicoId });
+    return this.http.put<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/topico`, { topicoId });
   }
 
   definirCategoriaSessao(id: number, categoriaEstudo: string | null): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/categoria`, { categoriaEstudo });
+    return this.http.put<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/categoria`, { categoriaEstudo });
   }
 
   pausarSessao(
@@ -156,11 +166,11 @@ export class EstudoApiService {
       payload['pomodoroRestanteSeg'] = pomodoro.restanteSeg;
       payload['pomodoroCiclo'] = pomodoro.cicloIndex;
     }
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/pausar`, payload);
+    return this.http.post<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/pausa`, payload);
   }
 
   retomarSessao(id: number, meta?: SessaoMetaEstudoRequest | null): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/retomar`, meta ?? {});
+    return this.http.post<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/retomada`, meta ?? {});
   }
 
   /** Persiste modo / restante / ciclo após transições locais (ex.: Pular etapa). */
@@ -168,21 +178,21 @@ export class EstudoApiService {
     id: number,
     payload: { pomodoroModo: string; pomodoroRestanteSeg: number; pomodoroCiclo: number },
   ): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/pomodoro`, payload);
+    return this.http.put<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/pomodoro`, payload);
   }
 
   // NOVO: salvar observações (autosave)
   atualizarObservacoes(id: number, observacoes: string): Observable<SessaoDetalheDto> {
     const payload: AtualizarObservacoesRequest = { observacoes };
-    return this.http.patch<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${id}/observacoes`, payload);
+    return this.http.patch<SessaoDetalheDto>(`${this.base}/v1/sessoes/${id}/observacoes`, payload);
   }
 
   finalizarSessao(payload: FinalizarSessaoRequest): Observable<SessaoDetalheDto> {
-    return this.http.post<SessaoDetalheDto>(`${this.base}/estudo/sessoes/${payload.id}/finalizar`, payload);
+    return this.http.post<SessaoDetalheDto>(`${this.base}/v1/sessoes/${payload.id}/fim`, payload);
   }
   getProgressoCiclo(cicloId: number): Observable<ProgressoDisciplinaDto[]> {
     return this.http.get<ProgressoDisciplinaDto[]>(
-      `${this.base}/estudo/ciclos/${cicloId}/progresso`,
+      `${this.base}/v1/estudos/ciclos/${cicloId}/progresso`,
     );
   }
 
@@ -190,7 +200,7 @@ export class EstudoApiService {
   getDisciplinaHistoricoResumo(disciplinaId: number, cicloId: number): Observable<DisciplinaHistoricoResumoDto> {
     const params = new HttpParams().set('cicloId', String(cicloId));
     return this.http.get<DisciplinaHistoricoResumoDto>(
-      `${this.base}/me/estudo/disciplinas/${disciplinaId}/resumo`,
+      `${this.base}/v1/me/estudos/disciplinas/${disciplinaId}/resumo`,
       { params },
     );
   }
@@ -206,7 +216,7 @@ export class EstudoApiService {
       .set('page', String(page))
       .set('size', String(size));
     return this.http.get<SpringDataPageDto<DisciplinaHistoricoSessaoDto>>(
-      `${this.base}/me/estudo/disciplinas/${disciplinaId}/sessoes`,
+      `${this.base}/v1/me/estudos/disciplinas/${disciplinaId}/sessoes`,
       { params },
     );
   }

@@ -35,7 +35,7 @@ export interface UpdatePasswordPayload {
 })
 export class ProfileService {
 
-  private readonly apiUrl = `${environment.apiBaseUrl}/profile`;
+  private readonly apiUrl = `${environment.apiBaseUrl}/v1/usuarios`;
 
   constructor(private http: HttpClient) {}
 

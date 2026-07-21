@@ -15,13 +15,13 @@ export class EditalTopicoEstadoApiService {
 
   listarPorCiclo(cicloId: number): Observable<EditalTopicoEstadoResponseDto> {
     const params = new HttpParams().set('cicloId', String(cicloId));
-    return this.http.get<EditalTopicoEstadoResponseDto>(`${this.base}/me/edital-topico-estado`, { params });
+    return this.http.get<EditalTopicoEstadoResponseDto>(`${this.base}/v1/me/edital-topicos`, { params });
   }
 
   definirConcluido(cicloId: number, topicoId: number, body: EditalTopicoEstadoUpdateRequest): Observable<EditalTopicoEstadoItemDto> {
     const params = new HttpParams().set('cicloId', String(cicloId));
     return this.http.put<EditalTopicoEstadoItemDto>(
-      `${this.base}/me/edital-topico-estado/${topicoId}`,
+      `${this.base}/v1/me/edital-topicos/${topicoId}`,
       body,
       { params },
     );

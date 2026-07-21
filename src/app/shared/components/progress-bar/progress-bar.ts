@@ -12,6 +12,8 @@ export type ProgressDisciplinaItem = { name: string; percent: number; disciplina
   styleUrl: './progress-bar.css',
 })
 export class ProgressBar {
+  private readonly initialVisibleCount = 5;
+  expanded = false;
   /** Quando vazio, não exibe lista mockada — apenas estado vazio. */
   items = input<ProgressDisciplinaItem[]>([]);
   /** Quando definido com `disciplinaId` nos itens, as linhas abrem o histórico da disciplina. */
@@ -19,6 +21,14 @@ export class ProgressBar {
   disciplinaClick = output<ProgressDisciplinaItem>();
 
   readonly formatPct = formatPercent;
+
+  visibleItems(): ProgressDisciplinaItem[] {
+    return this.expanded ? this.items() : this.items().slice(0, this.initialVisibleCount);
+  }
+
+  toggleExpanded(): void {
+    this.expanded = !this.expanded;
+  }
 
   trackByName(_: number, d: ProgressDisciplinaItem): string {
     return `${d.disciplinaId ?? '—'}-${d.name}`;

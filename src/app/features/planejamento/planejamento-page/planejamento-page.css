@@ -244,6 +244,57 @@
   box-shadow: 0 6px 14px color-mix(in srgb, var(--card-color) 30%, transparent);
 }
 
+.item-card.item-card--completed{
+  cursor: not-allowed;
+  background: color-mix(in srgb, #64748b 9%, #ffffff);
+  border-color: color-mix(in srgb, #64748b 24%, #ffffff);
+  border-left-color: #64748b;
+  box-shadow: none;
+}
+
+.item-card.item-card--completed:hover{
+  transform: none;
+  box-shadow: none;
+}
+
+.completed-badge,
+.dist-status{
+  margin-left: auto;
+  padding: 2px 7px;
+  border: 1px solid rgba(15, 118, 110, .22);
+  border-radius: 999px;
+  background: rgba(20, 184, 166, .1);
+  color: #0f766e;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.item-edit{
+  width: 24px;
+  height: 24px;
+  margin: -4px -5px -4px auto;
+  border: 1px solid color-mix(in srgb, var(--card-color) 30%, #cbd5e1);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--card-color) 10%, #ffffff);
+  color: #334155;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.item-edit:hover{
+  background: color-mix(in srgb, var(--card-color) 22%, #ffffff);
+}
+
+.item-card--loading{
+  pointer-events: none;
+  opacity: .72;
+}
+
 /* A cor por disciplina é aplicada via [style.--card-color] no template (mesma lógica do edital). */
 
 .item-card.free{
@@ -340,6 +391,28 @@
   margin-bottom: 8px;
 }
 
+.apply-cycle-btn{
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--primary, #14b8a6);
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter .15s ease, opacity .15s ease;
+}
+
+.apply-cycle-btn:hover:not(:disabled){
+  filter: brightness(1.06);
+}
+
+.apply-cycle-btn:disabled{
+  cursor: not-allowed;
+  opacity: .5;
+}
+
 .dist-row{
   display:flex;
   align-items:center;
@@ -369,6 +442,15 @@
   color:#0f172a;
   font-size: 12.5px;
   white-space: nowrap;
+}
+
+.dist-row--completed .dist-name,
+.dist-row--completed .dist-time{
+  color: #64748b;
+}
+
+.dist-status{
+  margin-left: 0;
 }
 
 .resume-row{

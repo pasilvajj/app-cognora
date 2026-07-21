@@ -38,6 +38,15 @@ export interface IniciarSessaoRequest {
   cicloItemId?: number;
 }
 
+export interface SessaoReservaDto {
+  id: number;
+  cicloId: number;
+  cicloItemId: number;
+  disciplinaNome: string;
+  tempoMinutos: number;
+  inicio: string | null;
+}
+
 export interface FinalizarSessaoRequest {
   id: number;
   concluido: boolean;
@@ -108,6 +117,10 @@ export interface SessaoCargaDto {
 export interface SessaoMetaEstudoRequest {
   topicoId?: number | null;
   categoriaEstudo?: string | null;
+}
+
+export interface ComecarSessaoRequest extends SessaoMetaEstudoRequest {
+  pomodoroAtivo: boolean;
 }
 
 /** Opções fixas de categoria de estudo na sessão (alinhadas ao enum Java). */

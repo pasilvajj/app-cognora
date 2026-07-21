@@ -42,6 +42,18 @@ export type CicloCreateRequest = {
   pomodoroLongaACada?: number;
 };
 
+export type CicloCriadoDto = {
+  id: number;
+  nome: string;
+  cargaHorariaSemanal: number;
+  ativo: boolean;
+  pomodoroAtivo: boolean;
+  pomodoroFocoMin: number;
+  pomodoroPausaCurtaMin: number;
+  pomodoroPausaLongaMin: number;
+  pomodoroLongaACada: number;
+};
+
 
 export type CicloItemDto = {
   id: number;
@@ -84,6 +96,7 @@ export interface DisciplinaEditDto {
   completouEdital: boolean;
   peso: number | null;
   nivel: number;
+  tempoPlanejadoMinutos: number;
 }
 
 export interface CicloEditResponseDto {

@@ -16,6 +16,7 @@ import { CiclosApiService } from '../../ciclos/data/ciclos-api.service';
 import { PlanejamentoApiService } from '../data/planejamento-api.service';
 import { PlanejamentoPersonalizadoReq, PlanejamentoSemanalDto } from '../data/planejamento.models';
 import { corDisciplina } from '../../../shared/utils/cor-disciplina.util';
+import { EstudoApiService } from '../../estudo/data/estudo-api.service';
 
 type DiaView = {
   diaSemanaLabel: string; // "Seg"
@@ -30,6 +31,8 @@ type DiaView = {
     duracaoSeg: number;
     corTag?: string; // ex: "c-azul"
     topico?: string; // opcional (front only)
+    concluida: boolean;
+    editavel: boolean;
   }>;
 };
 
@@ -56,6 +59,8 @@ export class PlanejamentoPage implements OnInit {
   carregando = false;
   gerando = false;
   salvando = signal(false);
+  aplicandoAoCiclo = signal(false);
+  iniciandoDisciplinaId = signal<number | null>(null);
 
   intervaloSemanaLabel = '—';
   totalSemanaLabel = '—';
@@ -63,6 +68,7 @@ export class PlanejamentoPage implements OnInit {
   // dados para o template
   dias: DiaView[] = [];
   distribuicao: PlanejamentoSemanalDto['distribuicao'] = [];
+  impactoTempos: PlanejamentoSemanalDto['impactoTempos'] = [];
 
   resumoDiaMaisLeve = '—';
   resumoDiaMaisPesado = '—';
@@ -75,7 +81,8 @@ export class PlanejamentoPage implements OnInit {
     private ciclosApi: CiclosApiService,
     private cdr: ChangeDetectorRef,
     private router: Router,
-    private auth: AuthService
+    private auth: AuthService,
+    private estudoApi: EstudoApiService,
   ) { }
 
   ngOnInit(): void {
@@ -174,6 +181,35 @@ export class PlanejamentoPage implements OnInit {
   gerarPlanejamento(): void {
     // "Gerar planejamento" volta ao plano automático (descarta a organização manual da semana).
     this.resetarPlanejamento();
+  }
+
+  get podeAplicarAoCiclo(): boolean {
+    return this.impactoTempos.some((item) => item.tempoPlanejadoSeg > 0);
+  }
+
+  aplicarAoCiclo(): void {
+    const cicloId = this.cicloIdSelecionado;
+    if (!cicloId || this.aplicandoAoCiclo() || !this.podeAplicarAoCiclo) return;
+
+    const confirmou = window.confirm(
+      'Aplicar os pesos sugeridos ao ciclo? O ciclo será reorganizado com base neste planejamento.',
+    );
+    if (!confirmou) return;
+
+    this.aplicandoAoCiclo.set(true);
+    this.api
+      .aplicarPlanejamentoAoCiclo(cicloId, this.weekStartIso)
+      .pipe(finalize(() => this.aplicandoAoCiclo.set(false)))
+      .subscribe({
+        next: () => {
+          this.toast.success('Pesos aplicados ao ciclo com sucesso.');
+          this.carregarPlanejamento(false);
+        },
+        error: (error) => {
+          console.error('Erro ao aplicar planejamento ao ciclo', error);
+          this.toast.error('Não foi possível aplicar os pesos ao ciclo.');
+        },
+      });
   }
 
   // ===== Drag & Drop (organização do usuário) =====
@@ -279,12 +315,45 @@ export class PlanejamentoPage implements OnInit {
 
   /** Abre o modal de edição do item clicado. */
   abrirEdicao(_dia: DiaView, item: DiaView['itens'][number]): void {
+    if (!item.editavel || item.concluida) {
+      this.toast.info('Esta matéria foi concluída e não pode mais ser alterada.');
+      return;
+    }
     this.itemEdicao = item;
     const seg = Math.max(0, item.duracaoSeg || 0);
     this.edicaoHoras = Math.floor(seg / 3600);
     this.edicaoMinutos = Math.floor((seg % 3600) / 60);
     this.modalAberto = true;
     this.cdr.detectChanges();
+  }
+
+  abrirSessao(item: DiaView['itens'][number]): void {
+    if (!this.cicloIdSelecionado || this.iniciandoDisciplinaId() !== null) return;
+    if (item.concluida || !item.editavel) {
+      this.toast.info('Esta matéria foi concluída e não pode iniciar uma nova sessão.');
+      return;
+    }
+
+    this.iniciandoDisciplinaId.set(item.disciplinaId);
+    this.estudoApi
+      .iniciarSessaoDisciplina(this.cicloIdSelecionado, item.disciplinaId)
+      .pipe(finalize(() => this.iniciandoDisciplinaId.set(null)))
+      .subscribe({
+        next: (sessao) => {
+          if (!sessao?.id) {
+            this.toast.error('Não foi possível identificar a sessão reservada.');
+            return;
+          }
+          void this.router.navigate(
+            ['/estudo/sessao', sessao.id],
+            { state: { cicloId: this.cicloIdSelecionado } },
+          );
+        },
+        error: (error) => {
+          console.error('Erro ao abrir sessão pelo planejamento', error);
+          this.toast.error('Não foi possível abrir a sessão desta matéria.');
+        },
+      });
   }
 
   fecharEdicao(): void {
@@ -383,12 +452,15 @@ export class PlanejamentoPage implements OnInit {
           duracaoSeg: it.duracaoSeg ?? 0,
           corTag: it.corTag ?? 'c-cinza',
           topico: undefined,
+          concluida: Boolean(it.concluida),
+          editavel: it.editavel !== false && !it.concluida,
         })),
       };
     });
 
     // distribuição
     this.distribuicao = dto.distribuicao ?? [];
+    this.impactoTempos = dto.impactoTempos ?? [];
 
     // resumo
     this.resumoDiaMaisLeve = dto.resumo?.diaMaisLeve ?? '—';

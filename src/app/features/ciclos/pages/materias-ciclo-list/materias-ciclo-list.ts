@@ -27,6 +27,7 @@ export interface DisciplinaEditDto {
   completouEdital: boolean;
   peso: number | null;
   nivel: number;
+  tempoPlanejadoMinutos: number;
 }
 
 export interface CicloEditResponseDto {

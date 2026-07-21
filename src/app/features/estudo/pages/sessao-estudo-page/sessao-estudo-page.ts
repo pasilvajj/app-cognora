@@ -126,6 +126,9 @@ export class SessaoEstudoPage implements OnDestroy {
   readonly retomarBloqueadoNaPausaCurta = computed(() =>
     this.timer.pausada() && this.pomodoroEnabled() && this.pomodoroMode() === 'PAUSA_CURTA',
   );
+  readonly podePularPomodoro = computed(() =>
+    !this.timer.finalizada() && !this.pomodoro.finished() && !this.pomodoroTemporariamenteDesativado(),
+  );
 
   constructor() {
     // 🔒 Garante que fim de foco pausa sessão real (congela relógio na hora, API em seguida)

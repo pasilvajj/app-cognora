@@ -73,6 +73,26 @@
   color: var(--text);
 }
 
+.chart-empty-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--primary, #356df3) 12%, transparent);
+  color: var(--primary, #356df3);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.chart-empty-copy {
+  max-width: 340px;
+  margin: 0;
+  color: var(--text-muted, #64748b);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 :host-context([data-theme='dark']) .chart-header{
   border-bottom-color: color-mix(in srgb,var(--text) 12%,transparent);
 }

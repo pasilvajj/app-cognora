@@ -5,7 +5,14 @@
     [cicloNome]="s.cicloNome"
     [disciplinaNome]="s.disciplinaNome"
     [ordem]="s.ordem"
-    (backClicked)="voltar()" />
+    [statusLabel]="statusLabel()"
+    [pomodoroEnabled]="pomodoroEnabled()"
+    [pomodoroTemporariamenteDesativado]="pomodoroTemporariamenteDesativado()"
+    [podePularPomodoro]="podePularPomodoro()"
+    [sessaoFinalizada]="!!s.fim || timer.finalizada()"
+    (backClicked)="voltar()"
+    (pomodoroSkipStage)="onPomodoroSkipStage()"
+    (pomodoroToggleEnabled)="onPomodoroToggleEnabled()" />
 
   <app-sessao-estudo-session-card
     [disciplinaNome]="s.disciplinaNome"
@@ -13,7 +20,10 @@
     [tempoPlanejado]="tempoPlanejado()"
     [statusLabel]="statusLabel()"
     [pomodoroEnabled]="pomodoroEnabled()"
-    [pomodoroTemporariamenteDesativado]="pomodoroTemporariamenteDesativado()"
+    [pomodoroFocoMin]="s.pomodoroFocoMin"
+    [pomodoroPausaCurtaMin]="s.pomodoroPausaCurtaMin"
+    [pomodoroPausaLongaMin]="s.pomodoroPausaLongaMin"
+    [pomodoroLongaACada]="s.pomodoroLongaACada"
     [observacoes]="observacoes()"
     [acaoLoading]="acaoLoading()"
     [retomarBloqueadoNaPausaCurta]="retomarBloqueadoNaPausaCurta()"
@@ -25,8 +35,6 @@
     [categoriaSelectDisabled]="!!s.fim"
     (mainActionClick)="onMainActionClick()"
     (modoFocoOpen)="abrirModoFoco()"
-    (pomodoroSkipStage)="onPomodoroSkipStage()"
-    (pomodoroToggleEnabled)="onPomodoroToggleEnabled()"
     (observacoesChange)="onObservacoesChange($event)"
     (observacoesSaveRequest)="onObservacoesSaveRequest($event)"
     (topicoChange)="onTopicoSelecionado($event)"

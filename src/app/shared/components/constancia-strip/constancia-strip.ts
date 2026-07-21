@@ -8,6 +8,9 @@ interface DiaConstanciaVm {
   estudou: boolean;
   naoAplicavel: boolean;
   diaNumero: number;
+  diaSemana: string;
+  deslocamento: number;
+  hoje: boolean;
   /** Ex.: "quarta-feira, 17/jan." */
   rotuloData: string;
 }
@@ -35,11 +38,15 @@ export class ConstanciaStrip {
   @Input()
   set dias(value: DiaConstanciaDto[] | null | undefined) {
     const lista = value ?? [];
+    const hoje = this.inicioDoDia(new Date());
     this._dias = lista.map((d) => ({
       iso: d.data,
       estudou: !!d.estudou,
       naoAplicavel: !!d.naoAplicavel,
       diaNumero: this.diaDoMes(d.data),
+      diaSemana: this.formatarDiaSemana(d.data),
+      deslocamento: this.diferencaEmDias(this.parseIso(d.data), hoje),
+      hoje: this.mesmoDia(this.parseIso(d.data), hoje),
       rotuloData: this.formatarData(d.data),
     }));
   }
@@ -88,6 +95,10 @@ export class ConstanciaStrip {
     return this._dias.length > 0;
   }
 
+  get totalDias(): number {
+    return this._dias.length;
+  }
+
   trackByIso(_index: number, dia: DiaConstanciaVm): string {
     return dia.iso;
   }
@@ -102,6 +113,26 @@ export class ConstanciaStrip {
 
   private diaDoMes(iso: string): number {
     return this.parseIso(iso).getDate();
+  }
+
+  private formatarDiaSemana(iso: string): string {
+    return this.parseIso(iso)
+      .toLocaleDateString('pt-BR', { weekday: 'short' })
+      .replace('.', '')
+      .slice(0, 3)
+      .toUpperCase();
+  }
+
+  private inicioDoDia(data: Date): Date {
+    return new Date(data.getFullYear(), data.getMonth(), data.getDate(), 12, 0, 0, 0);
+  }
+
+  private diferencaEmDias(data: Date, referencia: Date): number {
+    return Math.round((this.inicioDoDia(data).getTime() - referencia.getTime()) / 86_400_000);
+  }
+
+  private mesmoDia(data: Date, referencia: Date): boolean {
+    return this.inicioDoDia(data).getTime() === referencia.getTime();
   }
 
   private formatarData(iso: string): string {

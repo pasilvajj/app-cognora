@@ -11,5 +11,12 @@ export class SessaoEstudoPageHeader {
   cicloNome = input.required<string>();
   disciplinaNome = input.required<string>();
   ordem = input.required<number>();
+  statusLabel = input.required<string>();
+  pomodoroEnabled = input(false);
+  pomodoroTemporariamenteDesativado = input(false);
+  podePularPomodoro = input(false);
+  sessaoFinalizada = input(false);
   backClicked = output<void>();
+  pomodoroSkipStage = output<void>();
+  pomodoroToggleEnabled = output<void>();
 }

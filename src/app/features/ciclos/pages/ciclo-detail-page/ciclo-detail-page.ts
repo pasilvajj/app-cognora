@@ -8,7 +8,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CiclosApiService } from '../../data/ciclos-api.service';
 import { CicloUpdateRequest } from '../../data/ciclos.models';
 import { calcularHorasPorMateria } from '../../utils/carga-horaria.utils';
-import { ESTUDO_LIVRE_HORAS, BLOCO_SESSAO_MINUTOS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
+import { ESTUDO_LIVRE_HORAS, isDisciplinaEstudoLivre } from '../../constants/estudo-livre.constants';
 import { extrairMensagemErroHttp } from '../../../../shared/utils/http-error-message.util';
 import { CicloHeaderComponent } from '../../../../shared/components/ciclo-header/ciclo-header.component';
 
@@ -88,7 +88,6 @@ export class CicloDetailPage implements OnInit {
         this.pomodoroLongaACada = data.pomodoroLongaACada ?? this.pomodoroDefaults.longaACada;
 
         this.disciplinas = this.mapEditDtoToCicloItems(data.disciplinas);
-        this.aplicarHorasPorMateria();
       },
       error: err => console.error(err),
       complete: () => {
@@ -231,13 +230,20 @@ export class CicloDetailPage implements OnInit {
       .map(d => ({
       id: d.id,
       nome: d.nome,
-      tempoMinutos: BLOCO_SESSAO_MINUTOS,
+      tempoMinutos: d.tempoPlanejadoMinutos ?? 0,
       checked: d.checked,
       completouEdital: d.completouEdital,
       peso: d.peso,
       nivel: d.nivel,
-      horasLabel: '0:00h',
+      horasLabel: this.formatarMinutos(d.tempoPlanejadoMinutos),
     }));
+  }
+
+  private formatarMinutos(total: number | null | undefined): string {
+    const minutos = Math.max(0, Math.floor(Number(total) || 0));
+    const horas = Math.floor(minutos / 60);
+    const resto = minutos % 60;
+    return `${horas}:${String(resto).padStart(2, '0')}h`;
   }
 
   private normPomodoroInt(value: unknown, fallback: number): number {

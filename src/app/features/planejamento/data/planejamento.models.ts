@@ -3,6 +3,8 @@ export type ItemPlanejadoDto = {
   disciplinaNome: string;
   duracaoSeg: number;
   corTag?: string; // ex: "c-azul"
+  concluida: boolean;
+  editavel: boolean;
 };
 
 export type DiaPlanejadoDto = {
@@ -17,11 +19,23 @@ export type DistribuicaoDisciplinaDto = {
   disciplinaNome: string;
   totalSeg: number;
   corTag?: string;
+  concluida: boolean;
+  editavel: boolean;
 };
 
 export type ResumoPlanejamentoDto = {
   diaMaisLeve: string;     // "Dom"
   diaMaisPesado: string;   // "Seg"
+};
+
+export type ImpactoTempoDisciplinaDto = {
+  disciplinaId: number;
+  disciplinaNome: string;
+  tempoAtualSeg: number;
+  tempoPlanejadoSeg: number;
+  concluida: boolean;
+  semHorasPlanejadas: boolean;
+  alteracaoSugerida: boolean;
 };
 
 export type PlanejamentoSemanalDto = {
@@ -33,6 +47,7 @@ export type PlanejamentoSemanalDto = {
   dias: DiaPlanejadoDto[];
   distribuicao: DistribuicaoDisciplinaDto[];
   resumo: ResumoPlanejamentoDto;
+  impactoTempos: ImpactoTempoDisciplinaDto[];
 };
 
 /** Payload para salvar a organização feita pelo usuário (arrastar). */

@@ -15,7 +15,7 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class CatalogoApiService {
-  private readonly base = `${environment.apiBaseUrl}/catalogo`;
+  private readonly base = `${environment.apiBaseUrl}/v1/catalogo`;
   private readonly http = inject(HttpClient);
 
   listConcursos(): Observable<ConcursoCatalogoDto[]> {
@@ -71,14 +71,14 @@ export class CatalogoApiService {
   }
 
   createTopico(disciplinaId: number, body: TopicoUpsertRequest): Observable<number> {
-    return this.http.post<number>(`${environment.apiBaseUrl}/topicos/disciplina/${disciplinaId}`, body);
+    return this.http.post<number>(`${environment.apiBaseUrl}/v1/topicos/disciplina/${disciplinaId}`, body);
   }
 
   updateTopico(id: number, body: TopicoUpsertRequest): Observable<number> {
-    return this.http.put<number>(`${environment.apiBaseUrl}/topicos/${id}`, body);
+    return this.http.put<number>(`${environment.apiBaseUrl}/v1/topicos/${id}`, body);
   }
 
   deleteTopico(id: number): Observable<void> {
-    return this.http.delete(`${environment.apiBaseUrl}/topicos/${id}`, { responseType: 'text' }).pipe(map(() => undefined));
+    return this.http.delete(`${environment.apiBaseUrl}/v1/topicos/${id}`, { responseType: 'text' }).pipe(map(() => undefined));
   }
 }

@@ -210,7 +210,7 @@ export class CicloCreatePage implements OnInit {
   carregarDisciplinas(cargoId: number): void {
     this.loadingDisciplinas = true;
 
-    this.api.listDisciplinasByConcurso(cargoId).subscribe({
+    this.api.listDisciplinasByCargo(cargoId).subscribe({
       next: (data) => {
         this.disciplinas = this.mapDisciplinasFromApi(data ?? []);
         this.aplicarHorasPorMateria();

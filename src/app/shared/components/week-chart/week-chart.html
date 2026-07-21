@@ -1,14 +1,18 @@
 <section class="chart-card">
-  <header class="chart-header">
-    <div class="chart-title">{{ chartTitle }}</div>
-  </header>
+  @if (chartTitle) {
+    <header class="chart-header">
+      <div class="chart-title">{{ chartTitle }}</div>
+    </header>
+  }
 
   <div class="chart-container">
     @if (hasStudyDataInWeek()) {
     <canvas #weekCanvas></canvas>
     } @else {
     <div class="chart-empty" role="status" aria-live="polite">
-      <p class="chart-empty-title">Sem estudos nesta semana.</p>
+      <span class="chart-empty-icon" aria-hidden="true">↗</span>
+      <p class="chart-empty-title">Sua semana começa na próxima sessão.</p>
+      <p class="chart-empty-copy">Quando você estudar, o tempo de cada dia aparecerá aqui.</p>
     </div>
     }
   </div>

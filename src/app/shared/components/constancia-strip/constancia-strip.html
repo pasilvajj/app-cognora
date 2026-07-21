@@ -1,10 +1,18 @@
 <div class="constancia">
   <div class="constancia__head">
-    <span class="constancia__eyebrow">Constância nos estudos</span>
+    <div>
+      <span class="constancia__eyebrow">Trilha Cognora</span>
+      @if (temDados) {
+        <p class="constancia__subtitle">
+          Sua constância nos últimos <strong>{{ totalDias }} dias</strong>.
+        </p>
+      }
+    </div>
     @if (temDados) {
-      <p class="constancia__subtitle">
-        Você está há <strong>{{ streakLabel }} dia{{ streakLabel === 1 ? '' : 's' }}</strong> sem falhar!
-      </p>
+      <div class="constancia__legend" aria-label="Legenda da trilha">
+        <span><i class="constancia__legend-dot constancia__legend-dot--done"></i>Com estudo</span>
+        <span><i class="constancia__legend-dot constancia__legend-dot--miss"></i>Sem estudo</span>
+      </div>
     }
   </div>
 
@@ -22,20 +30,25 @@
           [class.cell--done]="dia.estudou"
           [class.cell--miss]="!dia.estudou && !dia.naoAplicavel"
           [class.cell--neutral]="dia.naoAplicavel"
+          [class.cell--today]="dia.hoje"
           role="listitem"
           [attr.aria-label]="rotuloAria(dia)"
         >
-          @if (dia.naoAplicavel) {
-            <span class="cell__dot" aria-hidden="true"></span>
-          } @else if (dia.estudou) {
-            <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          } @else {
-            <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
-          }
+          <span class="cell__box">
+            @if (dia.naoAplicavel) {
+              <span class="cell__dot" aria-hidden="true"></span>
+            } @else if (dia.estudou) {
+              <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            } @else {
+              <svg class="cell__icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 7l10 10M17 7L7 17" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+            <strong>{{ dia.hoje ? 'HOJE' : dia.deslocamento }}</strong>
+          </span>
+          <small>{{ dia.diaSemana }}</small>
           <span class="cell__tip" role="tooltip">{{ dia.rotuloData }}</span>
         </span>
       }

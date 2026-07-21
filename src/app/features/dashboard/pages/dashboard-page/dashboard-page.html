@@ -1,57 +1,157 @@
 <div class="dashboard">
   <header class="dashboard-header">
-    <div class="title">
-      <h1>Home</h1>
-      <p>Visão geral do seu desempenho</p>
+    <div class="dashboard-heading">
+      <span class="dashboard-kicker">Visão geral do ciclo</span>
+      <h1>Olá, {{ primeiroNomeUsuario }}<span aria-hidden="true">.</span></h1>
+      <p>Pronto para transformar o plano de hoje em progresso?</p>
     </div>
 
     <div class="dashboard-actions">
-      <app-ciclo-selector [ciclos]="ciclos" [selectedId]="cicloId" (selectedIdChange)="onCicloChange($event)"
-        [loading]="ciclosLoading()" [disabled]="ciclosLoading() || loading" label="Ciclo">
+      <app-ciclo-selector
+        [ciclos]="ciclos"
+        [selectedId]="cicloId"
+        (selectedIdChange)="onCicloChange($event)"
+        [loading]="ciclosLoading()"
+        [disabled]="ciclosLoading() || loading"
+        label="Ciclo em foco">
       </app-ciclo-selector>
     </div>
   </header>
 
-  <div class="dashboard-mobile-order-bar">
-    <span class="dashboard-mobile-order-label" id="dashboard-mobile-order-label">Ordem dos cards em coluna</span>
-    <div class="dashboard-mobile-order-toggle" role="group" aria-labelledby="dashboard-mobile-order-label">
-      <button type="button" class="order-chip" [class.order-chip--active]="cardsMobileOrder() === 'summary-first'"
-        (click)="setMobileCardOrder('summary-first')">Resumo primeiro</button>
-      <button type="button" class="order-chip" [class.order-chip--active]="cardsMobileOrder() === 'session-first'"
-        (click)="setMobileCardOrder('session-first')">Sessão primeiro</button>
-    </div>
-  </div>
+  <section class="dashboard-overview" aria-label="Resumo e próxima sessão">
+    <article class="session-hero" [class.session-hero--loading]="loading">
+      <div class="session-hero__content">
+        <span class="session-hero__eyebrow">
+          <span class="session-hero__pulse" aria-hidden="true"></span>
+          {{ actionIsRetomar() ? 'Sessão em andamento' : 'Próxima sessão' }}
+        </span>
 
-  <section class="dashboard-cards" [class.dashboard-cards--session-first]="cardsMobileOrder() === 'session-first'">
-    <app-metric-card type="time" icon="time" title="Estudado na semana" [value]="timeValue"
-      [footerText]="timeFooterText" [footerTone]="timeFooterTone">
-    </app-metric-card>
+        <div class="session-hero__title-row">
+          <span class="session-hero__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8" />
+              <path d="M12 7.7v4.8l3 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <div>
+            <h2>{{ actionTitle }}</h2>
+            <p>{{ actionSubtitle || 'Escolha um ciclo para receber sua recomendação.' }}</p>
+          </div>
+        </div>
 
-    <app-metric-card type="streak" icon="calendar" title="Sequência" [value]="streakValue"
-      [footerText]="streakFooterText" footerTone="primary">
-    </app-metric-card>
+        <p class="session-hero__description">
+          @if (actionIsRetomar()) {
+            Seu progresso está guardado. Continue exatamente de onde parou.
+          } @else {
+            A recomendação considera a ordem e a carga horária planejadas para o seu ciclo.
+          }
+        </p>
 
-    <app-metric-card
-      type="time"
-      icon="book"
-      title="Horas do ciclo"
-      [value]="cicloHorasFeitas"
-      [subtitle]="'Esperado: ' + cicloHorasEsperadas"
-      [footerText]="cicloHorasFooterText"
-      [footerTone]="cicloHorasFooterTone">
-    </app-metric-card>
+        <div class="session-hero__actions">
+          <button
+            type="button"
+            class="session-hero__button"
+            [disabled]="actionDisabled() || loading || acaoCardLoading()"
+            (click)="onActionClick()">
+            @if (acaoCardLoading()) {
+              <span class="button-spinner" aria-hidden="true"></span>
+              Abrindo sessão
+            } @else {
+              {{ actionText || 'Sessão indisponível' }}
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h13M14 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            }
+          </button>
+          @if (actionFooterText) {
+            <span class="session-hero__status" [class]="'session-hero__status session-hero__status--' + actionFooterTone">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M10 2.5l6 2.3v4.4c0 3.7-2.5 6.8-6 8.3-3.5-1.5-6-4.6-6-8.3V4.8L10 2.5z" stroke="currentColor" stroke-width="1.5" />
+                <path d="M7.5 10l1.7 1.7 3.5-3.6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+              {{ actionFooterText }}
+            </span>
+          }
+        </div>
+      </div>
 
-    <!-- CARD INTELIGENTE -->
-    <app-metric-card type="next" title="Sessão" [value]="actionTitle" [subtitle]="actionSubtitle"
-      [actionLabel]="actionText"
-      [footerText]="actionFooterText" [footerTone]="actionFooterTone"
-      [actionDisabled]="actionDisabled() || loading"
-      [actionLoading]="acaoCardLoading()"
-      (action)="onActionClick()">
-    </app-metric-card>
+      <div class="session-hero__art" aria-hidden="true">
+        <span class="art-orbit art-orbit--one"></span>
+        <span class="art-orbit art-orbit--two"></span>
+        <svg class="study-mark" viewBox="0 0 240 190" fill="none">
+          <path d="M51 145h119c10 0 18 8 18 18H69c-10 0-18-8-18-18z" fill="currentColor" opacity=".10" />
+          <path d="M53 124l72-17 7 30-72 17a8 8 0 01-10-6l-3-14a8 8 0 016-10z" fill="currentColor" opacity=".20" />
+          <path d="M65 101l68-16 6 24-68 16z" fill="currentColor" opacity=".35" />
+          <rect x="121" y="35" width="70" height="94" rx="12" fill="white" />
+          <rect x="121" y="35" width="70" height="94" rx="12" stroke="currentColor" stroke-width="3" opacity=".42" />
+          <path d="M139 59h35M139 76h27M139 93h31" stroke="currentColor" stroke-width="5" stroke-linecap="round" opacity=".30" />
+          <circle cx="184" cy="129" r="29" fill="currentColor" opacity=".92" />
+          <path d="M184 114v16l10 6" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+    </article>
+
+    <article class="rhythm-card">
+      <div class="section-heading">
+        <div>
+          <span class="section-heading__eyebrow">Ritmo desta semana</span>
+          <h2>Seu ciclo em números</h2>
+        </div>
+        <span class="rhythm-card__period">Semana atual</span>
+      </div>
+
+      <div class="rhythm-grid">
+        <div class="rhythm-metric rhythm-metric--amber">
+          <span class="rhythm-metric__icon" aria-hidden="true">◷</span>
+          <span class="rhythm-metric__label">Estudado</span>
+          <strong>{{ timeValue }}</strong>
+          <small>{{ timeFooterText }}</small>
+        </div>
+        <div class="rhythm-metric rhythm-metric--mint">
+          <span class="rhythm-metric__icon" aria-hidden="true">◇</span>
+          <span class="rhythm-metric__label">Sequência</span>
+          <strong>{{ streakDias }} dia{{ streakDias === 1 ? '' : 's' }}</strong>
+          <small>Recorde de {{ recordeStreakDias }} dias</small>
+        </div>
+        <div class="rhythm-metric rhythm-metric--blue">
+          <span class="rhythm-metric__icon" aria-hidden="true">◎</span>
+          <span class="rhythm-metric__label">Ciclo concluído</span>
+          <strong>{{ cicloPercentual }}%</strong>
+          <small>{{ cicloHorasFeitas }} de {{ cicloHorasEsperadas }}</small>
+        </div>
+        <div class="rhythm-metric rhythm-metric--violet">
+          <span class="rhythm-metric__icon" aria-hidden="true">▤</span>
+          <span class="rhythm-metric__label">Meta do ciclo</span>
+          <strong>{{ cicloHorasEsperadas }}</strong>
+          <small>Carga total planejada</small>
+        </div>
+      </div>
+
+      <div class="cycle-progress" aria-label="Progresso total do ciclo">
+        <div class="cycle-progress__track">
+          <span [style.width.%]="cicloPercentual"></span>
+        </div>
+        <span>{{ cicloHorasFooterText || 'Aguardando dados do ciclo' }}</span>
+      </div>
+    </article>
   </section>
 
   <section class="dashboard-block dashboard-constancia">
+    <div class="constancia-route" aria-hidden="true">
+      <span></span>
+      <div class="constancia-route__destination">
+        <svg class="constancia-route__arrow" viewBox="0 0 24 24" fill="none">
+          <path d="M5 12h13M14 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span class="constancia-route__clock">
+          <svg viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8" />
+            <path d="M12 7.5v5l3.2 1.9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <small>Próxima<br>sessão</small>
+        </span>
+      </div>
+    </div>
     <app-constancia-strip
       [dias]="constanciaDias"
       [streakAtual]="constanciaStreak"
@@ -60,48 +160,32 @@
   </section>
 
   <section class="dashboard-main">
-    <div class="dashboard-charts-column">
-      <!-- Gráfico "Estudos da semana" (legado + trechos) desativado — ver semana-so-diario -->
-      <!--
-      <div class="dashboard-block chart">
+    <div class="dashboard-block chart dashboard-chart--so-diario">
+      <div class="dashboard-panel-header">
+        <div>
+          <span class="section-heading__eyebrow">Evolução diária</span>
+          <h2>Estudos da semana</h2>
+        </div>
         @if (cicloId) {
-        <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico">
-          <button type="button" class="dashboard-nav-btn" (click)="semanaAnterior()" [disabled]="loading"
-            title="Semana anterior" aria-label="Semana anterior">‹</button>
-          <div class="dashboard-week-range">{{ intervaloSemanaLabel }}</div>
-          <button type="button" class="dashboard-nav-btn" (click)="proximaSemana()"
-            [disabled]="loading || semanaPosteriorDesabilitada" title="Semana seguinte"
-            aria-label="Semana seguinte">›</button>
-        </div>
+          <div class="dashboard-week-nav" aria-label="Semana do gráfico">
+            <button type="button" class="dashboard-nav-btn" (click)="semanaAnteriorSoDiario()"
+              [disabled]="loading || soDiarioLoading()" title="Semana anterior" aria-label="Semana anterior">‹</button>
+            <div class="dashboard-week-range">{{ intervaloSemanaSoDiarioLabel }}</div>
+            <button type="button" class="dashboard-nav-btn" (click)="proximaSemanaSoDiario()"
+              [disabled]="loading || soDiarioLoading() || semanaPosteriorDesabilitadaSoDiario"
+              title="Semana seguinte" aria-label="Semana seguinte">›</button>
+          </div>
         }
-        <app-week-chart [days]="semana"></app-week-chart>
       </div>
-      -->
-
-      @if (cicloId) {
-      <div class="dashboard-block chart dashboard-chart--so-diario">
-        <div class="dashboard-week-nav dashboard-week-nav--above-chart" aria-label="Semana do gráfico só diário">
-          <button type="button" class="dashboard-nav-btn" (click)="semanaAnteriorSoDiario()"
-            [disabled]="loading || soDiarioLoading()" title="Semana anterior (só diário)"
-            aria-label="Semana anterior (só diário)">‹</button>
-          <div class="dashboard-week-range">{{ intervaloSemanaSoDiarioLabel }}</div>
-          <button type="button" class="dashboard-nav-btn" (click)="proximaSemanaSoDiario()"
-            [disabled]="loading || soDiarioLoading() || semanaPosteriorDesabilitadaSoDiario"
-            title="Semana seguinte (só diário)" aria-label="Semana seguinte (só diário)">›</button>
-        </div>
-          <app-week-chart [days]="semanaSoDiario" chartTitle="Estudo Semanal"></app-week-chart>
-      </div>
-      }
+      <app-week-chart [days]="semanaSoDiario" chartTitle=""></app-week-chart>
     </div>
 
     <article class="block block-progress">
-      <div class="block-body">
-        <app-progress-bar
-          [items]="progressoItems"
-          [cicloId]="cicloId"
-          (disciplinaClick)="onDisciplinaHistorico($event)"
-        ></app-progress-bar>
-      </div>
+      <app-progress-bar
+        [items]="progressoItems"
+        [cicloId]="cicloId"
+        (disciplinaClick)="onDisciplinaHistorico($event)">
+      </app-progress-bar>
     </article>
   </section>
 </div>

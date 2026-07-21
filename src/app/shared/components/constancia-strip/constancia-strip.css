@@ -5,13 +5,14 @@
 .constancia {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 17px;
 }
 
 .constancia__head {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
 }
 
 .constancia__eyebrow {
@@ -33,6 +34,32 @@
   color: var(--text, #0f172a);
 }
 
+.constancia__legend {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 14px;
+  padding-top: 2px;
+  color: var(--text-muted, #64748b);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.constancia__legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.constancia__legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.constancia__legend-dot--done { background: #22c55e; }
+.constancia__legend-dot--miss { background: #ef7777; }
+
 .constancia__empty {
   margin: 0;
   font-size: 14px;
@@ -41,44 +68,92 @@
 
 /* FAIXA */
 .constancia__strip {
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 4px;
   /* tooltip precisa “sair” por cima da faixa */
   overflow: visible;
 }
 
+.constancia__strip::before {
+  content: '';
+  position: absolute;
+  top: 26px;
+  left: 4px;
+  right: 4px;
+  border-top: 2px solid color-mix(in srgb, var(--primary, #356df3) 16%, transparent);
+  transform: translateY(-50%);
+}
+
 .cell {
   position: relative;
-  width: 30px;
-  height: 30px;
+  width: 43px;
+  min-width: 43px;
+  height: 65px;
   flex: 0 0 auto;
-  border-radius: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 5px;
   cursor: default;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
+  color: var(--text-muted, #64748b);
+  z-index: 1;
+}
+
+.cell__box {
+  display: flex;
+  width: 43px;
+  height: 48px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: var(--bg-card, #fff);
+}
+
+.cell__box strong {
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.cell > small {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .02em;
 }
 
 .cell__icon {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
 }
 
-.cell--done {
+.cell--done .cell__box {
   background: color-mix(in srgb, #16a34a 18%, #ffffff);
   color: #16a34a;
+  border-color: color-mix(in srgb, #16a34a 15%, transparent);
 }
 
-.cell--miss {
+.cell--miss .cell__box {
   background: color-mix(in srgb, #ef4444 14%, #ffffff);
   color: #ef4444;
+  border-color: color-mix(in srgb, #ef4444 16%, transparent);
 }
 
-.cell--neutral {
+.cell--neutral .cell__box {
   background: color-mix(in srgb, var(--text-muted, #94a3b8) 10%, #ffffff);
   color: var(--text-muted, #94a3b8);
+}
+
+.cell--today .cell__box {
+  border: 2px solid #159447;
+  background: color-mix(in srgb, #22c55e 8%, #fff);
+  box-shadow: 0 0 0 3px color-mix(in srgb, #22c55e 10%, transparent);
 }
 
 .cell__dot {
@@ -91,9 +166,10 @@
 
 .cell:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16);
   z-index: 3;
 }
+
+.cell:hover .cell__box { box-shadow: 0 6px 14px rgba(15, 23, 42, 0.16); }
 
 /* TOOLTIP (mostra a data ao passar o rato) */
 .cell__tip {
@@ -138,23 +214,41 @@
   animation: constancia-pulse 1.2s ease-in-out infinite;
 }
 
+@media (max-width: 1180px) {
+  .constancia__strip {
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: visible;
+    padding: 2px 0 7px;
+    scrollbar-color: color-mix(in srgb, var(--primary, #356df3) 25%, transparent) transparent;
+    scrollbar-width: thin;
+  }
+}
+
+@media (max-width: 560px) {
+  .constancia__head {
+    flex-direction: column;
+    gap: 9px;
+  }
+}
+
 @keyframes constancia-pulse {
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
 
 /* DARK */
-:host-context([data-theme='dark']) .cell--done {
+:host-context([data-theme='dark']) .cell--done .cell__box {
   background: color-mix(in srgb, #22c55e 26%, transparent);
   color: #4ade80;
 }
 
-:host-context([data-theme='dark']) .cell--miss {
+:host-context([data-theme='dark']) .cell--miss .cell__box {
   background: color-mix(in srgb, #ef4444 24%, transparent);
   color: #f87171;
 }
 
-:host-context([data-theme='dark']) .cell--neutral {
+:host-context([data-theme='dark']) .cell--neutral .cell__box {
   background: color-mix(in srgb, #94a3b8 18%, transparent);
   color: #94a3b8;
 }
