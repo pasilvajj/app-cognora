@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -351,9 +352,20 @@ export class PlanejamentoPage implements OnInit {
         },
         error: (error) => {
           console.error('Erro ao abrir sessão pelo planejamento', error);
+          if (this.isMateriaConcluidaError(error)) {
+            this.toast.info('Esta matéria foi concluída e não pode iniciar uma nova sessão.');
+            this.carregarPlanejamento(false);
+            return;
+          }
           this.toast.error('Não foi possível abrir a sessão desta matéria.');
         },
       });
+  }
+
+  private isMateriaConcluidaError(error: unknown): boolean {
+    return error instanceof HttpErrorResponse
+      && error.status === 400
+      && error.error?.message === 'Matéria concluída não pode iniciar nova sessão';
   }
 
   fecharEdicao(): void {
