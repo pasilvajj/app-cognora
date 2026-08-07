@@ -27,6 +27,7 @@ type DiaView = {
   totalDiaSeg: number;
   observacao?: string;
   itens: Array<{
+    cicloItemId: number | null;
     disciplinaId: number;
     disciplinaNome: string;
     duracaoSeg: number;
@@ -255,6 +256,7 @@ export class PlanejamentoPage implements OnInit {
       dias: this.dias.map((d) => ({
         data: d.dataIso,
         itens: d.itens.map((it) => ({
+          cicloItemId: it.cicloItemId,
           disciplinaId: it.disciplinaId,
           duracaoSeg: it.duracaoSeg,
         })),
@@ -335,14 +337,24 @@ export class PlanejamentoPage implements OnInit {
       return;
     }
 
+    if (item.cicloItemId == null) {
+      this.toast.info('Este planejamento foi criado antes do vínculo por ordem. Use “Refazer automático” uma vez para abrir a posição correta do ciclo.');
+      return;
+    }
+
     this.iniciandoDisciplinaId.set(item.disciplinaId);
     this.estudoApi
-      .iniciarSessaoDisciplina(this.cicloIdSelecionado, item.disciplinaId)
+      .iniciarSessao(this.cicloIdSelecionado, { cicloItemId: item.cicloItemId })
       .pipe(finalize(() => this.iniciandoDisciplinaId.set(null)))
       .subscribe({
         next: (sessao) => {
           if (!sessao?.id) {
             this.toast.error('Não foi possível identificar a sessão reservada.');
+            return;
+          }
+          if (sessao.cicloItemId !== item.cicloItemId) {
+            this.toast.error('A sessão reservada não corresponde à posição selecionada. Atualize o planejamento e tente novamente.');
+            this.carregarPlanejamento(false);
             return;
           }
           void this.router.navigate(
@@ -459,6 +471,7 @@ export class PlanejamentoPage implements OnInit {
         totalDiaSeg: d.totalDiaSeg ?? 0,
         observacao: undefined,
         itens: (d.itens ?? []).map((it) => ({
+          cicloItemId: it.cicloItemId ?? null,
           disciplinaId: it.disciplinaId,
           disciplinaNome: it.disciplinaNome,
           duracaoSeg: it.duracaoSeg ?? 0,

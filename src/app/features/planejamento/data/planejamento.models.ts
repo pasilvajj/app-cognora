@@ -1,4 +1,5 @@
 export type ItemPlanejadoDto = {
+  cicloItemId: number | null;
   disciplinaId: number;
   disciplinaNome: string;
   duracaoSeg: number;
@@ -52,6 +53,7 @@ export type PlanejamentoSemanalDto = {
 
 /** Payload para salvar a organização feita pelo usuário (arrastar). */
 export type ItemPersonalizadoReq = {
+  cicloItemId: number | null;
   disciplinaId: number;
   duracaoSeg: number;
 };
