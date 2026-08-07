@@ -108,8 +108,8 @@ h1{
 
   .sub {
     min-width: 0;
-    flex-wrap: wrap;
-    gap: 4px 7px;
+    flex-wrap: nowrap;
+    gap: 6px;
   }
 
   .dot {
@@ -118,7 +118,8 @@ h1{
 
   .pill {
     min-width: 0;
-    max-width: min(152px, 100%);
+    flex: 0 1 132px;
+    max-width: 132px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -129,12 +130,14 @@ h1{
 
   .muted {
     min-width: 0;
-    max-width: 132px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 12px;
   }
+
+  .header__disciplina { flex: 1 1 auto; }
+  .header__ordem { flex: 0 0 auto; }
 }
 
 @media (max-width: 360px) {
