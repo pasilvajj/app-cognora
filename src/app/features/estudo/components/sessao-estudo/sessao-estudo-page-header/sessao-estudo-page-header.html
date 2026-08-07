@@ -2,9 +2,9 @@
   <div class="header__copy">
     <h1>Sessão de Estudo</h1>
     <div class="sub">
-      <span class="pill">{{ cicloNome() }}</span>
+      <span class="pill" [title]="cicloNome()">{{ cicloNome() }}</span>
       <span class="dot">•</span>
-      <span class="muted">{{ disciplinaNome() }}</span>
+      <span class="muted" [title]="disciplinaNome()">{{ disciplinaNome() }}</span>
       <span class="dot">•</span>
       <span class="muted">Ordem #{{ ordem() }}</span>
     </div>
