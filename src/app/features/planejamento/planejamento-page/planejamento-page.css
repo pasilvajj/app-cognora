@@ -373,9 +373,14 @@
   }
 
   .item-top--completed{
-    grid-template-areas: 'title badge';
+    grid-template-areas:
+      'badge badge'
+      'title title';
   }
-  .item-top--completed .completed-badge{ grid-area: badge; }
+  .item-top--completed .completed-badge{
+    grid-area: badge;
+    justify-self: start;
+  }
 }
 
 .item-sub{
