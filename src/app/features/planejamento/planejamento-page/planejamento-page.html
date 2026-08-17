@@ -74,7 +74,7 @@
               [title]="it.editavel ? 'Clique para estudar esta matéria' : 'Matéria concluída — sessão bloqueada'">
               <div class="item-card-placeholder" *cdkDragPlaceholder></div>
 
-              <div class="item-top">
+              <div class="item-top" [class.item-top--completed]="it.concluida">
                 <span class="item-grip" *ngIf="it.editavel" cdkDragHandle aria-hidden="true"
                   (click)="$event.stopPropagation()" title="Arraste para mover">⋮⋮</span>
                 <div class="item-title">{{ it.disciplinaNome }}</div>
