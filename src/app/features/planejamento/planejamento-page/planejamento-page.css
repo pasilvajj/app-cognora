@@ -257,7 +257,33 @@
   box-shadow: none;
 }
 
-.completed-badge,
+.completed-badge{
+  margin-left: auto;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 6px;
+  border: 1px solid #087f5b;
+  border-radius: 999px;
+  background: #087f5b;
+  color: #f0fdf4;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(15, 23, 42, .16);
+}
+
+.completed-badge::before{
+  content: '✓';
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .dist-status{
   margin-left: auto;
   padding: 2px 7px;
@@ -841,16 +867,10 @@
 }
 
 :host-context([data-theme='dark']) .item-card{
-  /* overlay translúcido da cor sobre a superfície escura = tom sutil, sem ficar “barrento” */
-  background:
-    linear-gradient(
-      0deg,
-      color-mix(in srgb, var(--card-color) 13%, transparent),
-      color-mix(in srgb, var(--card-color) 13%, transparent)
-    ),
-    color-mix(in srgb, var(--surface) 88%, #0b1220);
-  border-color: color-mix(in srgb, var(--card-color) 24%, var(--border));
-  border-left-color: var(--card-color);
+  /* Post-it: tom pastel sólido da disciplina, sem camadas translúcidas. */
+  background: color-mix(in srgb, var(--card-color) 86%, #ffffff);
+  border-color: color-mix(in srgb, var(--card-color) 72%, #ffffff);
+  border-left-color: color-mix(in srgb, var(--card-color) 82%, #0f172a);
 }
 
 :host-context([data-theme='dark']) .item-card:hover{
@@ -858,19 +878,44 @@
 }
 
 :host-context([data-theme='dark']) .item-card.free{
-  background:
-    linear-gradient(
-      0deg,
-      color-mix(in srgb, #fb923c 13%, transparent),
-      color-mix(in srgb, #fb923c 13%, transparent)
-    ),
-    color-mix(in srgb, var(--surface) 88%, #0b1220);
-  border-color: color-mix(in srgb, #fb923c 24%, var(--border));
+  background: color-mix(in srgb, #fb923c 86%, #ffffff);
+  border-color: color-mix(in srgb, #fb923c 72%, #ffffff);
+}
+
+:host-context([data-theme='dark']) .item-card.item-card--completed{
+  background: color-mix(in srgb, var(--card-color) 86%, #ffffff);
+  border-color: color-mix(in srgb, var(--card-color) 72%, #ffffff);
+  border-left-color: color-mix(in srgb, var(--card-color) 82%, #0f172a);
 }
 
 :host-context([data-theme='dark']) .item-time{
-  background: color-mix(in srgb, var(--card-color) 24%, transparent);
-  color: color-mix(in srgb, var(--card-color) 35%, #ffffff);
+  background: color-mix(in srgb, var(--card-color) 68%, #0f172a);
+  color: #ffffff;
+}
+
+:host-context([data-theme='dark']) .item-card .item-title,
+:host-context([data-theme='dark']) .item-card .item-sub{
+  color: #17233b;
+}
+
+:host-context([data-theme='dark']) .item-card .item-edit{
+  border-color: color-mix(in srgb, var(--card-color) 34%, #17233b);
+  background: #fffaf7;
+  color: #17233b;
+}
+
+:host-context([data-theme='dark']) .item-grip{
+  display: grid;
+  width: 20px;
+  height: 20px;
+  margin: -2px 0 0 -3px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--card-color) 30%, #17233b);
+  border-radius: 7px;
+  background: #fffaf7;
+  color: #17233b;
+  font-size: 13px;
+  opacity: 1;
 }
 
 :host-context([data-theme='dark']) .day-col--today{

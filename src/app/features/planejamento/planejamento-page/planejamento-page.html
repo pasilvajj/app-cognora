@@ -55,7 +55,7 @@
     <div class="board-body">
       <!-- GRID PRINCIPAL (7 dias) -->
       <div class="grid">
-        <div class="day-col" *ngFor="let d of dias; let idx = index" [class.day-col--today]="d.isHoje">
+          <div class="day-col" *ngFor="let d of dias; let idx = index" [class.day-col--today]="d.isHoje">
           <div class="day-head">
             <div class="day-name">{{ d.diaSemanaLabel }}</div>
             <div class="day-number">{{ d.diaMes }}</div>
@@ -102,7 +102,7 @@
             <div class="day-total">{{ formatarTempo(d.totalDiaSeg) }}</div>
             <div class="day-total-sub">de estudo</div>
           </div>
-        </div>
+          </div>
       </div>
 
       <!-- COLUNA LATERAL -->
